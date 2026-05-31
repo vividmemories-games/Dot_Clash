@@ -1,0 +1,255 @@
+[
+  {
+    "id": "w4_l01", "worldId": 4, "index": 1,
+    "title": "Speed Rush", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "maxMoves", "value": 12},
+      "star3": {"type": "maxMoves", "value": 9}
+    },
+    "rewards": {"coins": 22, "xp": 28}
+  },
+  {
+    "id": "w4_l02", "worldId": 4, "index": 2,
+    "title": "Quick Draw", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 3},
+      "star3": {"type": "margin", "min": 4}
+    },
+    "rewards": {"coins": 22, "xp": 28}
+  },
+  {
+    "id": "w4_l03", "worldId": 4, "index": 3,
+    "title": "Beat the Bell", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "maxMoves", "value": 11},
+      "star3": {"type": "maxMoves", "value": 8}
+    },
+    "rewards": {"coins": 22, "xp": 28}
+  },
+  {
+    "id": "w4_l04", "worldId": 4, "index": 4,
+    "title": "Blitz Round", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "maxAiBoxes", "value": 4}
+    },
+    "rewards": {"coins": 24, "xp": 30}
+  },
+  {
+    "id": "w4_l05", "worldId": 4, "index": 5,
+    "title": "Minute Mile", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "maxMoves", "value": 12},
+      "star3": {"type": "maxMoves", "value": 9}
+    },
+    "rewards": {"coins": 24, "xp": 30}
+  },
+  {
+    "id": "w4_l06", "worldId": 4, "index": 6,
+    "title": "Big Board Blitz", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "maxMoves", "value": 18},
+      "star3": {"type": "maxMoves", "value": 14}
+    },
+    "rewards": {"coins": 24, "xp": 30}
+  },
+  {
+    "id": "w4_l07", "worldId": 4, "index": 7,
+    "title": "Lightning Round", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "maxAiBoxes", "value": 3}
+    },
+    "rewards": {"coins": 24, "xp": 30}
+  },
+  {
+    "id": "w4_l08", "worldId": 4, "index": 8,
+    "title": "Detention Rush", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "maxAiBoxes", "value": 4}
+    },
+    "rewards": {"coins": 26, "xp": 33}
+  },
+  {
+    "id": "w4_l09", "worldId": 4, "index": 9,
+    "title": "Rapid Fire", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "maxMoves", "value": 18},
+      "star3": {"type": "maxMoves", "value": 14}
+    },
+    "rewards": {"coins": 26, "xp": 33}
+  },
+  {
+    "id": "w4_l10", "worldId": 4, "index": 10,
+    "title": "BOSS: The Machine v2", "gridSize": 7, "aiDifficulty": "hard",
+    "isBoss": true, "persona": "machine", "bossName": "The Machine",
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "maxMoves", "value": 20},
+      "star3": {"type": "margin", "min": 5}
+    },
+    "rewards": {"coins": 55, "xp": 65}
+  },
+  {
+    "id": "w4_l11", "worldId": 4, "index": 11,
+    "title": "Pressure Cooker", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "maxAiBoxes", "value": 4}
+    },
+    "rewards": {"coins": 26, "xp": 33}
+  },
+  {
+    "id": "w4_l12", "worldId": 4, "index": 12,
+    "title": "Speed Trap", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "maxAiBoxes", "value": 3}
+    },
+    "rewards": {"coins": 26, "xp": 33}
+  },
+  {
+    "id": "w4_l13", "worldId": 4, "index": 13,
+    "title": "Efficient Lines", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "maxAiBoxes", "value": 5}
+    },
+    "rewards": {"coins": 28, "xp": 35}
+  },
+  {
+    "id": "w4_l14", "worldId": 4, "index": 14,
+    "title": "Tick Tock", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "maxAiBoxes", "value": 3}
+    },
+    "rewards": {"coins": 28, "xp": 35}
+  },
+  {
+    "id": "w4_l15", "worldId": 4, "index": 15,
+    "title": "Breather", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "maxAiBoxes", "value": 4}
+    },
+    "rewards": {"coins": 26, "xp": 33}
+  },
+  {
+    "id": "w4_l16", "worldId": 4, "index": 16,
+    "title": "Surge", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "maxMoves", "value": 18},
+      "star3": {"type": "maxMoves", "value": 14}
+    },
+    "rewards": {"coins": 28, "xp": 35}
+  },
+  {
+    "id": "w4_l17", "worldId": 4, "index": 17,
+    "title": "Sprint Finale", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 6},
+      "star3": {"type": "maxAiBoxes", "value": 3}
+    },
+    "rewards": {"coins": 28, "xp": 35}
+  },
+  {
+    "id": "w4_l18", "worldId": 4, "index": 18,
+    "title": "Overdrive", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 6},
+      "star3": {"type": "maxAiBoxes", "value": 5}
+    },
+    "rewards": {"coins": 30, "xp": 38}
+  },
+  {
+    "id": "w4_l19", "worldId": 4, "index": 19,
+    "title": "Turbo Mode", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "maxMoves", "value": 18},
+      "star3": {"type": "maxMoves", "value": 14}
+    },
+    "rewards": {"coins": 30, "xp": 38}
+  },
+  {
+    "id": "w4_l20", "worldId": 4, "index": 20,
+    "title": "BOSS: The Collector Final", "gridSize": 7, "aiDifficulty": "hard",
+    "isBoss": true, "persona": "collector", "bossName": "The Collector",
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "maxMoves", "value": 20},
+      "star3": {"type": "maxAiBoxes", "value": 6}
+    },
+    "rewards": {"coins": 60, "xp": 75}
+  },
+  {
+    "id": "w4_l21", "worldId": 4, "index": 21,
+    "title": "Last Sprint", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "maxAiBoxes", "value": 5}
+    },
+    "rewards": {"coins": 30, "xp": 38}
+  },
+  {
+    "id": "w4_l22", "worldId": 4, "index": 22,
+    "title": "Finish Line", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "maxMoves", "value": 18},
+      "star3": {"type": "maxMoves", "value": 14}
+    },
+    "rewards": {"coins": 30, "xp": 38}
+  },
+  {
+    "id": "w4_l23", "worldId": 4, "index": 23,
+    "title": "Velocity Check", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 7},
+      "star3": {"type": "maxAiBoxes", "value": 6}
+    },
+    "rewards": {"coins": 32, "xp": 40}
+  },
+  {
+    "id": "w4_l24", "worldId": 4, "index": 24,
+    "title": "Full Throttle", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 6},
+      "star3": {"type": "maxAiBoxes", "value": 5}
+    },
+    "rewards": {"coins": 32, "xp": 40}
+  },
+  {
+    "id": "w4_l25", "worldId": 4, "index": 25,
+    "title": "BOSS: The Machine Supreme", "gridSize": 7, "aiDifficulty": "hard",
+    "isBoss": true, "persona": "machine", "bossName": "The Machine",
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "maxMoves", "value": 22},
+      "star3": {"type": "maxAiBoxes", "value": 5}
+    },
+    "rewards": {"coins": 65, "xp": 80}
+  }
+]

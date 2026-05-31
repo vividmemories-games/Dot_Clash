@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "218032510167",
+    "project_id": "dot-clash-dev",
+    "storage_bucket": "dot-clash-dev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:218032510167:android:820822f0042cad8041cc92",
+        "android_client_info": {
+          "package_name": "com.vividmemories.dev.dotclash"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsBiVxhMmf-vTsfqmHnNbzud-7W-kqs_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:218032510167:android:0bc73b5b5916514a41cc92",
+        "android_client_info": {
+          "package_name": "com.vividmemories.dotclash"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsBiVxhMmf-vTsfqmHnNbzud-7W-kqs_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

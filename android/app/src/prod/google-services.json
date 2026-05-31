@@ -1,0 +1,70 @@
+{
+  "project_info": {
+    "project_number": "727354434155",
+    "project_id": "dot-clash-72cc6",
+    "storage_bucket": "dot-clash-72cc6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:727354434155:android:6abd475ba0f254f844072e",
+        "android_client_info": {
+          "package_name": "com.vividmemories.dotclash"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "727354434155-60m6bkb89acqpthrgbhvghr1aoa5pnog.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vividmemories.dotclash",
+            "certificate_hash": "6dd16caa42fe5bc96fea001aec0910257a3dff60"
+          }
+        },
+        {
+          "client_id": "727354434155-fa4s0a62t4uotq6ts1fotlprqqogkpd4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vividmemories.dotclash",
+            "certificate_hash": "904587cfff28d922fa6cf02670457151e389705f"
+          }
+        },
+        {
+          "client_id": "727354434155-j1sccejqg2ls2gc70bt3peg328tk84dv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vividmemories.dotclash",
+            "certificate_hash": "5288c72701e1110497de41ec12553a93832a759a"
+          }
+        },
+        {
+          "client_id": "727354434155-11to1o8qau9ndkt3s8chlsdbps2l1p4v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBB9GIrza-ogKm9U2YF1btPKBMVIQoQzvQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "727354434155-11to1o8qau9ndkt3s8chlsdbps2l1p4v.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "727354434155-5j6k4blehaes369dr9jfbkps8smfuj1e.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "testapoorv.dotClash"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

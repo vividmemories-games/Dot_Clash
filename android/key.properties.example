@@ -1,0 +1,7 @@
+# Copy to android/key.properties (gitignored) and fill in after creating the upload keystore.
+# See SETUP.md §8 and:  bash android/scripts/create_upload_keystore.sh
+
+storePassword=YOUR_STORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=upload
+storeFile=upload-keystore.jks

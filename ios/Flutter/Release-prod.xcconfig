@@ -1,0 +1,6 @@
+#include "Release.xcconfig"
+FLUTTER_FLAVOR=prod
+PRODUCT_BUNDLE_IDENTIFIER=com.vividmemories.dotclash
+APP_DISPLAY_NAME=Dot Clash
+GAD_APPLICATION_IDENTIFIER=ca-app-pub-6626056478655263~8406844911
+#include? "BetaAdsOverride.xcconfig"

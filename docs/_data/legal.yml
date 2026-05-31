@@ -1,0 +1,23 @@
+# Edit these values once — all legal pages use this file.
+# Not legal advice. Review with qualified counsel before publishing.
+
+entity_name: "vividmemories-games"
+contact_email: "vividmemoriesgames@gmail.com"
+postal_address: "swixgata 14, 1473 Lorenskog, Norway"
+website_url: "https://vividmemories-games.github.io"
+effective_date: "2026-05-24"
+deletion_sla: "30 days"
+governing_law: "Norwegian law"
+jurisdiction: "Norway"
+
+# AdMob A3: set true only if you serve personalized ads (+ iOS ATT).
+personalized_ads: false
+
+# Relative paths (Jekyll). Full URLs are built with site.url + site.baseurl.
+privacy_policy_path: "/privacy-policy/"
+terms_path: "/terms-and-conditions/"
+eula_path: "/eula/"
+cookie_policy_path: "/cookie-policy/"
+contact_path: "/contact/"
+delete_data_path: "/delete-data/"
+privacy_choices_path: "/privacy-choices/"

@@ -1,0 +1,105 @@
+[
+  {
+    "id": "w1_l01", "worldId": 1, "index": 1,
+    "title": "First Lines", "gridSize": 5, "aiDifficulty": "easy", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "win"},
+      "star3": {"type": "margin", "min": 2}
+    },
+    "rewards": {"coins": 10, "xp": 15}
+  },
+  {
+    "id": "w1_l02", "worldId": 1, "index": 2,
+    "title": "Two Boxes", "gridSize": 5, "aiDifficulty": "easy", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 1},
+      "star3": {"type": "margin", "min": 3}
+    },
+    "rewards": {"coins": 10, "xp": 15}
+  },
+  {
+    "id": "w1_l03", "worldId": 1, "index": 3,
+    "title": "Claim Your Corners", "gridSize": 5, "aiDifficulty": "easy", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 2},
+      "star3": {"type": "margin", "min": 4}
+    },
+    "rewards": {"coins": 10, "xp": 15}
+  },
+  {
+    "id": "w1_l04", "worldId": 1, "index": 4,
+    "title": "Hold the Line", "gridSize": 5, "aiDifficulty": "easy", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 4}
+    },
+    "rewards": {"coins": 12, "xp": 15}
+  },
+  {
+    "id": "w1_l05", "worldId": 1, "index": 5,
+    "title": "BOSS: The Trickster", "gridSize": 5, "aiDifficulty": "hard",
+    "isBoss": true, "persona": "trapper", "bossName": "The Trickster",
+    "powerUpRewards": {"hold": 1, "riposte": 1},
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 2},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 20, "xp": 25}
+  },
+  {
+    "id": "w1_l06", "worldId": 1, "index": 6,
+    "title": "Bigger Board", "gridSize": 6, "aiDifficulty": "easy", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 2},
+      "star3": {"type": "margin", "min": 5}
+    },
+    "rewards": {"coins": 12, "xp": 18}
+  },
+  {
+    "id": "w1_l07", "worldId": 1, "index": 7,
+    "title": "Quick Fingers", "gridSize": 6, "aiDifficulty": "easy", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "maxMoves", "value": 17},
+      "star3": {"type": "maxMoves", "value": 15}
+    },
+    "rewards": {"coins": 12, "xp": 18}
+  },
+  {
+    "id": "w1_l08", "worldId": 1, "index": 8,
+    "title": "Smooth Operator", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "maxAiBoxes", "value": 4}
+    },
+    "rewards": {"coins": 15, "xp": 20}
+  },
+  {
+    "id": "w1_l09", "worldId": 1, "index": 9,
+    "title": "Class Captain", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 3},
+      "star3": {"type": "margin", "min": 5}
+    },
+    "rewards": {"coins": 15, "xp": 20}
+  },
+  {
+    "id": "w1_l10", "worldId": 1, "index": 10,
+    "title": "BOSS: The Machine", "gridSize": 6, "aiDifficulty": "hard",
+    "isBoss": true, "persona": "machine", "bossName": "The Machine",
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 2},
+      "star3": {"type": "maxMoves", "value": 14}
+    },
+    "rewards": {"coins": 40, "xp": 50}
+  }
+]

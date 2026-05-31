@@ -1,0 +1,255 @@
+[
+  {
+    "id": "w3_l01", "worldId": 3, "index": 1,
+    "title": "Setting Traps", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 2},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 20, "xp": 25}
+  },
+  {
+    "id": "w3_l02", "worldId": 3, "index": 2,
+    "title": "The Baited Line", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 4}
+    },
+    "rewards": {"coins": 20, "xp": 25}
+  },
+  {
+    "id": "w3_l03", "worldId": 3, "index": 3,
+    "title": "Tripwire", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "maxAiBoxes", "value": 3}
+    },
+    "rewards": {"coins": 20, "xp": 25}
+  },
+  {
+    "id": "w3_l04", "worldId": 3, "index": 4,
+    "title": "Three-Edge Terror", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 3},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 20, "xp": 25}
+  },
+  {
+    "id": "w3_l05", "worldId": 3, "index": 5,
+    "title": "Tactical Patience", "gridSize": 7, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 3},
+      "star3": {"type": "maxAiBoxes", "value": 5}
+    },
+    "rewards": {"coins": 22, "xp": 28}
+  },
+  {
+    "id": "w3_l06", "worldId": 3, "index": 6,
+    "title": "Open Invitation", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 5}
+    },
+    "rewards": {"coins": 22, "xp": 28}
+  },
+  {
+    "id": "w3_l07", "worldId": 3, "index": 7,
+    "title": "Reverse Bait", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "maxMoves", "value": 15},
+      "star3": {"type": "margin", "min": 4}
+    },
+    "rewards": {"coins": 22, "xp": 28}
+  },
+  {
+    "id": "w3_l08", "worldId": 3, "index": 8,
+    "title": "Domination", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 22, "xp": 28}
+  },
+  {
+    "id": "w3_l09", "worldId": 3, "index": 9,
+    "title": "Lunchtime Rivalry", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "maxAiBoxes", "value": 6}
+    },
+    "rewards": {"coins": 22, "xp": 28}
+  },
+  {
+    "id": "w3_l10", "worldId": 3, "index": 10,
+    "title": "BOSS: The Trapper", "gridSize": 7, "aiDifficulty": "hard",
+    "isBoss": true, "persona": "trapper", "bossName": "The Trapper",
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 3},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 50, "xp": 60}
+  },
+  {
+    "id": "w3_l11", "worldId": 3, "index": 11,
+    "title": "Broken Lines", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 3},
+      "star3": {"type": "maxMoves", "value": 14}
+    },
+    "rewards": {"coins": 24, "xp": 30}
+  },
+  {
+    "id": "w3_l12", "worldId": 3, "index": 12,
+    "title": "Hidden Chains", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 6}
+    },
+    "rewards": {"coins": 24, "xp": 30}
+  },
+  {
+    "id": "w3_l13", "worldId": 3, "index": 13,
+    "title": "Patience Pays", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 24, "xp": 30}
+  },
+  {
+    "id": "w3_l14", "worldId": 3, "index": 14,
+    "title": "No Safe Moves", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 24, "xp": 30}
+  },
+  {
+    "id": "w3_l15", "worldId": 3, "index": 15,
+    "title": "Tactical Genius", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "maxMoves", "value": 20}
+    },
+    "rewards": {"coins": 24, "xp": 30}
+  },
+  {
+    "id": "w3_l16", "worldId": 3, "index": 16,
+    "title": "Gridlock", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 6},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 25, "xp": 32}
+  },
+  {
+    "id": "w3_l17", "worldId": 3, "index": 17,
+    "title": "Trap City", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "margin", "min": 7}
+    },
+    "rewards": {"coins": 25, "xp": 32}
+  },
+  {
+    "id": "w3_l18", "worldId": 3, "index": 18,
+    "title": "Baiting Master", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 7}
+    },
+    "rewards": {"coins": 25, "xp": 32}
+  },
+  {
+    "id": "w3_l19", "worldId": 3, "index": 19,
+    "title": "Edge of Control", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 6},
+      "star3": {"type": "maxAiBoxes", "value": 7}
+    },
+    "rewards": {"coins": 25, "xp": 32}
+  },
+  {
+    "id": "w3_l20", "worldId": 3, "index": 20,
+    "title": "BOSS: The Trapper v2", "gridSize": 7, "aiDifficulty": "hard",
+    "isBoss": true, "persona": "trapper", "bossName": "The Trapper",
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 55, "xp": 65}
+  },
+  {
+    "id": "w3_l21", "worldId": 3, "index": 21,
+    "title": "Lunch Table King", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "maxMoves", "value": 20}
+    },
+    "rewards": {"coins": 26, "xp": 33}
+  },
+  {
+    "id": "w3_l22", "worldId": 3, "index": 22,
+    "title": "Unbreakable", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 6}
+    },
+    "rewards": {"coins": 26, "xp": 33}
+  },
+  {
+    "id": "w3_l23", "worldId": 3, "index": 23,
+    "title": "Perfect Trap", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 6},
+      "star3": {"type": "maxAiBoxes", "value": 8}
+    },
+    "rewards": {"coins": 26, "xp": 33}
+  },
+  {
+    "id": "w3_l24", "worldId": 3, "index": 24,
+    "title": "Final Setup", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 7},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 28, "xp": 35}
+  },
+  {
+    "id": "w3_l25", "worldId": 3, "index": 25,
+    "title": "BOSS: The Machine", "gridSize": 7, "aiDifficulty": "hard",
+    "isBoss": true, "persona": "machine", "bossName": "The Machine",
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "maxMoves", "value": 22}
+    },
+    "rewards": {"coins": 60, "xp": 75}
+  }
+]

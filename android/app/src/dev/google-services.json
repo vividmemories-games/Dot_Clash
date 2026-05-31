@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "218032510167",
+    "project_id": "dot-clash-dev",
+    "storage_bucket": "dot-clash-dev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:218032510167:android:940568c54d577cc441cc92",
+        "android_client_info": {
+          "package_name": "com.vividmemories.dotclash.dev"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "218032510167-ifir1qfqdrdl000341qf7c5759fdju0p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vividmemories.dotclash.dev",
+            "certificate_hash": "6dd16caa42fe5bc96fea001aec0910257a3dff60"
+          }
+        },
+        {
+          "client_id": "218032510167-go3gn9lr2uatb8jv5bveupjdabcpqi03.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsBiVxhMmf-vTsfqmHnNbzud-7W-kqs_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "218032510167-go3gn9lr2uatb8jv5bveupjdabcpqi03.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "218032510167-fkd9hivf8djhvv76hd2rbdaso92k9nd2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.vividmemories.dotclash.dev"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

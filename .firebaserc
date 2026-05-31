@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "dot-clash-72cc6",
+    "prod": "dot-clash-72cc6",
+    "dev": "dot-clash-dev"
+  }
+}

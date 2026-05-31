@@ -1,0 +1,224 @@
+[
+  {
+    "id": "w5_l01", "worldId": 5, "index": 1,
+    "title": "Broken Grid", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "maxMoves", "value": 16}
+    },
+    "rewards": {"coins": 30, "xp": 38},
+    "disabledCells": ["0_0", "0_1", "5_5", "5_4"]
+  },
+  {
+    "id": "w5_l02", "worldId": 5, "index": 2,
+    "title": "L-Shaped Duel", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 5}
+    },
+    "rewards": {"coins": 30, "xp": 38},
+    "disabledCells": ["0_4", "0_5", "1_4", "1_5"]
+  },
+  {
+    "id": "w5_l03", "worldId": 5, "index": 3,
+    "title": "Corner Cutoff", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "maxAiBoxes", "value": 5}
+    },
+    "rewards": {"coins": 30, "xp": 38},
+    "disabledCells": ["0_0", "5_5"]
+  },
+  {
+    "id": "w5_l04", "worldId": 5, "index": 4,
+    "title": "Diamond Grid", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 32, "xp": 40},
+    "disabledCells": ["0_0", "0_5", "5_0", "5_5", "0_1", "0_4", "1_0", "4_0", "1_5", "4_5"]
+  },
+  {
+    "id": "w5_l05", "worldId": 5, "index": 5,
+    "title": "Blocked Path", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "maxMoves", "value": 14},
+      "star3": {"type": "margin", "min": 6}
+    },
+    "rewards": {"coins": 32, "xp": 40},
+    "disabledCells": ["2_2", "2_3", "3_2", "3_3"]
+  },
+  {
+    "id": "w5_l06", "worldId": 5, "index": 6,
+    "title": "Cross Board", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "maxAiBoxes", "value": 5}
+    },
+    "rewards": {"coins": 32, "xp": 40},
+    "disabledCells": ["0_0", "0_5", "1_0", "1_5", "4_0", "4_5", "5_0", "5_5"]
+  },
+  {
+    "id": "w5_l07", "worldId": 5, "index": 7,
+    "title": "Maze Runner", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 5}
+    },
+    "rewards": {"coins": 34, "xp": 42},
+    "disabledCells": ["0_2", "1_2", "2_0", "2_1", "3_4", "3_5", "4_3", "5_3"]
+  },
+  {
+    "id": "w5_l08", "worldId": 5, "index": 8,
+    "title": "Shattered Grid", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "maxMoves", "value": 14}
+    },
+    "rewards": {"coins": 34, "xp": 42},
+    "disabledCells": ["1_1", "1_4", "4_1", "4_4"]
+  },
+  {
+    "id": "w5_l09", "worldId": 5, "index": 9,
+    "title": "Final Challenge", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 6},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 34, "xp": 42},
+    "disabledCells": ["0_0", "0_5", "5_0", "5_5"]
+  },
+  {
+    "id": "w5_l10", "worldId": 5, "index": 10,
+    "title": "BOSS: The Trapper — Chaos", "gridSize": 7, "aiDifficulty": "hard",
+    "isBoss": true, "persona": "trapper", "bossName": "The Trapper",
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 65, "xp": 80},
+    "disabledCells": ["0_0", "0_5", "5_0", "5_5"]
+  },
+  {
+    "id": "w5_l11", "worldId": 5, "index": 11,
+    "title": "Chaos Continues", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "maxMoves", "value": 15}
+    },
+    "rewards": {"coins": 35, "xp": 44},
+    "disabledCells": ["0_0", "0_1", "0_2"]
+  },
+  {
+    "id": "w5_l12", "worldId": 5, "index": 12,
+    "title": "Warped Grid", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 6}
+    },
+    "rewards": {"coins": 35, "xp": 44},
+    "disabledCells": ["3_0", "3_1", "3_4", "3_5"]
+  },
+  {
+    "id": "w5_l13", "worldId": 5, "index": 13,
+    "title": "Half Moon", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "maxAiBoxes", "value": 6}
+    },
+    "rewards": {"coins": 35, "xp": 44},
+    "disabledCells": ["0_0", "0_5", "1_0", "1_5"]
+  },
+  {
+    "id": "w5_l14", "worldId": 5, "index": 14,
+    "title": "Void Center", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 36, "xp": 45},
+    "disabledCells": ["2_2", "2_3", "3_2", "3_3", "2_4", "4_2"]
+  },
+  {
+    "id": "w5_l15", "worldId": 5, "index": 15,
+    "title": "Archipelago", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 6},
+      "star3": {"type": "maxMoves", "value": 15}
+    },
+    "rewards": {"coins": 36, "xp": 45},
+    "disabledCells": ["0_0", "2_2", "4_4", "5_5"]
+  },
+  {
+    "id": "w5_l16", "worldId": 5, "index": 16,
+    "title": "Border Wars", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 7}
+    },
+    "rewards": {"coins": 36, "xp": 45},
+    "disabledCells": ["0_2", "0_3", "5_2", "5_3"]
+  },
+  {
+    "id": "w5_l17", "worldId": 5, "index": 17,
+    "title": "Fragmented", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "maxAiBoxes", "value": 6}
+    },
+    "rewards": {"coins": 38, "xp": 48},
+    "disabledCells": ["1_1", "1_4", "4_1", "4_4", "0_0", "0_5", "5_0", "5_5"]
+  },
+  {
+    "id": "w5_l18", "worldId": 5, "index": 18,
+    "title": "The Labyrinth", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 6},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 38, "xp": 48},
+    "disabledCells": ["0_0", "0_1", "1_0", "4_5", "5_4", "5_5"]
+  },
+  {
+    "id": "w5_l19", "worldId": 5, "index": 19,
+    "title": "Grand Chaos", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 7},
+      "star3": {"type": "maxMoves", "value": 16}
+    },
+    "rewards": {"coins": 40, "xp": 50},
+    "disabledCells": ["0_0", "0_5", "5_0", "5_5", "0_1", "1_0"]
+  },
+  {
+    "id": "w5_l20", "worldId": 5, "index": 20,
+    "title": "BOSS: The Machine — Final", "gridSize": 7, "aiDifficulty": "hard",
+    "isBoss": true, "persona": "machine", "bossName": "The Machine",
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 100, "xp": 120},
+    "disabledCells": ["0_0", "0_5", "5_0", "5_5"]
+  }
+]

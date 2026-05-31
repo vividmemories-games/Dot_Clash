@@ -1,0 +1,205 @@
+[
+  {
+    "id": "w2_l01", "worldId": 2, "index": 1,
+    "title": "Chain Starter", "gridSize": 6, "aiDifficulty": "easy", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 2},
+      "star3": {"type": "margin", "min": 5}
+    },
+    "rewards": {"coins": 15, "xp": 20}
+  },
+  {
+    "id": "w2_l02", "worldId": 2, "index": 2,
+    "title": "Open Chains", "gridSize": 6, "aiDifficulty": "easy", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 3}
+    },
+    "rewards": {"coins": 15, "xp": 20}
+  },
+  {
+    "id": "w2_l03", "worldId": 2, "index": 3,
+    "title": "Give and Take", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 2},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 15, "xp": 20}
+  },
+  {
+    "id": "w2_l04", "worldId": 2, "index": 4,
+    "title": "Sacrifice Play", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 6}
+    },
+    "rewards": {"coins": 15, "xp": 20}
+  },
+  {
+    "id": "w2_l05", "worldId": 2, "index": 5,
+    "title": "Control the Grid", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "maxAiBoxes", "value": 4}
+    },
+    "rewards": {"coins": 18, "xp": 22}
+  },
+  {
+    "id": "w2_l06", "worldId": 2, "index": 6,
+    "title": "Chain Reaction", "gridSize": 7, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 3},
+      "star3": {"type": "maxMoves", "value": 20}
+    },
+    "rewards": {"coins": 18, "xp": 22},
+    "turnBudget": 25
+  },
+  {
+    "id": "w2_l07", "worldId": 2, "index": 7,
+    "title": "Long Chains", "gridSize": 7, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 5}
+    },
+    "rewards": {"coins": 18, "xp": 22}
+  },
+  {
+    "id": "w2_l08", "worldId": 2, "index": 8,
+    "title": "Endgame Setup", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 3},
+      "star3": {"type": "maxAiBoxes", "value": 4}
+    },
+    "rewards": {"coins": 18, "xp": 22}
+  },
+  {
+    "id": "w2_l09", "worldId": 2, "index": 9,
+    "title": "Greedy Counter", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 18, "xp": 22}
+  },
+  {
+    "id": "w2_l10", "worldId": 2, "index": 10,
+    "title": "BOSS: The Collector", "gridSize": 7, "aiDifficulty": "hard",
+    "isBoss": true, "persona": "collector", "bossName": "The Collector",
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 3},
+      "star3": {"type": "maxMoves", "value": 22}
+    },
+    "rewards": {"coins": 45, "xp": 55}
+  },
+  {
+    "id": "w2_l11", "worldId": 2, "index": 11,
+    "title": "After the Boss", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 2},
+      "star3": {"type": "maxAiBoxes", "value": 4}
+    },
+    "rewards": {"coins": 18, "xp": 22}
+  },
+  {
+    "id": "w2_l12", "worldId": 2, "index": 12,
+    "title": "Chain Breaker", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 4}
+    },
+    "rewards": {"coins": 18, "xp": 22}
+  },
+  {
+    "id": "w2_l13", "worldId": 2, "index": 13,
+    "title": "Deep Sacrifice", "gridSize": 7, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "maxAiBoxes", "value": 6}
+    },
+    "rewards": {"coins": 20, "xp": 25}
+  },
+  {
+    "id": "w2_l14", "worldId": 2, "index": 14,
+    "title": "Grid Control", "gridSize": 6, "aiDifficulty": "medium", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 3},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 20, "xp": 25}
+  },
+  {
+    "id": "w2_l15", "worldId": 2, "index": 15,
+    "title": "Near Perfect", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 3},
+      "star3": {"type": "maxMoves", "value": 14}
+    },
+    "rewards": {"coins": 20, "xp": 25}
+  },
+  {
+    "id": "w2_l16", "worldId": 2, "index": 16,
+    "title": "Chain Champion", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "preventChain"},
+      "star3": {"type": "margin", "min": 5}
+    },
+    "rewards": {"coins": 20, "xp": 25}
+  },
+  {
+    "id": "w2_l17", "worldId": 2, "index": 17,
+    "title": "The Grind", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 5},
+      "star3": {"type": "maxMoves", "value": 20}
+    },
+    "rewards": {"coins": 20, "xp": 25}
+  },
+  {
+    "id": "w2_l18", "worldId": 2, "index": 18,
+    "title": "Total Domination", "gridSize": 6, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 6},
+      "star3": {"type": "preventChain"}
+    },
+    "rewards": {"coins": 22, "xp": 28}
+  },
+  {
+    "id": "w2_l19", "worldId": 2, "index": 19,
+    "title": "Chain Mastery", "gridSize": 7, "aiDifficulty": "hard", "isBoss": false,
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "maxMoves", "value": 20}
+    },
+    "rewards": {"coins": 22, "xp": 28}
+  },
+  {
+    "id": "w2_l20", "worldId": 2, "index": 20,
+    "title": "BOSS: The Collector Returns", "gridSize": 7, "aiDifficulty": "hard",
+    "isBoss": true, "persona": "collector", "bossName": "The Collector",
+    "objectives": {
+      "star1": {"type": "win"},
+      "star2": {"type": "margin", "min": 4},
+      "star3": {"type": "maxMoves", "value": 22}
+    },
+    "rewards": {"coins": 50, "xp": 60}
+  }
+]
