@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/dot_clash_visuals.dart';
 import '../../../../features/profile/domain/lives_logic.dart';
 import '../../../../features/profile/domain/progression.dart';
-import '../../../../features/profile/domain/rank.dart';
 import '../../../../features/profile/domain/user_profile.dart';
 import '../../../../features/tutorial/presentation/coach_tour_target.dart';
 import '../../../../features/tutorial/domain/coach_tour_step.dart';
 import '../../../../shared/layout/app_spacing.dart';
-import '../../../../shared/widgets/equipped_avatar.dart';
+import '../../../../shared/widgets/profile_avatar_chip.dart';
 import 'resource_pill.dart';
 
 class HomeTopBar extends StatelessWidget {
@@ -19,6 +17,7 @@ class HomeTopBar extends StatelessWidget {
     required this.livesSnapshot,
     required this.onOpenSettings,
     required this.onOpenShop,
+    required this.onOpenProfile,
     required this.onLivesTap,
   });
 
@@ -26,17 +25,16 @@ class HomeTopBar extends StatelessWidget {
   final LivesSnapshot livesSnapshot;
   final VoidCallback onOpenSettings;
   final VoidCallback onOpenShop;
+  final VoidCallback onOpenProfile;
   final VoidCallback onLivesTap;
 
   @override
   Widget build(BuildContext context) {
     final v = context.dc;
-    final t = context.txt;
     final displayName = profile?.displayName ?? 'Player';
     final avatarId = profile?.avatarId ?? 'avatar_orb_cyan';
-    final rankTier = profile?.rankTier ?? RankTier.bronze;
-    final rankLabel = RankSystem.label(rankTier);
-    final rankColor = _rankColor(v, rankTier);
+    final initialSkinId = profile?.initialSkinId ?? 'initial_skin_classic';
+    final level = profile?.campaignPlayerLevel ?? 1;
     final coins = profile?.coins ?? 0;
 
     return Container(
@@ -48,59 +46,33 @@ class HomeTopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // ── Avatar + name + rank ─────────────────────────────────────────
-          EquippedAvatar(
+          ProfileAvatarChip(
             avatarId: avatarId,
-            fallbackInitial: displayName,
-            size: 42,
-            onTap: onOpenShop,
-          ),
-          AppSpacing.hGapSM,
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                displayName,
-                style: t.playerName.copyWith(fontSize: 13),
-                overflow: TextOverflow.ellipsis,
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.shield_rounded, size: 10, color: rankColor),
-                  const SizedBox(width: 3),
-                  Text(
-                    rankLabel.toUpperCase(),
-                    style: t.bodySmall.copyWith(
-                      fontSize: 10,
-                      color: rankColor,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            displayName: displayName,
+            initialSkinId: initialSkinId,
+            level: level,
+            size: 44,
+            onTap: onOpenProfile,
           ),
           AppSpacing.hGapSM,
 
-          // ── Resources row (lives + coins) ────────────────────────────────
           Expanded(
             child: CoachTourTarget(
               id: CoachTourTargetId.homeTopBarLives,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ResourcePill(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Flexible(
+                    child: ResourcePill(
                       icon: Icons.bolt_rounded,
                       label: _livesLabel(livesSnapshot),
                       iconColor: livesSnapshot.isFull ? v.green : v.gold,
                       onTap: onLivesTap,
                     ),
-                    AppSpacing.hGapXS,
-                    ResourcePill(
+                  ),
+                  AppSpacing.hGapXS,
+                  Flexible(
+                    child: ResourcePill(
                       icon: Icons.monetization_on_rounded,
                       label: '$coins',
                       iconColor: v.gold,
@@ -111,13 +83,12 @@ class HomeTopBar extends StatelessWidget {
                       ),
                       onTap: onOpenShop,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
 
-          // ── Action icons ─────────────────────────────────────────────────
           IconButton(
             tooltip: 'Settings',
             icon: Icon(Icons.settings_outlined, color: v.textSecondary, size: 24),
@@ -130,17 +101,10 @@ class HomeTopBar extends StatelessWidget {
     );
   }
 
-  static Color _rankColor(DotClashVisuals v, RankTier tier) => switch (tier) {
-        RankTier.bronze => const Color(0xFFCD7F32),
-        RankTier.silver => const Color(0xFFC0C0C0),
-        RankTier.gold => v.gold,
-        RankTier.platinum => const Color(0xFF00D4FF),
-        RankTier.diamond => const Color(0xFF9D4DFF),
-        RankTier.master => const Color(0xFFFF4C4C),
-      };
-
   static String _livesLabel(LivesSnapshot snapshot) {
-    if (snapshot.isFull) return '${Progression.maxLives}/${Progression.maxLives} Full';
+    if (snapshot.isFull) {
+      return '${Progression.maxLives}/${Progression.maxLives} Full';
+    }
     final timer = snapshot.timeUntilNextLife ?? Duration.zero;
     final mm = timer.inMinutes.remainder(60).toString().padLeft(2, '0');
     final ss = timer.inSeconds.remainder(60).toString().padLeft(2, '0');

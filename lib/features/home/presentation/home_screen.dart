@@ -53,6 +53,7 @@ class HomeScreen extends ConsumerWidget {
               livesSnapshot: livesSnapshot,
               onOpenSettings: () => context.push(AppRoutes.settings),
               onOpenShop: () => context.go(AppRoutes.shop),
+              onOpenProfile: () => context.go(AppRoutes.profile),
               onLivesTap: () => _showLivesSheet(
                 context: context,
                 ref: ref,

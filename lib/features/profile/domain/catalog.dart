@@ -1,4 +1,29 @@
-enum CatalogItemType { theme, avatar, initialSkin }
+enum CatalogItemType { theme, avatar, initialSkin, bundle }
+
+/// Future IAP / coin bundles grouping cosmetics (not sold in v6.0 shop UI yet).
+class CatalogBundle {
+  const CatalogBundle({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.itemIds,
+    required this.priceCoins,
+    this.iapProductId,
+    this.enabled = false,
+  });
+
+  final String id;
+  final String name;
+  final String description;
+
+  /// Theme, avatar, and/or initial skin ids included in the bundle.
+  final List<String> itemIds;
+  final int priceCoins;
+  final String? iapProductId;
+
+  /// When false, hidden from shop until bundle checkout is implemented.
+  final bool enabled;
+}
 
 class CatalogItem {
   const CatalogItem({
@@ -35,10 +60,12 @@ class CatalogSnapshot {
     required this.themes,
     required this.avatars,
     required this.initialSkins,
+    this.bundles = const [],
   });
 
   final List<CatalogItem> themes;
   final List<CatalogItem> avatars;
   final List<CatalogItem> initialSkins;
+  final List<CatalogBundle> bundles;
 }
 

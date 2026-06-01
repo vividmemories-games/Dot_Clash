@@ -50,6 +50,33 @@ class MockCatalogRepository {
         previewPrimary: 0xFF4DDCFF,
         previewSecondary: 0xFF6D5BFF,
       ),
+      const CatalogItem(
+        id: 'theme_neon_sunset',
+        type: CatalogItemType.theme,
+        name: 'Neon Sunset',
+        priceCoins: 400,
+        rarity: 'epic',
+        previewPrimary: 0xFFFF7A45,
+        previewSecondary: 0xFFFF3D8A,
+      ),
+      const CatalogItem(
+        id: 'theme_neon_frost',
+        type: CatalogItemType.theme,
+        name: 'Neon Frost',
+        priceCoins: 400,
+        rarity: 'epic',
+        previewPrimary: 0xFFB8F0FF,
+        previewSecondary: 0xFF4D9FFF,
+      ),
+      const CatalogItem(
+        id: 'theme_neon_void',
+        type: CatalogItemType.theme,
+        name: 'Neon Void',
+        priceCoins: 500,
+        rarity: 'legendary',
+        previewPrimary: 0xFFE040FF,
+        previewSecondary: 0xFF7C4DFF,
+      ),
     ];
 
     final avatars = <CatalogItem>[
@@ -73,6 +100,41 @@ class MockCatalogRepository {
         name: 'Gold Orb',
         priceCoins: 240,
         rarity: 'rare',
+      ),
+      const CatalogItem(
+        id: 'avatar_orb_lime',
+        type: CatalogItemType.avatar,
+        name: 'Lime Orb',
+        priceCoins: 180,
+        rarity: 'common',
+      ),
+      const CatalogItem(
+        id: 'avatar_orb_coral',
+        type: CatalogItemType.avatar,
+        name: 'Coral Orb',
+        priceCoins: 200,
+        rarity: 'common',
+      ),
+      const CatalogItem(
+        id: 'avatar_orb_violet',
+        type: CatalogItemType.avatar,
+        name: 'Violet Orb',
+        priceCoins: 280,
+        rarity: 'rare',
+      ),
+      const CatalogItem(
+        id: 'avatar_orb_ice',
+        type: CatalogItemType.avatar,
+        name: 'Ice Orb',
+        priceCoins: 320,
+        rarity: 'rare',
+      ),
+      const CatalogItem(
+        id: 'avatar_orb_rose',
+        type: CatalogItemType.avatar,
+        name: 'Rose Orb',
+        priceCoins: 400,
+        rarity: 'epic',
       ),
     ];
 
@@ -98,9 +160,87 @@ class MockCatalogRepository {
         priceCoins: 300,
         rarity: 'epic',
       ),
+      const CatalogItem(
+        id: 'initial_skin_neon',
+        type: CatalogItemType.initialSkin,
+        name: 'Neon',
+        priceCoins: 180,
+        rarity: 'common',
+      ),
+      const CatalogItem(
+        id: 'initial_skin_outline',
+        type: CatalogItemType.initialSkin,
+        name: 'Outline',
+        priceCoins: 220,
+        rarity: 'common',
+      ),
+      const CatalogItem(
+        id: 'initial_skin_shadow',
+        type: CatalogItemType.initialSkin,
+        name: 'Shadow',
+        priceCoins: 260,
+        rarity: 'rare',
+      ),
+      const CatalogItem(
+        id: 'initial_skin_chrome',
+        type: CatalogItemType.initialSkin,
+        name: 'Chrome',
+        priceCoins: 340,
+        rarity: 'rare',
+      ),
+      const CatalogItem(
+        id: 'initial_skin_arcade',
+        type: CatalogItemType.initialSkin,
+        name: 'Arcade',
+        priceCoins: 400,
+        rarity: 'epic',
+      ),
     ];
 
-    return CatalogSnapshot(themes: themes, avatars: avatars, initialSkins: initialSkins);
+    const bundles = <CatalogBundle>[
+      CatalogBundle(
+        id: 'bundle_starter_rival',
+        name: 'Rival Pack',
+        description: 'Sunset theme + Rose orb + Neon initial (planned IAP).',
+        itemIds: [
+          'theme_neon_sunset',
+          'avatar_orb_rose',
+          'initial_skin_neon',
+        ],
+        priceCoins: 850,
+        enabled: false,
+      ),
+      CatalogBundle(
+        id: 'bundle_ice_queen',
+        name: 'Ice Queen Pack',
+        description: 'Frost theme + Ice orb + Chrome initial (planned IAP).',
+        itemIds: [
+          'theme_neon_frost',
+          'avatar_orb_ice',
+          'initial_skin_chrome',
+        ],
+        priceCoins: 950,
+        enabled: false,
+      ),
+      CatalogBundle(
+        id: 'bundle_void_master',
+        name: 'Void Master Pack',
+        description: 'Void theme + Violet orb + Arcade initial (planned IAP).',
+        itemIds: [
+          'theme_neon_void',
+          'avatar_orb_violet',
+          'initial_skin_arcade',
+        ],
+        priceCoins: 1100,
+        enabled: false,
+      ),
+    ];
+
+    return CatalogSnapshot(
+      themes: themes,
+      avatars: avatars,
+      initialSkins: initialSkins,
+      bundles: bundles,
+    );
   }
 }
-

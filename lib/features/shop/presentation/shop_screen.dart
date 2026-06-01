@@ -16,6 +16,8 @@ import '../../../features/profile/domain/progression.dart';
 import '../../../features/profile/providers/lives_provider.dart';
 import '../../../features/profile/providers/profile_providers.dart';
 import '../../../shared/layout/app_spacing.dart';
+import '../../../shared/widgets/equipped_avatar.dart';
+import '../../../shared/widgets/initial_skin_style.dart';
 import '../../../shared/widgets/neon_card.dart';
 import '../../../services/ads/ad_reward_router.dart';
 import '../../../services/analytics/analytics_service.dart';
@@ -133,6 +135,7 @@ class ShopScreen extends ConsumerWidget {
                             title: 'CHOOSE YOUR THEME',
                             subtitle:
                                 'Personalize your matches. Only you can see your theme.',
+                            coins: profile.coins,
                             items: catalog.themes,
                             ownedIds: profile.ownedThemeIds,
                             equippedId: profile.themeId,
@@ -144,6 +147,7 @@ class ShopScreen extends ConsumerWidget {
                             title: 'CHOOSE YOUR AVATAR',
                             subtitle:
                                 'Show off on the home screen and in matches.',
+                            coins: profile.coins,
                             items: catalog.avatars,
                             ownedIds: profile.ownedAvatarIds,
                             equippedId: profile.avatarId,
@@ -155,6 +159,7 @@ class ShopScreen extends ConsumerWidget {
                             title: 'CHOOSE YOUR INITIAL',
                             subtitle:
                                 'Your letter on the scoreboard during play.',
+                            coins: profile.coins,
                             items: catalog.initialSkins,
                             ownedIds: profile.ownedInitialSkinIds,
                             equippedId: profile.initialSkinId,
@@ -545,6 +550,7 @@ class _CosmeticCatalogTab extends StatelessWidget {
   const _CosmeticCatalogTab({
     required this.title,
     required this.subtitle,
+    required this.coins,
     required this.items,
     required this.ownedIds,
     required this.equippedId,
@@ -554,6 +560,7 @@ class _CosmeticCatalogTab extends StatelessWidget {
 
   final String title;
   final String subtitle;
+  final int coins;
   final List<CatalogItem> items;
   final List<String> ownedIds;
   final String equippedId;
@@ -603,7 +610,7 @@ class _CosmeticCatalogTab extends StatelessWidget {
           sliver: SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 1.22,
+              childAspectRatio: 1.05,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
@@ -613,10 +620,12 @@ class _CosmeticCatalogTab extends StatelessWidget {
                 final owned =
                     ownedIds.contains(item.id) || item.priceCoins == 0;
                 final equipped = equippedId == item.id;
+                final canAfford = coins >= item.priceCoins;
                 return _CatalogCard(
                   item: item,
                   owned: owned,
                   equipped: equipped,
+                  canAfford: canAfford,
                   onBuy: () async {
                     await _showShopBoolResult(
                       context,
@@ -959,6 +968,7 @@ class _CatalogCard extends StatelessWidget {
     required this.item,
     required this.owned,
     required this.equipped,
+    required this.canAfford,
     required this.onBuy,
     required this.onEquip,
   });
@@ -966,6 +976,7 @@ class _CatalogCard extends StatelessWidget {
   final CatalogItem item;
   final bool owned;
   final bool equipped;
+  final bool canAfford;
   final VoidCallback onBuy;
   final VoidCallback onEquip;
 
@@ -973,9 +984,10 @@ class _CatalogCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final v = context.dc;
     final t = context.txt;
-    final accent = item.type == CatalogItemType.theme
-        ? v.gold
-        : (item.type == CatalogItemType.avatar ? v.playerA : v.playerB);
+    final accent = _catalogAccent(item, v);
+    final showBuy = !owned && !equipped;
+    final buyEnabled = showBuy && canAfford;
+    final buttonColor = buyEnabled ? accent : v.textDisabled;
 
     return NeonCard(
       glowColor: accent.withValues(alpha: 0.10),
@@ -1002,19 +1014,28 @@ class _CatalogCard extends StatelessWidget {
             AppSpacing.vGapXS,
             _ThemeSwatches(item: item),
           ],
+          if (item.type == CatalogItemType.avatar ||
+              item.type == CatalogItemType.initialSkin) ...[
+            AppSpacing.vGapSM,
+            _CosmeticPreview(item: item),
+          ],
           const Spacer(),
           if (!owned)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
                 children: [
-                  Icon(Icons.monetization_on_rounded, color: v.gold, size: 16),
+                  Icon(
+                    Icons.monetization_on_rounded,
+                    color: canAfford ? v.gold : v.red,
+                    size: 16,
+                  ),
                   AppSpacing.hGapXS,
                   Text(
                     '${item.priceCoins}',
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
-                      color: v.textPrimary,
+                      color: canAfford ? v.textPrimary : v.red,
                     ),
                   ),
                 ],
@@ -1025,8 +1046,10 @@ class _CatalogCard extends StatelessWidget {
             height: 34,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: accent,
+                backgroundColor: equipped || owned ? accent : buttonColor,
                 foregroundColor: v.onAccent,
+                disabledBackgroundColor: v.textDisabled.withValues(alpha: 0.35),
+                disabledForegroundColor: v.textSecondary,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 textStyle: const TextStyle(
                   fontWeight: FontWeight.w900,
@@ -1034,12 +1057,72 @@ class _CatalogCard extends StatelessWidget {
                   letterSpacing: 0.8,
                 ),
               ),
-              onPressed: equipped ? null : (owned ? onEquip : onBuy),
+              onPressed: equipped
+                  ? null
+                  : (owned ? onEquip : (buyEnabled ? onBuy : null)),
               child: Text(
                 equipped ? 'EQUIPPED' : (owned ? 'USE' : 'BUY'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Color _catalogAccent(CatalogItem item, DotClashVisuals v) {
+  switch (item.type) {
+    case CatalogItemType.theme:
+      return item.previewPrimary != null
+          ? Color(item.previewPrimary!)
+          : v.gold;
+    case CatalogItemType.avatar:
+      return EquippedAvatar.accentForAvatarId(item.id, v);
+    case CatalogItemType.initialSkin:
+      return v.playerA;
+    case CatalogItemType.bundle:
+      return v.gold;
+  }
+}
+
+class _CosmeticPreview extends StatelessWidget {
+  const _CosmeticPreview({required this.item});
+
+  final CatalogItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    if (item.type == CatalogItemType.avatar) {
+      return EquippedAvatar(
+        avatarId: item.id,
+        fallbackInitial: 'A',
+        size: 42,
+        showInitial: false,
+      );
+    }
+
+    final accent = EquippedAvatar.accentForAvatarId('avatar_orb_cyan', context.dc);
+    return SizedBox(
+      width: 42,
+      height: 42,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          EquippedAvatar(
+            avatarId: 'avatar_orb_cyan',
+            fallbackInitial: 'A',
+            size: 42,
+            showInitial: false,
+          ),
+          Text(
+            'A',
+            style: InitialSkinStyles.letterStyle(
+              skinId: item.id,
+              fontSize: 16,
+              accent: accent,
             ),
           ),
         ],

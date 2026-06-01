@@ -250,6 +250,108 @@ class DotClashVisuals extends ThemeExtension<DotClashVisuals> {
     newGameColor: Color(0xFF63E3AF),
   );
 
+  static const DotClashVisuals sunset = DotClashVisuals(
+    useGlow: true,
+    scaffold: Color(0xFF1A100C),
+    backgroundGradientTop: Color(0xFF3A1A12),
+    surface: Color(0xFF22140F),
+    surfaceElevated: Color(0xFF2C1A14),
+    cardBorder: Color(0xFF6A3828),
+    textPrimary: Color(0xFFFFFFFF),
+    textSecondary: Color(0xFFD4A894),
+    textDisabled: Color(0xFF6E4A3C),
+    playerA: Color(0xFFFF7A45),
+    playerADark: Color(0xFFCC4F1A),
+    playerAGlow: Color(0x66FF7A45),
+    playerAFill: Color(0x22FF7A45),
+    playerB: Color(0xFFFF3D8A),
+    playerBDark: Color(0xFFC2185B),
+    playerBGlow: Color(0x66FF3D8A),
+    playerBFill: Color(0x22FF3D8A),
+    gold: Color(0xFFFFD166),
+    green: Color(0xFF7DDE6F),
+    red: Color(0xFFFF5C5C),
+    onAccent: Color(0xFFFFFFFF),
+    vsText: Color(0xFFFFD0C2),
+    dotActive: Color(0xFFFFF5EE),
+    dotGlow: Color(0x88FFF5EE),
+    edgeInactive: Color(0x33FFE0D0),
+    edgeHover: Color(0x66FFC4A8),
+    boardSurface: Color(0xFF1A100C),
+    boardGlow: Color(0xFF6A3828),
+    undoColor: Color(0xFFFFD166),
+    hintColor: Color(0xFFFFEB61),
+    newGameColor: Color(0xFF7DDE6F),
+  );
+
+  static const DotClashVisuals frost = DotClashVisuals(
+    useGlow: true,
+    scaffold: Color(0xFF081218),
+    backgroundGradientTop: Color(0xFF102838),
+    surface: Color(0xFF0C1A22),
+    surfaceElevated: Color(0xFF122430),
+    cardBorder: Color(0xFF2A5A72),
+    textPrimary: Color(0xFFFFFFFF),
+    textSecondary: Color(0xFF9EC8DE),
+    textDisabled: Color(0xFF3E5E72),
+    playerA: Color(0xFFB8F0FF),
+    playerADark: Color(0xFF6EB8D4),
+    playerAGlow: Color(0x66B8F0FF),
+    playerAFill: Color(0x22B8F0FF),
+    playerB: Color(0xFF4D9FFF),
+    playerBDark: Color(0xFF2A6FC4),
+    playerBGlow: Color(0x664D9FFF),
+    playerBFill: Color(0x224D9FFF),
+    gold: Color(0xFFFFE082),
+    green: Color(0xFF80E8C8),
+    red: Color(0xFFFF7A8A),
+    onAccent: Color(0xFF061018),
+    vsText: Color(0xFFC8E8FF),
+    dotActive: Color(0xFFF4FCFF),
+    dotGlow: Color(0x88F4FCFF),
+    edgeInactive: Color(0x33D8F4FF),
+    edgeHover: Color(0x66B0E8FF),
+    boardSurface: Color(0xFF081218),
+    boardGlow: Color(0xFF2A5A72),
+    undoColor: Color(0xFFFFE082),
+    hintColor: Color(0xFFE0FFFF),
+    newGameColor: Color(0xFF80E8C8),
+  );
+
+  static const DotClashVisuals voidTheme = DotClashVisuals(
+    useGlow: true,
+    scaffold: Color(0xFF050508),
+    backgroundGradientTop: Color(0xFF120A24),
+    surface: Color(0xFF0A0814),
+    surfaceElevated: Color(0xFF12101F),
+    cardBorder: Color(0xFF3D2A66),
+    textPrimary: Color(0xFFFFFFFF),
+    textSecondary: Color(0xFFA894D4),
+    textDisabled: Color(0xFF4A3D66),
+    playerA: Color(0xFFE040FF),
+    playerADark: Color(0xFF9C1AB8),
+    playerAGlow: Color(0x66E040FF),
+    playerAFill: Color(0x22E040FF),
+    playerB: Color(0xFF7C4DFF),
+    playerBDark: Color(0xFF4F2AC4),
+    playerBGlow: Color(0x667C4DFF),
+    playerBFill: Color(0x227C4DFF),
+    gold: Color(0xFFFFD166),
+    green: Color(0xFF63E3AF),
+    red: Color(0xFFFF6E9A),
+    onAccent: Color(0xFFFFFFFF),
+    vsText: Color(0xFFD8C8FF),
+    dotActive: Color(0xFFF8F0FF),
+    dotGlow: Color(0x88F8F0FF),
+    edgeInactive: Color(0x33E8D8FF),
+    edgeHover: Color(0x66C8A8FF),
+    boardSurface: Color(0xFF050508),
+    boardGlow: Color(0xFF3D2A66),
+    undoColor: Color(0xFFFFD166),
+    hintColor: Color(0xFFE9C0FF),
+    newGameColor: Color(0xFF63E3AF),
+  );
+
   static DotClashVisuals fromThemeId(String? themeId) {
     switch (themeId) {
       case 'theme_neon_ember':
@@ -260,6 +362,12 @@ class DotClashVisuals extends ThemeExtension<DotClashVisuals> {
         return aurora;
       case 'theme_neon_royal':
         return royal;
+      case 'theme_neon_sunset':
+        return sunset;
+      case 'theme_neon_frost':
+        return frost;
+      case 'theme_neon_void':
+        return voidTheme;
       case 'theme_neon_default':
       default:
         return neon;

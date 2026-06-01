@@ -86,11 +86,14 @@ class ContactScreen extends ConsumerWidget {
                       style: t.bodySmall,
                     ),
                     AppSpacing.vGapLG,
-                    NeonButton(
-                      label: 'Email support',
-                      icon: Icons.mail_outline_rounded,
-                      color: v.playerB,
-                      onPressed: () => _emailSupport(context, ref),
+                    SizedBox(
+                      width: double.infinity,
+                      child: NeonButton(
+                        label: 'Email support',
+                        icon: Icons.mail_outline_rounded,
+                        color: v.playerB,
+                        onPressed: () => _emailSupport(context, ref),
+                      ),
                     ),
                   ],
                 ),

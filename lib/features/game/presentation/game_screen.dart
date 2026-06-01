@@ -279,9 +279,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       }
     });
 
+    final isVsAi =
+        widget.config.mode == GameMode.ai ||
+        widget.config.mode == GameMode.campaign;
     final isAiTurn =
-        (widget.config.mode == GameMode.ai || widget.config.mode == GameMode.campaign) &&
-            state.currentPlayerId == state.playerIds[1];
+        isVsAi && state.currentPlayerId == state.playerIds[1];
+    final humanTurnReady = ref.watch(humanTurnReadyProvider);
+    final opponentHighlightEdge = isVsAi
+        ? ref.watch(opponentLastEdgeProvider)
+        : null;
 
     final coachTourState = ref.watch(matchCoachTourProvider);
     final coachLogic = coachTourState.logic;
@@ -304,6 +310,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final canInteract =
         !state.isOver &&
         !isAiTurn &&
+        humanTurnReady &&
         !session.outOfTurnsPending &&
         _bossIntroDismissed &&
         !coachBlocksInteraction &&
@@ -400,6 +407,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     state: state,
                     isInteractive: canInteract,
                     hintEdge: effectiveHintEdge,
+                    opponentHighlightEdge: opponentHighlightEdge,
                     playerInitials: playerInitials,
                     onEdgeTap: (edge) {
                       if (coachAllowedEdges != null &&

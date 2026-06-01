@@ -80,6 +80,8 @@ class _NeonButtonState extends State<NeonButton>
       child: Container(
         width: widget.width,
         height: widget.height,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         decoration: BoxDecoration(
           color: effectiveColor.withOpacity(fillOpacity),
           borderRadius: AppSpacing.roundedMD,
@@ -108,13 +110,18 @@ class _NeonButtonState extends State<NeonButton>
               Icon(widget.icon, color: effectiveColor, size: 18),
               AppSpacing.hGapSM,
             ],
-            Text(
-              widget.label.toUpperCase(),
-              style: TextStyle(
-                fontSize: widget.fontSize,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.5,
-                color: effectiveColor,
+            Flexible(
+              child: Text(
+                widget.label.toUpperCase(),
+                style: TextStyle(
+                  fontSize: widget.fontSize,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                  color: effectiveColor,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

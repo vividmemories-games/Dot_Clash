@@ -4,13 +4,22 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/env/app_env.dart';
+import '../../../shared/feedback/app_haptics.dart';
 import '../../ai/ai_player.dart';
 import '../../campaign/domain/campaign_move_metrics.dart';
 import '../../powerups/domain/power_up.dart';
+import '../domain/ai_pacing.dart';
 import '../domain/models/game_state.dart';
 import '../domain/models/match_session.dart';
 import '../domain/rules/game_rules.dart';
 import 'match_session_provider.dart';
+
+/// Edge key of the opponent's most recent move (for board highlight).
+final opponentLastEdgeProvider =
+    StateProvider.autoDispose<String?>((ref) => null);
+
+/// False briefly when the human regains control so the board can be read.
+final humanTurnReadyProvider = StateProvider.autoDispose<bool>((ref) => true);
 
 final turnTimerProvider =
     StateNotifierProvider.autoDispose<TurnTimerNotifier, int>(
@@ -75,6 +84,12 @@ class GameNotifier extends StateNotifier<GameState> {
   static const _humanId = 'A';
   static const _aiId = 'B';
 
+  int _aiScheduleGeneration = 0;
+  int _handoffGeneration = 0;
+
+  bool get _isVsAi =>
+      _config.mode == GameMode.ai || _config.mode == GameMode.campaign;
+
   MatchSession get _session => _ref.read(matchSessionProvider);
 
   void _setSession(MatchSession session) {
@@ -85,7 +100,16 @@ class GameNotifier extends StateNotifier<GameState> {
     if (!GameRules.isLegalMove(state, edgeKey)) return;
     if (_session.outOfTurnsPending) return;
 
-    final wasHumanTurn = state.currentPlayerId == _humanId;
+    final moverId = state.currentPlayerId;
+    final wasHumanTurn = moverId == _humanId;
+
+    if (moverId == _aiId) {
+      _ref.read(opponentLastEdgeProvider.notifier).state = edgeKey;
+      AppHaptics.lightImpact();
+    } else {
+      _ref.read(opponentLastEdgeProvider.notifier).state = null;
+    }
+
     state = GameRules.applyMove(state, edgeKey);
     _ref.read(turnTimerProvider.notifier).reset();
 
@@ -95,7 +119,7 @@ class GameNotifier extends StateNotifier<GameState> {
       _checkRiposteOffer();
     }
 
-    _maybeScheduleAiMove();
+    _onTurnAdvanced(wasHumanTurn: wasHumanTurn);
   }
 
   void _onHumanControlPeriodEnded() {
@@ -174,6 +198,10 @@ class GameNotifier extends StateNotifier<GameState> {
     }
     state = rebuilt.copyWith(currentPlayerId: _humanId);
 
+    _cancelAiSchedule();
+    _ref.read(opponentLastEdgeProvider.notifier).state = null;
+    _ref.read(humanTurnReadyProvider.notifier).state = true;
+
     var updatedSession = session.copyWith(
       riposteUsed: true,
       pendingRiposteOffer: false,
@@ -210,6 +238,21 @@ class GameNotifier extends StateNotifier<GameState> {
     }
     state = target;
     _ref.read(turnTimerProvider.notifier).reset();
+    _cancelAiSchedule();
+    _ref.read(opponentLastEdgeProvider.notifier).state =
+        _lastOpponentEdgeFromHistory();
+    _ref.read(humanTurnReadyProvider.notifier).state = true;
+    if (_isVsAi && !state.isOver && state.currentPlayerId == _aiId) {
+      _scheduleAiMove(delayMs: AiPacing.thinkBeforeFirstMs);
+    }
+  }
+
+  String? _lastOpponentEdgeFromHistory() {
+    for (var i = state.moveHistory.length - 1; i >= 0; i--) {
+      final edge = state.moveHistory[i];
+      if (state.edgeOwners[edge] == _aiId) return edge;
+    }
+    return null;
   }
 
   void newGame({int? rows, int? cols}) {
@@ -220,6 +263,9 @@ class GameNotifier extends StateNotifier<GameState> {
     );
     _ref.read(matchSessionProvider.notifier).init(turnBudget: _config.turnBudget);
     _ref.read(turnTimerProvider.notifier).reset();
+    _cancelAiSchedule();
+    _ref.read(opponentLastEdgeProvider.notifier).state = null;
+    _ref.read(humanTurnReadyProvider.notifier).state = true;
     _maybeScheduleAiMove();
   }
 
@@ -227,9 +273,15 @@ class GameNotifier extends StateNotifier<GameState> {
     if (state.isOver) return;
 
     final timedOutPlayer = state.currentPlayerId;
+    final wasHuman = timedOutPlayer == _humanId;
     final legalMoves = GameRules.legalMoves(state);
     if (legalMoves.isNotEmpty) {
       final randomMove = legalMoves[_rng.nextInt(legalMoves.length)];
+      if (timedOutPlayer == _aiId) {
+        _ref.read(opponentLastEdgeProvider.notifier).state = randomMove;
+      } else {
+        _ref.read(opponentLastEdgeProvider.notifier).state = null;
+      }
       state = GameRules.applyMove(state, randomMove);
     }
 
@@ -239,19 +291,53 @@ class GameNotifier extends StateNotifier<GameState> {
           : state.playerIds[0];
       state = state.copyWith(currentPlayerId: nextPlayer);
     }
-    if (timedOutPlayer == _humanId && state.currentPlayerId != _humanId) {
+    if (wasHuman && state.currentPlayerId != _humanId) {
       _onHumanControlPeriodEnded();
     }
     _ref.read(turnTimerProvider.notifier).reset();
-    _maybeScheduleAiMove();
+    _onTurnAdvanced(wasHumanTurn: wasHuman);
+  }
+
+  void _cancelAiSchedule() => _aiScheduleGeneration++;
+
+  void _cancelHandoff() {
+    _handoffGeneration++;
+    _ref.read(humanTurnReadyProvider.notifier).state = true;
+  }
+
+  void _onTurnAdvanced({required bool wasHumanTurn}) {
+    _cancelAiSchedule();
+
+    if (!_isVsAi || state.isOver || _session.outOfTurnsPending) return;
+
+    if (state.currentPlayerId == _aiId) {
+      final delayMs = wasHumanTurn
+          ? AiPacing.thinkBeforeFirstMs
+          : AiPacing.afterAiMoveMs;
+      _scheduleAiMove(delayMs: delayMs);
+      return;
+    }
+
+    if (!wasHumanTurn && state.currentPlayerId == _humanId) {
+      _startHumanHandoffPause();
+    }
+  }
+
+  void _startHumanHandoffPause() {
+    _cancelHandoff();
+    _ref.read(humanTurnReadyProvider.notifier).state = false;
+    final generation = ++_handoffGeneration;
+    Future.delayed(
+      const Duration(milliseconds: AiPacing.handoffToHumanMs),
+      () {
+        if (!mounted || generation != _handoffGeneration) return;
+        _ref.read(humanTurnReadyProvider.notifier).state = true;
+      },
+    );
   }
 
   void _maybeScheduleAiMove() {
-    if (_config.mode != GameMode.ai && _config.mode != GameMode.campaign) {
-      return;
-    }
-    if (state.isOver) return;
-    if (_session.outOfTurnsPending) return;
+    if (!_isVsAi || state.isOver || _session.outOfTurnsPending) return;
 
     final session = _session;
     if (session.skipAiTurnsRemaining > 0 && state.currentPlayerId == _aiId) {
@@ -260,14 +346,24 @@ class GameNotifier extends StateNotifier<GameState> {
       ));
       state = state.copyWith(currentPlayerId: _humanId);
       _ref.read(turnTimerProvider.notifier).reset();
+      _ref.read(opponentLastEdgeProvider.notifier).state = null;
+      _startHumanHandoffPause();
       return;
     }
 
-    if (state.currentPlayerId == _humanId) return;
+    if (state.currentPlayerId == _aiId) {
+      _scheduleAiMove(delayMs: AiPacing.thinkBeforeFirstMs);
+    }
+  }
 
-    Future.delayed(const Duration(milliseconds: 650), () {
-      if (!mounted) return;
-      if (state.isOver || state.currentPlayerId != _aiId) return;
+  void _scheduleAiMove({required int delayMs}) {
+    if (!_isVsAi) return;
+
+    final generation = ++_aiScheduleGeneration;
+    Future.delayed(Duration(milliseconds: delayMs), () {
+      if (!mounted || generation != _aiScheduleGeneration) return;
+      if (state.isOver || _session.outOfTurnsPending) return;
+      if (state.currentPlayerId != _aiId) return;
 
       final move = AiPlayer.pickMove(
         state,

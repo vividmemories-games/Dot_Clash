@@ -19,6 +19,7 @@ class BoardWidget extends StatefulWidget {
     required this.onEdgeTap,
     this.isInteractive = true,
     this.hintEdge,
+    this.opponentHighlightEdge,
     this.playerInitials = const {},
   });
 
@@ -28,6 +29,9 @@ class BoardWidget extends StatefulWidget {
 
   /// When set, this edge is highlighted with a pulsing gold glow.
   final String? hintEdge;
+
+  /// Opponent's most recent edge — pulsing rival color for readability.
+  final String? opponentHighlightEdge;
 
   /// Maps playerId -> single-letter initial to render inside claimed squares.
   /// If not present, the painter falls back to the playerId's first character.
@@ -267,6 +271,7 @@ class _BoardWidgetState extends State<BoardWidget>
                   hoveredEdge: _hoveredEdge,
                   pressedEdge: _pressedEdge,
                   hintEdge: widget.hintEdge,
+                  opponentHighlightEdge: widget.opponentHighlightEdge,
                   rewindFadeEdges: _rewindFadeEdges,
                   rewindFadeBoxes: _rewindFadeBoxes,
                   rewindFadeOwnership: _rewindFadeOwnership,
@@ -392,6 +397,7 @@ class _BoardPainter extends CustomPainter {
     required this.hoveredEdge,
     required this.pressedEdge,
     required this.hintEdge,
+    this.opponentHighlightEdge,
     this.rewindFadeEdges = const {},
     this.rewindFadeBoxes = const {},
     this.rewindFadeOwnership = const {},
@@ -416,6 +422,7 @@ class _BoardPainter extends CustomPainter {
   final String? hoveredEdge;
   final String? pressedEdge;
   final String? hintEdge;
+  final String? opponentHighlightEdge;
   final Set<String> rewindFadeEdges;
   final Map<String, String> rewindFadeBoxes;
   final Map<String, String> rewindFadeOwnership;
@@ -584,6 +591,18 @@ class _BoardPainter extends CustomPainter {
           progress >= 1.0 ? p2 : Offset.lerp(p1, p2, progress)!;
 
       _strokeLine(canvas, p1, endpoint, color, width: _edgeW, glow: false);
+
+      if (key == opponentHighlightEdge) {
+        final pulse = 0.55 + pulseValue * 0.45;
+        _strokeLine(
+          canvas,
+          p1,
+          endpoint,
+          color.withOpacity(pulse),
+          width: _edgeW * 1.45,
+          glow: true,
+        );
+      }
     }
   }
 
@@ -770,6 +789,7 @@ class _BoardPainter extends CustomPainter {
       old.hoveredEdge != hoveredEdge ||
       old.pressedEdge != pressedEdge ||
       old.hintEdge != hintEdge ||
+      old.opponentHighlightEdge != opponentHighlightEdge ||
       old.state != state ||
       old.visuals != visuals ||
       old.edgeProgress != edgeProgress ||

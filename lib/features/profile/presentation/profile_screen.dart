@@ -12,7 +12,7 @@ import '../../../features/profile/providers/lives_provider.dart';
 import '../../../features/profile/providers/profile_providers.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/layout/responsive_layout.dart';
-import '../../../shared/widgets/equipped_avatar.dart';
+import '../../../shared/widgets/profile_avatar_chip.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -25,6 +25,7 @@ class ProfileScreen extends ConsumerWidget {
 
     final displayName = profile?.displayName ?? 'Player';
     final avatarId = profile?.avatarId ?? 'avatar_orb_cyan';
+    final initialSkinId = profile?.initialSkinId ?? 'initial_skin_classic';
     final rankTier = profile?.rankTier ?? RankTier.bronze;
     final rankLabel = RankSystem.label(rankTier);
     final rankColor = _rankColor(v, rankTier);
@@ -67,30 +68,15 @@ class ProfileScreen extends ConsumerWidget {
               Center(
                 child: Column(
                   children: [
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Rank aura behind avatar
-                        Opacity(
-                          opacity: 0.55,
-                          child: SizedBox(
-                            width: 180,
-                            height: 180,
-                            child: Image.asset(
-                              _rankAuraAsset(rankTier),
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) =>
-                                  const SizedBox.shrink(),
-                            ),
-                          ),
-                        ),
-                        EquippedAvatar(
-                          avatarId: avatarId,
-                          fallbackInitial: displayName,
-                          size: 88,
-                          onTap: () => context.go(AppRoutes.shop),
-                        ),
-                      ],
+                    ProfileAvatarChip(
+                      avatarId: avatarId,
+                      displayName: displayName,
+                      initialSkinId: initialSkinId,
+                      size: 88,
+                      showInitial: true,
+                      showRankAura: true,
+                      rankTier: rankTier,
+                      onTap: () => context.go(AppRoutes.shop),
                     ),
                     AppSpacing.vGapSM,
                     Text(
@@ -568,11 +554,3 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-String _rankAuraAsset(RankTier tier) => switch (tier) {
-      RankTier.bronze => 'assets/images/rank_aura_bronze.png',
-      RankTier.silver => 'assets/images/rank_aura_silver.png',
-      RankTier.gold => 'assets/images/rank_aura_gold.png',
-      RankTier.platinum => 'assets/images/rank_aura_platinum.png',
-      RankTier.diamond => 'assets/images/rank_aura_diamond.png',
-      RankTier.master => 'assets/images/rank_aura_master.png',
-    };
