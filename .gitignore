@@ -62,3 +62,8 @@ functions/lib/
 functions/.env
 firebase-debug.log
 firebase-debug.*.log
+
+# Apple / signing secrets — never commit (store locally or in CI secrets only)
+*.p8
+*.pem
+ios/Security Key/

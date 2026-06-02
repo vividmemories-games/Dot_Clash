@@ -218,6 +218,22 @@ The app always uses **AdMob** (no mock ad dialogs). Ad unit IDs are selected by 
 1. In App Store Connect → **In-App Purchases** → create a **Non-Consumable** with ID `dot_clash_remove_ads`.
 2. Enable **StoreKit** in capabilities (`Xcode → Signing & Capabilities`).
 
+### Apple Developer auth keys (`.p8`) — local only
+
+**Never commit** `.p8`, `.pem`, or anything under `ios/Security Key/`. They are gitignored.
+
+These are **Auth Keys** from [developer.apple.com](https://developer.apple.com/account/resources/authkeys/list) (Account → **Certificates, Identifiers & Profiles** → **Keys**) — not the separate App Store Connect → Integrations → API keys.
+
+If a key was ever pushed to GitHub, treat it as **compromised**:
+
+1. [Apple Developer → Keys](https://developer.apple.com/account/resources/authkeys/list) → select the key (e.g. `AR2XHZG3V2`) → **Revoke**.
+2. Create a **new** key; download the `.p8` once (Apple does not show it again).
+3. Store locally, e.g. `ios/Security Key/AuthKey_<KEY_ID>.p8` (folder stays on your machine only), or in CI as an encrypted secret.
+4. After rotating, purge the old key from git history and force-push (one-time):  
+   `git filter-repo --path "ios/Security Key" --invert-paths` (or ask a maintainer to run the history rewrite).
+
+Used for services tied to that key (e.g. Sign in with Apple, APNs, DeviceCheck). Server-side IAP receipt validation may use a separate App Store Connect API key — create that in App Store Connect when you implement #3 in the security plan.
+
 ---
 
 ## 5 · Assets placeholder

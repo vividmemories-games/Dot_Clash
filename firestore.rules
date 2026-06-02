@@ -10,53 +10,61 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
-    // Profile fields written only by Cloud Functions (Admin SDK bypasses rules).
-    function profileServerOnlyKeys() {
-      return [
-        'campaignStars',
-        'lastCampaignLevelId',
-        'dailyPuzzleDate',
-        'dailyPuzzleLevelId',
-        'dailyPuzzleCompleted',
-        'dailyPuzzleStreak',
-        'dailyMissions',
-      ];
+    // ── Profile security model ───────────────────────────────────────────────
+    // Clients may only change display/cosmetic equip fields.
+    // All economy, progression, IAP, lives, missions, and inventory fields are
+    // written exclusively by Cloud Functions (Admin SDK bypasses these rules).
+
+    function profileClientWritableKeys() {
+      return ['displayName', 'themeId', 'avatarId', 'initialSkinId', 'updatedAt'];
     }
 
     function profileClientUpdateAllowed() {
       let changed = request.resource.data.diff(resource.data).affectedKeys();
-      return !changed.hasAny(profileServerOnlyKeys());
+      return changed.hasOnly(profileClientWritableKeys());
     }
 
-    // Dev fallback when Cloud Functions are not deployed yet.
-    function campaignProgressClientUpdate() {
-      let changed = request.resource.data.diff(resource.data).affectedKeys();
-      let allowed = [
-        'campaignStars', 'lastCampaignLevelId', 'level', 'coins', 'xp',
-        'gamesPlayed', 'wins', 'losses', 'lives', 'nextLifeAt', 'dailyMissions', 'updatedAt',
-      ];
-      return changed.hasOnly(allowed);
-    }
-
-    function dailyPuzzleClientUpdate() {
-      let changed = request.resource.data.diff(resource.data).affectedKeys();
-      let allowed = [
-        'dailyPuzzleDate', 'dailyPuzzleLevelId', 'dailyPuzzleCompleted', 'dailyPuzzleStreak',
-        'coins', 'dailyMissions', 'updatedAt',
-      ];
-      return changed.hasOnly(allowed);
-    }
-
-    function missionClaimClientUpdate() {
-      let changed = request.resource.data.diff(resource.data).affectedKeys();
-      return changed.hasOnly(['coins', 'dailyMissions', 'updatedAt']);
-    }
-
-    function profileUpdateAllowed() {
-      return profileClientUpdateAllowed()
-        || campaignProgressClientUpdate()
-        || dailyPuzzleClientUpdate()
-        || missionClaimClientUpdate();
+    function validProfileCreate() {
+      let d = request.resource.data;
+      return d.uid == request.auth.uid
+        && d.displayName is string
+        && d.coins == 200
+        && d.xp == 0
+        && d.level == 1
+        && d.wins == 0
+        && d.losses == 0
+        && d.ties == 0
+        && d.gamesPlayed == 0
+        && d.winStreak == 0
+        && d.bestWinStreak == 0
+        && d.seasonId is string
+        && d.rating == 1000
+        && d.seasonBestRating == 1000
+        && d.seasonWins == 0
+        && d.seasonLosses == 0
+        && d.seasonTies == 0
+        && d.themeId == 'theme_neon_default'
+        && d.avatarId == 'avatar_orb_cyan'
+        && d.initialSkinId == 'initial_skin_classic'
+        && d.removeAds == false
+        && d.ownedThemeIds.hasOnly(['theme_neon_default'])
+        && d.ownedAvatarIds.hasOnly(['avatar_orb_cyan'])
+        && d.ownedInitialSkinIds.hasOnly(['initial_skin_classic'])
+        && d.lives == 5
+        && d.nextLifeAt == null
+        && d.lastDailyClaimAt == null
+        && d.lastRewardedAdAt == null
+        && (!('campaignStars' in d) || d.campaignStars.size() == 0)
+        && (!('lastCampaignLevelId' in d) || d.lastCampaignLevelId == null)
+        && (!('dailyPuzzleDate' in d) || d.dailyPuzzleDate == null)
+        && (!('dailyPuzzleLevelId' in d) || d.dailyPuzzleLevelId == null)
+        && d.dailyPuzzleCompleted == false
+        && d.dailyPuzzleStreak == 0
+        && d.dailyMissions.wins == 0
+        && d.dailyMissions.games == 0
+        && d.dailyMissions.boxes == 0
+        && d.dailyMissions.claimed.size() == 0
+        && (!('powerUpInventory' in d) || d.powerUpInventory.size() == 0);
     }
 
     function validMatchCreate() {
@@ -75,8 +83,8 @@ service cloud.firestore {
 
     match /profiles/{uid} {
       allow read: if isOwner(uid);
-      allow create: if isOwner(uid);
-      allow update: if isOwner(uid) && profileUpdateAllowed();
+      allow create: if isOwner(uid) && validProfileCreate();
+      allow update: if isOwner(uid) && profileClientUpdateAllowed();
       allow delete: if false;
 
       match /matches/{matchId} {
