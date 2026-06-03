@@ -95,6 +95,13 @@ abstract final class AppEnv {
   /// When false, use non-personalized AdMob requests (no iOS ATT for ads).
   static const bool personalizedAds = false;
 
+  // ── Store package IDs (IAP verification payloads) ─────────────────────────
+  static String get androidPackageName =>
+      isDev ? 'com.vividmemories.dotclash.dev' : 'com.vividmemories.dotclash';
+
+  static String get iosBundleId =>
+      isDev ? 'com.vividmemories.dotclash.dev' : 'com.vividmemories.dotclash';
+
   // ── IAP product IDs ────────────────────────────────────────────────────────
   // These must match exactly what you create in App Store Connect / Play Console.
   static const String iapRemoveAds = 'dot_clash_remove_ads';

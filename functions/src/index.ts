@@ -1,6 +1,7 @@
 import { FieldValue, Timestamp, type DocumentData } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 
+import { loadLevelRewards } from './campaign';
 import {
   MISSION_TARGETS,
   missionProgressForId,
@@ -8,18 +9,41 @@ import {
   todayUtc,
   yesterdayUtc,
 } from './daily';
-import { onLoss, resolveLives } from './lives';
+import {
+  claimDailyReward,
+  claimRewardedAd,
+  consumePowerUp,
+  grantLifeFromAd,
+  grantPowerUp,
+  purchaseCosmetic,
+  purchaseLife,
+  purchasePowerUp,
+  settleQuickMatch,
+} from './economy';
+import { onLoss, resolveLives, syncLives } from './lives';
 import { levelForStars, totalStarsFromMap } from './progression';
 import { deleteUserData } from './compliance';
 import { assertAuth, callableOptions, db } from './shared';
+import { verifyRemoveAdsPurchase } from './iap';
 
 export { deleteUserData };
+export {
+  verifyRemoveAdsPurchase,
+  purchaseCosmetic,
+  purchasePowerUp,
+  purchaseLife,
+  claimDailyReward,
+  claimRewardedAd,
+  grantLifeFromAd,
+  settleQuickMatch,
+  consumePowerUp,
+  grantPowerUp,
+  syncLives,
+};
 
 interface CampaignSettleRequest {
   levelId: string;
   starsEarned: number;
-  coinReward: number;
-  xpReward: number;
   win: boolean;
   boxesCaptured?: number;
 }
@@ -38,6 +62,17 @@ function bumpDailyMissions(
   };
 }
 
+function mergePowerUpInventory(
+  inv: Record<string, number>,
+  rewards: Record<string, number>,
+): Record<string, number> {
+  const next = { ...inv };
+  for (const [id, qty] of Object.entries(rewards)) {
+    if (qty > 0) next[id] = (next[id] ?? 0) + qty;
+  }
+  return next;
+}
+
 // ── Campaign level settlement ─────────────────────────────────────────────────
 
 export const completeCampaignLevel = onCall(
@@ -46,16 +81,18 @@ export const completeCampaignLevel = onCall(
     const uid = assertAuth(request);
 
     const data = request.data as CampaignSettleRequest;
-    const { levelId, starsEarned, coinReward, xpReward, win } = data;
+    const { levelId, starsEarned, win } = data;
     const boxesCaptured = Number(data.boxesCaptured ?? 0);
 
-    if (!levelId || typeof starsEarned !== 'number') {
+    if (!levelId || typeof starsEarned !== 'number' || typeof win !== 'boolean') {
       throw new HttpsError('invalid-argument', 'Missing fields.');
     }
 
+    const level = await loadLevelRewards(levelId);
     const clampedStars = Math.min(3, Math.max(0, starsEarned));
-    const effectiveCoins = win ? coinReward : Math.floor(coinReward / 4);
-    const effectiveXp = win ? xpReward : Math.floor(xpReward / 4);
+    const effectiveCoins = win ? level.coinReward : Math.floor(level.coinReward / 4);
+    const effectiveXp = win ? level.xpReward : Math.floor(level.xpReward / 4);
+    const powerUpRewards = win ? level.powerUpRewards : {};
     const nowMs = Date.now();
 
     const profileRef = db.collection('profiles').doc(uid);
@@ -89,6 +126,8 @@ export const completeCampaignLevel = onCall(
         nextLifeAt = afterLoss.nextLifeAt;
       }
 
+      const inv = (profile.powerUpInventory as Record<string, number>) ?? {};
+
       txn.update(profileRef, {
         campaignStars: updatedStars,
         lastCampaignLevelId: levelId,
@@ -100,12 +139,17 @@ export const completeCampaignLevel = onCall(
         losses: (profile.losses ?? 0) + (win ? 0 : 1),
         lives,
         nextLifeAt,
+        powerUpInventory: mergePowerUpInventory(inv, powerUpRewards),
         dailyMissions: bumpDailyMissions(profile, { win, boxesCaptured }),
         updatedAt: FieldValue.serverTimestamp(),
       });
     });
 
-    return { success: true };
+    return {
+      success: true,
+      coinReward: effectiveCoins,
+      xpReward: effectiveXp,
+    };
   },
 );
 

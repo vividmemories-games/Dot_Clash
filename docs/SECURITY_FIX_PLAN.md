@@ -54,7 +54,9 @@ Campaign, daily puzzle, and mission **claims** should work when callables are de
 
 ## Tomorrow — remaining findings
 
-### #2 Cloud Functions trust client rewards (Critical)
+### #2 Cloud Functions trust client rewards (Critical) — **fixed in Release 7 (2026-06-02)**
+
+**Done:** `completeCampaignLevel` loads rewards from `campaigns/dot_clash/levels/{levelId}`; client no longer sends trusted `coinReward`/`xpReward`. Prod disables local Firestore fallback.
 
 **Kid version:** When you finish a level, the game sends a note to the server saying "I earned 50 coins." A cheater could change the note to "I earned 999,999 coins" and the server would believe it.
 
@@ -72,7 +74,9 @@ Campaign, daily puzzle, and mission **claims** should work when callables are de
 
 ---
 
-### #3 IAP entitlement granted client-side (High)
+### #3 IAP entitlement granted client-side (High) — **fixed in Release 7 (2026-06-02)**
+
+**Done:** `verifyRemoveAdsPurchase` deployed; client uses callable with store receipt. `grantRemoveAds()` is dev-only. **Prod:** set `APPLE_IAP_*` secrets (see `docs/RELEASE_7.md`). **Ship new app build** for testers.
 
 **Kid version:** When you "buy" no ads, the app tells the cloud "trust me, I paid" without showing a receipt. Anyone could also skip the store and just write `removeAds: true` — and before today they could; after today's rules they cannot, but **honest buyers** still need a real path.
 
@@ -159,19 +163,20 @@ Campaign, daily puzzle, and mission **claims** should work when callables are de
 
 ---
 
-## New Cloud Functions to add (tomorrow)
+## Cloud Functions (Release 7)
 
-| Callable | Purpose |
-|----------|---------|
-| `purchaseCosmetic` | Spend coins, add owned id, equip (server validates price + ownership) |
-| `purchasePowerUp` | Same for consumables |
-| `purchaseLife` | Deduct coins, grant life |
-| `claimDailyReward` | Daily login coins + XP + boost |
-| `claimRewardedAd` | Ad coin grant with cooldown |
-| `settleQuickMatch` | PvE/PvP match coins, XP, rating, lives |
-| `verifyRemoveAdsPurchase` | Receipt validation → `removeAds` |
-
-Until these exist, shop and ad-economy features will error after today's rules deploy. Prioritize by player-facing impact: campaign callables already exist → shop + IAP next.
+| Callable | Status |
+|----------|--------|
+| `purchaseCosmetic` | Deployed |
+| `purchasePowerUp` | Deployed |
+| `purchaseLife` | Deployed |
+| `claimDailyReward` | Deployed |
+| `claimRewardedAd` | Deployed |
+| `grantLifeFromAd` | Deployed |
+| `settleQuickMatch` | Deployed |
+| `consumePowerUp` / `grantPowerUp` | Deployed |
+| `verifyRemoveAdsPurchase` | Deployed |
+| `completeCampaignLevel` | Hardened (server-side rewards) |
 
 ---
 

@@ -6,9 +6,30 @@ import '../domain/coach_tour_step.dart';
 abstract final class CoachTourTargetRegistry {
   static final Map<CoachTourTargetId, GlobalKey> _keys = {};
 
+  /// Targets registered on [GameScreen] — released on dispose to avoid
+  /// duplicate GlobalKeys when the play route overlaps the campaign map.
+  static const Set<CoachTourTargetId> gameTargetIds = {
+    CoachTourTargetId.gameBoard,
+    CoachTourTargetId.gameScoreStrip,
+    CoachTourTargetId.gameObjectivesBar,
+    CoachTourTargetId.gameObjectivesStar2,
+    CoachTourTargetId.gameTurnTimer,
+    CoachTourTargetId.gameHintButton,
+    CoachTourTargetId.gamePowerUpHold,
+    CoachTourTargetId.gamePowerUpPanel,
+  };
+
   static GlobalKey keyFor(CoachTourTargetId id) {
     return _keys.putIfAbsent(id, GlobalKey.new);
   }
+
+  static void releaseTargets(Iterable<CoachTourTargetId> ids) {
+    for (final id in ids) {
+      _keys.remove(id);
+    }
+  }
+
+  static void releaseGameTargets() => releaseTargets(gameTargetIds);
 
   static Rect? boundsFor(CoachTourTargetId id) {
     if (id == CoachTourTargetId.none || id == CoachTourTargetId.homeWelcome) {

@@ -5,6 +5,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../core/env/app_env.dart';
 import '../../../services/analytics/analytics_service.dart';
 import '../../../services/backend/callable_backend.dart';
 import '../../powerups/domain/power_up.dart';
@@ -95,7 +96,51 @@ class FirestoreProfileRepository implements ProfileRepository {
   }
 
   @override
+  Future<bool> verifyRemoveAdsPurchase({
+    required String platform,
+    required String productId,
+    String? packageName,
+    String? purchaseToken,
+    String? verificationData,
+    String? localVerificationData,
+  }) async {
+    final profile = await _loadProfileBestEffort();
+    if (profile.removeAds) return true;
+
+    final result = await _tryCallableWithResult(
+      'verifyRemoveAdsPurchase',
+      {
+        'platform': platform,
+        'productId': productId,
+        if (packageName != null) 'packageName': packageName,
+        if (purchaseToken != null) 'purchaseToken': purchaseToken,
+        if (verificationData != null) 'verificationData': verificationData,
+        if (localVerificationData != null)
+          'localVerificationData': localVerificationData,
+      },
+    );
+    if (result != null && result['success'] == true) {
+      await _refreshProfileFromServer();
+      return true;
+    }
+    if (_allowEconomyLocalFallback) {
+      return _grantRemoveAdsLocal();
+    }
+    return false;
+  }
+
+  @override
   Future<bool> grantRemoveAds() async {
+    if (!AppEnv.isDev) {
+      debugPrint(
+        '[IAP] grantRemoveAds() is dev-only; purchases must use verifyRemoveAdsPurchase.',
+      );
+      return false;
+    }
+    return _grantRemoveAdsLocal();
+  }
+
+  Future<bool> _grantRemoveAdsLocal() async {
     await _ensureExists();
     final profile = await _loadProfileBestEffort();
     if (profile.removeAds) return true;
@@ -108,37 +153,52 @@ class FirestoreProfileRepository implements ProfileRepository {
 
   @override
   Future<bool> purchaseTheme(String themeId, int priceCoins) async {
-    return _purchase(
-      ownedKey: 'ownedThemeIds',
-      equipKey: 'themeId',
-      itemId: themeId,
-      priceCoins: priceCoins,
+    return _economyBool(
+      'purchaseCosmetic',
+      {'itemId': themeId},
+      devFallback: () => _purchase(
+        ownedKey: 'ownedThemeIds',
+        equipKey: 'themeId',
+        itemId: themeId,
+        priceCoins: priceCoins,
+      ),
     );
   }
 
   @override
   Future<bool> purchaseAvatar(String avatarId, int priceCoins) async {
-    return _purchase(
-      ownedKey: 'ownedAvatarIds',
-      equipKey: 'avatarId',
-      itemId: avatarId,
-      priceCoins: priceCoins,
+    return _economyBool(
+      'purchaseCosmetic',
+      {'itemId': avatarId},
+      devFallback: () => _purchase(
+        ownedKey: 'ownedAvatarIds',
+        equipKey: 'avatarId',
+        itemId: avatarId,
+        priceCoins: priceCoins,
+      ),
     );
   }
 
   @override
   Future<bool> purchaseInitialSkin(String skinId, int priceCoins) async {
-    return _purchase(
-      ownedKey: 'ownedInitialSkinIds',
-      equipKey: 'initialSkinId',
-      itemId: skinId,
-      priceCoins: priceCoins,
+    return _economyBool(
+      'purchaseCosmetic',
+      {'itemId': skinId},
+      devFallback: () => _purchase(
+        ownedKey: 'ownedInitialSkinIds',
+        equipKey: 'initialSkinId',
+        itemId: skinId,
+        priceCoins: priceCoins,
+      ),
     );
   }
 
   @override
   Future<bool> purchaseLife() async {
-    return _guardBoolTransaction('purchaseLife', () async {
+    return _economyBool(
+      'purchaseLife',
+      const {},
+      devFallback: () => _guardBoolTransaction('purchaseLife', () async {
       await _ensureExists();
       return _firestore.runTransaction<bool>((txn) async {
       final snap = await txn.get(_doc);
@@ -167,12 +227,16 @@ class FirestoreProfileRepository implements ProfileRepository {
       });
       return true;
       });
-    });
+    }),
+    );
   }
 
   @override
   Future<bool> claimDaily() async {
-    return _guardBoolTransaction('claimDaily', () async {
+    return _economyBool(
+      'claimDailyReward',
+      const {},
+      devFallback: () => _guardBoolTransaction('claimDaily', () async {
       await _ensureExists();
       return _firestore.runTransaction<bool>((txn) async {
       final snap = await txn.get(_doc);
@@ -196,12 +260,16 @@ class FirestoreProfileRepository implements ProfileRepository {
       });
       return true;
       });
-    });
+    }),
+    );
   }
 
   @override
   Future<bool> claimRewardedAd() async {
-    return _guardBoolTransaction('claimRewardedAd', () async {
+    return _economyBool(
+      'claimRewardedAd',
+      const {},
+      devFallback: () => _guardBoolTransaction('claimRewardedAd', () async {
       await _ensureExists();
       return _firestore.runTransaction<bool>((txn) async {
       final snap = await txn.get(_doc);
@@ -218,20 +286,29 @@ class FirestoreProfileRepository implements ProfileRepository {
       });
       return true;
       });
-    });
+    }),
+    );
   }
 
   @override
   Future<bool> grantLifeFromAd() async {
-    return _grantFreeLifeTransaction();
+    return _economyBool(
+      'grantLifeFromAd',
+      const {},
+      devFallback: _grantFreeLifeLocal,
+    );
   }
 
   @override
   Future<bool> refundLastCampaignLife() async {
-    return _grantFreeLifeTransaction();
+    return _economyBool(
+      'grantLifeFromAd',
+      const {},
+      devFallback: _grantFreeLifeLocal,
+    );
   }
 
-  Future<bool> _grantFreeLifeTransaction() async {
+  Future<bool> _grantFreeLifeLocal() async {
     return _guardBoolTransaction('grantFreeLife', () async {
       await _ensureExists();
       return _firestore.runTransaction<bool>((txn) async {
@@ -267,7 +344,10 @@ class FirestoreProfileRepository implements ProfileRepository {
     int priceCoins, {
     int quantity = 1,
   }) async {
-    return _guardBoolTransaction('purchasePowerUp', () async {
+    return _economyBool(
+      'purchasePowerUp',
+      {'powerUpId': powerUpId, 'quantity': quantity},
+      devFallback: () => _guardBoolTransaction('purchasePowerUp', () async {
       await _ensureExists();
       return _firestore.runTransaction<bool>((txn) async {
       final snap = await txn.get(_doc);
@@ -282,12 +362,16 @@ class FirestoreProfileRepository implements ProfileRepository {
       });
       return true;
       });
-    });
+    }),
+    );
   }
 
   @override
   Future<bool> consumePowerUp(String powerUpId, {int quantity = 1}) async {
-    return _guardBoolTransaction('consumePowerUp', () async {
+    return _economyBool(
+      'consumePowerUp',
+      {'powerUpId': powerUpId, 'quantity': quantity},
+      devFallback: () => _guardBoolTransaction('consumePowerUp', () async {
       await _ensureExists();
       return _firestore.runTransaction<bool>((txn) async {
       final snap = await txn.get(_doc);
@@ -307,11 +391,22 @@ class FirestoreProfileRepository implements ProfileRepository {
       });
       return true;
       });
-    });
+    }),
+    );
   }
 
   @override
   Future<void> grantPowerUp(String powerUpId, int quantity) async {
+    final result = await _tryCallableWithResult(
+      'grantPowerUp',
+      {'powerUpId': powerUpId, 'quantity': quantity},
+    );
+    if (result != null && result['success'] == true) {
+      await _refreshProfileFromServer();
+      return;
+    }
+    if (!_allowEconomyLocalFallback) return;
+
     await _ensureExists();
     await _firestore.runTransaction<void>((txn) async {
       final snap = await txn.get(_doc);
@@ -339,15 +434,20 @@ class FirestoreProfileRepository implements ProfileRepository {
         resolved.nextLifeAt == profile.nextLifeAt) {
       return;
     }
-    final updated = profile.copyWith(
-      lives: resolved.effectiveLives,
-      nextLifeAt: resolved.nextLifeAt,
+
+    final result = await _tryCallableWithResult('syncLives', const {});
+    if (result != null && result['success'] == true) {
+      await _refreshProfileFromServer();
+      return;
+    }
+
+    // Local UI only — Firestore rules block client writes to lives.
+    _emit(
+      profile.copyWith(
+        lives: resolved.effectiveLives,
+        nextLifeAt: resolved.nextLifeAt,
+      ),
     );
-    _emit(updated);
-    await _withRetry(() => _doc.set({
-          ..._toMap(updated),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true)));
   }
 
   @override
@@ -355,6 +455,21 @@ class FirestoreProfileRepository implements ProfileRepository {
     MatchResult result, {
     bool consumeLife = false,
   }) async {
+    final outcome = switch (result) {
+      MatchResult.win => 'win',
+      MatchResult.loss => 'loss',
+      MatchResult.tie => 'tie',
+    };
+    final usedCallable = await _tryCallable(
+      'settleQuickMatch',
+      {'outcome': outcome, 'consumeLife': consumeLife},
+    );
+    if (usedCallable) {
+      await _refreshProfileFromServer();
+      return;
+    }
+    if (!_allowEconomyLocalFallback) return;
+
     await _ensureExists();
     final profile = await _loadProfileBestEffort();
     final now = DateTime.now();
@@ -446,27 +561,27 @@ class FirestoreProfileRepository implements ProfileRepository {
     int boxesCaptured = 0,
     Map<String, int> powerUpRewards = const {},
   }) async {
-    final usedCallable = await _tryCallable(
+    final callableResult = await _tryCallableWithResult(
       'completeCampaignLevel',
       {
         'levelId': levelId,
         'starsEarned': starsEarned,
-        'coinReward': coinReward,
-        'xpReward': xpReward,
         'win': win,
         'boxesCaptured': boxesCaptured,
       },
     );
-    if (usedCallable) {
-      // Optimistic emit so the UI responds immediately without waiting on
-      // a Firestore round-trip.
+    if (callableResult != null) {
+      final serverCoins =
+          (callableResult['coinReward'] as num?)?.toInt() ?? coinReward;
+      final serverXp =
+          (callableResult['xpReward'] as num?)?.toInt() ?? xpReward;
       final current = await _loadProfileBestEffort();
       _emit(_profileAfterCampaignSettlement(
         current,
         levelId: levelId,
         starsEarned: starsEarned,
-        coinReward: coinReward,
-        xpReward: xpReward,
+        coinReward: serverCoins,
+        xpReward: serverXp,
         consumeLife: consumeLife,
         win: win,
         boxesCaptured: boxesCaptured,
@@ -476,9 +591,16 @@ class FirestoreProfileRepository implements ProfileRepository {
       return;
     }
 
+    if (!_allowEconomyLocalFallback) {
+      debugPrint(
+        '[Campaign][settle] Callable failed — progress not saved (prod).',
+      );
+      return;
+    }
+
     if (kDebugMode) {
       debugPrint(
-        '[Campaign][settle] Callable unavailable — saving progress via Firestore.',
+        '[Campaign][settle] Callable unavailable — saving progress via Firestore (dev).',
       );
     }
     await _settleCampaignLevelLocal(
@@ -569,7 +691,10 @@ class FirestoreProfileRepository implements ProfileRepository {
     }
   }
 
+  bool get _allowEconomyLocalFallback => AppEnv.isDev;
+
   bool _callableAllowsLocalFallback(FirebaseFunctionsException e) {
+    if (!_allowEconomyLocalFallback) return false;
     if (e.code == 'not-found' ||
         e.code == 'unavailable' ||
         e.code == 'internal' ||
@@ -580,6 +705,25 @@ class FirestoreProfileRepository implements ProfileRepository {
     }
     final msg = e.message ?? '';
     return msg.contains('permission to the requested URL');
+  }
+
+  Future<bool> _economyBool(
+    String name,
+    Map<String, dynamic> data, {
+    required Future<bool> Function() devFallback,
+  }) async {
+    final result = await _tryCallableWithResult(name, data);
+    if (result != null) {
+      if (result['success'] == true) {
+        await _refreshProfileFromServer();
+        return true;
+      }
+      return false;
+    }
+    if (_allowEconomyLocalFallback) {
+      return devFallback();
+    }
+    return false;
   }
 
   /// Force-reads the profile from Firestore server (bypasses offline cache) and

@@ -210,19 +210,147 @@ The app always uses **AdMob** (no mock ad dialogs). Ad unit IDs are selected by 
 
 ## 4 · In-App Purchases
 
-### Android (Google Play)
-1. Upload a signed AAB to the Play Console (needs at least one internal track upload).
-2. Create a **Non-consumable** in-app product with ID `dot_clash_remove_ads`.
+### 4a — Store products (one-time)
 
-### iOS (App Store)
-1. In App Store Connect → **In-App Purchases** → create a **Non-Consumable** with ID `dot_clash_remove_ads`.
-2. Enable **StoreKit** in capabilities (`Xcode → Signing & Capabilities`).
+**Android (Google Play)**
 
-### Apple Developer auth keys (`.p8`) — local only
+1. Open [Google Play Console](https://play.google.com/console) → select **Dot Clash** (prod package `com.vividmemories.dotclash`).
+2. **Test and release** → upload at least one signed **AAB** to **Internal testing** (required before IAP goes live).
+3. **Monetize** → **Products** → **In-app products** → **Create product**.
+4. Product ID: `dot_clash_remove_ads` · Type: **One-time** (non-consumable) · set price (e.g. Norway tier for beta testers).
+
+**iOS (App Store Connect)**
+
+1. Open [App Store Connect](https://appstoreconnect.apple.com) → **Apps** → **Dot Clash**.
+2. **Monetization** (or **Features**) → **In-App Purchases** → **+** → **Non-Consumable**.
+3. Reference name: e.g. `Remove Ads` · Product ID: `dot_clash_remove_ads` · set pricing (per territory, e.g. Norway).
+4. In Xcode: **Runner** target → **Signing & Capabilities** → **+ Capability** → **In-App Purchase** (if not already present).
+
+Product IDs must match `AppEnv.iapRemoveAds` in `lib/core/env/app_env.dart`.
+
+---
+
+### 4b — Server-side IAP verification (Release 7)
+
+After Firestore rules lock `removeAds` to the server, purchases must go through the callable **`verifyRemoveAdsPurchase`**. That function calls **Apple** and **Google** to confirm the receipt before writing `removeAds: true`.
+
+| Platform | What you configure | Used by |
+|----------|-------------------|---------|
+| **iOS** | App Store Connect **API** key + Firebase env vars | App Store Server API |
+| **Android** | Play Console **API access** for the Cloud Functions service account | Google Play Developer API |
+
+**Not** the same as the Apple **Developer** Auth Key in `ios/Security Key/` (Sign in with Apple). IAP uses a separate key from **App Store Connect → Integrations**.
+
+**Dev vs prod**
+
+| Project | `GCLOUD_PROJECT` | If secrets / Play API missing |
+|---------|------------------|-------------------------------|
+| `dot-clash-dev` | dev | Verification **skipped** (logs a warning) |
+| `dot-clash-72cc6` | prod | Verification **required** — Remove Ads fails without setup |
+
+---
+
+#### iOS — App Store Connect API key (click-by-click)
+
+1. Go to [App Store Connect](https://appstoreconnect.apple.com).
+2. Top navigation: **Users and Access** (not the per-app screen).
+3. Open the **Integrations** tab.
+4. Left sidebar: **App Store Connect API**.
+5. Under **Team Keys**, click **+** (Generate API Key) or **Generate API Key**.
+6. Name: e.g. `Dot Clash IAP Server` · Access: **Admin** or **App Manager** (must be allowed to use In-App Purchase / transaction APIs for your team).
+7. Click **Generate** → **Download** the `.p8` file **once** (Apple will not offer it again).
+8. On the same **Integrations → App Store Connect API** page, copy:
+   - **Issuer ID** (top of the page, UUID)
+   - **Key ID** (column for the key you just created, 10 characters)
+
+Keep the `.p8` local only (same rules as `ios/Security Key/` — never commit).
+
+---
+
+#### iOS — Set secrets on prod Cloud Functions
+
+The function reads `process.env.APPLE_IAP_*` in `functions/src/iap.ts`. Configure them for project **`dot-clash-72cc6`** only (prod).
+
+**Option A — env file at deploy (recommended)**
+
+1. Create `functions/.env.dot-clash-72cc6` (gitignored; do not commit):
+
+   ```bash
+   APPLE_IAP_KEY_ID=ABCD123456
+   APPLE_IAP_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+   APPLE_IAP_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIGT...\n-----END PRIVATE KEY-----"
+   APPLE_IAP_BUNDLE_ID=com.vividmemories.dotclash
+   ```
+
+   Use `\n` for line breaks inside the private key string, or paste the full `.p8` body on one line with `\n` between lines.
+
+2. Deploy functions to prod:
+
+   ```bash
+   firebase use prod
+   firebase deploy --only functions
+   ```
+
+**Option B — Google Cloud Console (per service)**
+
+1. [Google Cloud Console](https://console.cloud.google.com) → project **`dot-clash-72cc6`**.
+2. **Cloud Run** → open service **`verifyremoveadspurchase`** (name may be lowercase).
+3. **Edit & deploy new revision** → **Variables & secrets** → add `APPLE_IAP_KEY_ID`, `APPLE_IAP_ISSUER_ID`, `APPLE_IAP_PRIVATE_KEY`, optional `APPLE_IAP_BUNDLE_ID`.
+4. Repeat for other callables only if you did not use Option A (Option A applies env to all functions in that deploy).
+
+**Sandbox vs production Apple API**
+
+- TestFlight / sandbox purchases: function uses `api.storekit-sandbox.itunes.apple.com` when not on prod project — on **prod** project it uses production API. TestFlight builds against **prod** Firebase still hit production Apple API for verification (correct for closed testing on prod backend).
+
+---
+
+#### Android — Play Console API access (click-by-click)
+
+Cloud Functions use the project’s **default compute service account** and Application Default Credentials (`googleapis` Android Publisher scope). No extra JSON key file in the repo.
+
+1. **Find the service account email**
+   - [Firebase Console](https://console.firebase.google.com) → project **`dot-clash-72cc6`** → ⚙️ **Project settings** → **General** → note **Project number** (e.g. `727354434155`).
+   - Service account email is usually:  
+     `{PROJECT_NUMBER}-compute@developer.gserviceaccount.com`  
+     Example: `727354434155-compute@developer.gserviceaccount.com`
+   - Confirm in [Google Cloud Console](https://console.cloud.google.com) → **IAM & Admin** → **IAM** (same project).
+
+2. **Link Play Console to the Google Cloud project**
+   - [Play Console](https://play.google.com/console) → **Dot Clash**.
+   - **Setup** (gear / left nav) → **API access**.
+   - If you see **Link** / **Choose a project to link**: select Google Cloud project **`dot-clash-72cc6`** (same as Firebase prod) → confirm.
+
+3. **Grant the service account access**
+   - On **API access**, under **Service accounts**, find `{PROJECT_NUMBER}-compute@developer.gserviceaccount.com` (or click **View in Google Cloud Console** and return).
+   - Click **Grant access** (or **Manage Play Console permissions**).
+   - Enable at least:
+     - **View app information** (read-only)
+     - **View financial data, orders, and cancellation survey responses** (needed for `purchases.products.get`)
+   - **Invite user** / **Apply** / **Save** (wording varies).
+
+4. Wait a few minutes for permissions to propagate.
+
+**Android package names** allowed by the server: `com.vividmemories.dotclash` (prod) and `com.vividmemories.dotclash.dev` (dev flavor).
+
+---
+
+#### Verify Remove Ads end-to-end
+
+1. Ship a **Release 7+** app build (client calls `verifyRemoveAdsPurchase`, not direct Firestore).
+2. Prod Firebase + secrets above configured.
+3. Purchase or restore Remove Ads on device.
+4. Check [Firebase Functions logs](https://console.firebase.google.com/project/dot-clash-72cc6/functions/logs) for `verifyRemoveAdsPurchase` — success, not `IAP verification not configured` or `Play verification failed`.
+5. In Firestore, profile should show `removeAds: true` (client cannot set this via rules).
+
+**Norway / USD price on device:** localized price comes from the store (`ProductDetails.price`). Confirm product pricing in App Store Connect / Play Console and that the tester’s Apple ID region matches (see `docs/RELEASE_7.md`).
+
+---
+
+### 4c — Apple Developer auth keys (`.p8`) — Sign in with Apple only
 
 **Never commit** `.p8`, `.pem`, or anything under `ios/Security Key/`. They are gitignored.
 
-These are **Auth Keys** from [developer.apple.com](https://developer.apple.com/account/resources/authkeys/list) (Account → **Certificates, Identifiers & Profiles** → **Keys**) — not the separate App Store Connect → Integrations → API keys.
+These are **Auth Keys** from [developer.apple.com](https://developer.apple.com/account/resources/authkeys/list) (Account → **Certificates, Identifiers & Profiles** → **Keys**) — **not** the App Store Connect API key in §4b.
 
 If a key was ever pushed to GitHub, treat it as **compromised**:
 
@@ -232,7 +360,7 @@ If a key was ever pushed to GitHub, treat it as **compromised**:
 4. After rotating, purge the old key from git history and force-push (one-time):  
    `git filter-repo --path "ios/Security Key" --invert-paths` (or ask a maintainer to run the history rewrite).
 
-Used for services tied to that key (e.g. Sign in with Apple, APNs, DeviceCheck). Server-side IAP receipt validation may use a separate App Store Connect API key — create that in App Store Connect when you implement #3 in the security plan.
+Used for **Sign in with Apple**, APNs, DeviceCheck, etc. **Do not** reuse this file for `APPLE_IAP_PRIVATE_KEY` unless Apple issued it as an App Store Connect API key (they are different key types).
 
 ---
 

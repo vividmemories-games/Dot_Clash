@@ -42,6 +42,18 @@ class MockProfileRepository implements ProfileRepository {
   }
 
   @override
+  Future<bool> verifyRemoveAdsPurchase({
+    required String platform,
+    required String productId,
+    String? packageName,
+    String? purchaseToken,
+    String? verificationData,
+    String? localVerificationData,
+  }) async {
+    return grantRemoveAds();
+  }
+
+  @override
   Future<bool> grantRemoveAds() async {
     if (_profile.removeAds) return true;
     _emit(_profile.copyWith(removeAds: true));

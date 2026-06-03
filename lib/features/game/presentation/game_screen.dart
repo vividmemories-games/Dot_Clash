@@ -123,6 +123,18 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
   }
 
+  @override
+  void deactivate() {
+    CoachTourTargetRegistry.releaseGameTargets();
+    // Provider writes are not allowed during deactivate (mid-build).
+    final container = ProviderScope.containerOf(context, listen: false);
+    Future.microtask(() {
+      container.read(turnTimerProvider.notifier).stop();
+      container.read(matchCoachTourProvider.notifier).reset();
+    });
+    super.deactivate();
+  }
+
   // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
@@ -140,6 +152,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     // - stop the countdown so it doesn't reach 0 in the background
     // - ignore timeout-based turn switching
     ref.listen<SettingsState>(settingsProvider, (prev, next) {
+      if (!mounted) return;
       final prevShow = prev?.showTimer ?? next.showTimer;
       if (prevShow == next.showTimer) return;
       if (next.showTimer) {
@@ -177,6 +190,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     // Auto-pass the turn when the timer reaches 0.
     ref.listen<int>(turnTimerProvider, (prev, next) {
+      if (!mounted) return;
       if (!ref.read(settingsProvider).showTimer) return;
       if (ref.read(matchCoachTourProvider).matchPaused) return;
       final prevVal = prev ?? next;
@@ -188,6 +202,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
 
     ref.listen<MatchCoachTourState>(matchCoachTourProvider, (prev, next) {
+      if (!mounted) return;
       final wasPaused = prev?.matchPaused ?? false;
       final isPaused = next.matchPaused;
 
@@ -201,6 +216,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
 
     ref.listen<MatchSession>(matchSessionProvider, (prev, next) {
+      if (!mounted) return;
       if (next.outOfTurnsPending && !(prev?.outOfTurnsPending ?? false)) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) _showOutOfTurnsSheet(context);
@@ -216,6 +232,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     // Tutorial: react to human moves and box captures.
     ref.listen<GameState>(gameProvider, (prev, next) {
+      if (!mounted) return;
       if (prev == null) return;
       final coachState = ref.read(matchCoachTourProvider);
       if (!coachState.isActive) return;
@@ -241,6 +258,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     // Show result dialog on game end
     ref.listen<GameState>(gameProvider, (prev, next) {
+      if (!mounted) return;
       if (!next.isOver || (prev?.isOver ?? false)) return;
       setState(() => _hintEdge = null);
 

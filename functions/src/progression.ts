@@ -28,3 +28,31 @@ export function levelForStars(totalStars: number): number {
 export function totalStarsFromMap(stars: Record<string, number>): number {
   return Object.values(stars).reduce((sum, s) => sum + Math.min(3, Math.max(0, s)), 0);
 }
+
+export const BASE_XP = 100;
+export const STEP_XP = 25;
+
+export function xpForLevel(level: number): number {
+  return BASE_XP + (level - 1) * STEP_XP;
+}
+
+export function levelForXp(xp: number): number {
+  let level = 1;
+  let remaining = xp;
+  while (remaining >= xpForLevel(level)) {
+    remaining -= xpForLevel(level);
+    level++;
+    if (level > 200) break;
+  }
+  return level;
+}
+
+export function coinsForMatch(win: boolean, tie: boolean): number {
+  if (tie) return 8;
+  return win ? 15 : 6;
+}
+
+export function xpForMatch(win: boolean, tie: boolean): number {
+  if (tie) return 14;
+  return win ? 22 : 10;
+}

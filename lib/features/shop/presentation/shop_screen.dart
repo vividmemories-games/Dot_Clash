@@ -572,77 +572,134 @@ class _CosmeticCatalogTab extends StatelessWidget {
     final v = context.dc;
     final t = context.txt;
 
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final aspectRatio = _cosmeticCatalogGridAspectRatio(
+          context,
+          gridWidth: constraints.maxWidth,
+          items: items,
+        );
+
+        return CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.auto_awesome_rounded,
-                        size: 16, color: v.gold),
-                    AppSpacing.hGapXS,
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: t.scoreLabel.copyWith(
-                          fontSize: 13,
-                          letterSpacing: 1.4,
+                    Row(
+                      children: [
+                        Icon(Icons.auto_awesome_rounded,
+                            size: 16, color: v.gold),
+                        AppSpacing.hGapXS,
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: t.scoreLabel.copyWith(
+                              fontSize: 13,
+                              letterSpacing: 1.4,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
+                    ),
+                    AppSpacing.vGapXS,
+                    Text(
+                      subtitle,
+                      style: t.bodySmall.copyWith(color: v.textSecondary),
                     ),
                   ],
                 ),
-                AppSpacing.vGapXS,
-                Text(
-                  subtitle,
-                  style: t.bodySmall.copyWith(color: v.textSecondary),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: _cosmeticCatalogCrossAxisCount,
+                  childAspectRatio: aspectRatio,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
                 ),
-              ],
-            ),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 1.05,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, i) {
-                final item = items[i];
-                final owned =
-                    ownedIds.contains(item.id) || item.priceCoins == 0;
-                final equipped = equippedId == item.id;
-                final canAfford = coins >= item.priceCoins;
-                return _CatalogCard(
-                  item: item,
-                  owned: owned,
-                  equipped: equipped,
-                  canAfford: canAfford,
-                  onBuy: () async {
-                    await _showShopBoolResult(
-                      context,
-                      purchase: () => onBuy(item),
-                      successMessage: 'Purchased!',
+                delegate: SliverChildBuilderDelegate(
+                  (context, i) {
+                    final item = items[i];
+                    final owned =
+                        ownedIds.contains(item.id) || item.priceCoins == 0;
+                    final equipped = equippedId == item.id;
+                    final canAfford = coins >= item.priceCoins;
+                    return _CatalogCard(
+                      item: item,
+                      owned: owned,
+                      equipped: equipped,
+                      canAfford: canAfford,
+                      onBuy: () async {
+                        await _showShopBoolResult(
+                          context,
+                          purchase: () => onBuy(item),
+                          successMessage: 'Purchased!',
+                        );
+                      },
+                      onEquip: () async => onEquip(item),
                     );
                   },
-                  onEquip: () async => onEquip(item),
-                );
-              },
-              childCount: items.length,
+                  childCount: items.length,
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
+}
+
+/// Grid layout for cosmetic shop tabs (themes / avatars / initials).
+const int _cosmeticCatalogCrossAxisCount = 2;
+const double _cosmeticCatalogGridHorizontalInset = 32; // 16 + 16 sliver padding
+const double _cosmeticCatalogGridCrossSpacing = 12;
+
+/// Estimates minimum catalog card height and returns width/height for [SliverGrid].
+double _cosmeticCatalogGridAspectRatio(
+  BuildContext context, {
+  required double gridWidth,
+  required List<CatalogItem> items,
+}) {
+  final width = gridWidth.isFinite && gridWidth > 0
+      ? gridWidth
+      : MediaQuery.sizeOf(context).width;
+  final cellWidth = (width -
+          _cosmeticCatalogGridHorizontalInset -
+          _cosmeticCatalogGridCrossSpacing) /
+      _cosmeticCatalogCrossAxisCount;
+
+  final textScale = MediaQuery.textScalerOf(context).scale(1);
+  final hasOrbPreview = items.any(
+    (i) =>
+        i.type == CatalogItemType.avatar ||
+        i.type == CatalogItemType.initialSkin,
+  );
+  final hasThemeSwatches =
+      items.any((i) => i.type == CatalogItemType.theme);
+
+  // Mirrors [_CatalogCard] fixed vertical stack + [NeonCard] padding.
+  var minHeight = AppSpacing.md * 2; // NeonCard padding
+  minHeight += 13 * 1.2 * textScale; // title
+  minHeight += AppSpacing.xs;
+  minHeight += 12 * 1.4 * textScale; // rarity
+  if (hasThemeSwatches) {
+    minHeight += AppSpacing.xs + 12; // swatch row
+  }
+  if (hasOrbPreview) {
+    minHeight += AppSpacing.sm + 42; // orb / initial preview
+  }
+  minHeight += 6 + 20 * textScale; // price row
+  minHeight += 34; // action button
+  minHeight += 6; // safety buffer (avoids 11px overflow on narrow phones)
+
+  final aspect = cellWidth / minHeight;
+  return aspect.clamp(0.72, 1.12);
 }
 
 class _BoostsAndStoreTab extends StatelessWidget {

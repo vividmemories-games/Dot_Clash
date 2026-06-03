@@ -10,6 +10,7 @@ import '../../../shared/widgets/neon_button.dart';
 import '../../../shared/widgets/neon_card.dart';
 import '../domain/campaign_level.dart';
 import '../domain/campaign_world.dart';
+import 'campaign_play_navigation.dart';
 import 'campaign_save_status.dart';
 
 class LevelResultScreen extends ConsumerWidget {
@@ -155,12 +156,10 @@ class LevelResultPanel extends ConsumerWidget {
               color: v.green,
               width: double.infinity,
               onPressed: saveReady
-                  ? () {
-                      final router = GoRouter.of(context);
-                      Navigator.of(context).pop();
-                      router.go('/campaign');
-                      router.push('/campaign/play/$nextId');
-                    }
+                  ? () => CampaignPlayNavigation.exitToNextLevel(
+                        context,
+                        nextId,
+                      )
                   : null,
             ),
           AppSpacing.vGapSM,
@@ -168,11 +167,7 @@ class LevelResultPanel extends ConsumerWidget {
             label: 'CAMPAIGN MAP',
             color: v.playerA,
             width: double.infinity,
-            onPressed: () {
-              final router = GoRouter.of(context);
-              Navigator.of(context).pop();
-              router.go('/campaign');
-            },
+            onPressed: () => CampaignPlayNavigation.exitToMap(context),
           ),
           AppSpacing.vGapSM,
           if (!humanWon)

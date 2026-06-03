@@ -60,6 +60,7 @@ app.*.map.json
 functions/node_modules/
 functions/lib/
 functions/.env
+functions/.env.*
 firebase-debug.log
 firebase-debug.*.log
 
@@ -67,3 +68,4 @@ firebase-debug.*.log
 *.p8
 *.pem
 ios/Security Key/
+*firebase-adminsdk*.json

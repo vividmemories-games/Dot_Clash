@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +12,7 @@ import '../../features/profile/providers/profile_providers.dart';
 
 final iapServiceProvider = Provider<IapService>((ref) {
   final repo = ref.watch(profileRepositoryProvider);
-  final svc = IapService(grantRemoveAds: repo.grantRemoveAds);
+  final svc = IapService(verifyRemoveAds: repo.verifyRemoveAdsPurchase);
   ref.onDispose(svc.dispose);
   return svc;
 });
@@ -25,15 +26,22 @@ final removeAdsProductProvider = FutureProvider<ProductDetails?>((ref) async {
 
 // ── IapService ─────────────────────────────────────────────────────────────────
 
-typedef GrantRemoveAds = Future<bool> Function();
+typedef VerifyRemoveAds = Future<bool> Function({
+  required String platform,
+  required String productId,
+  String? packageName,
+  String? purchaseToken,
+  String? verificationData,
+  String? localVerificationData,
+});
 
 class IapService {
-  IapService({required GrantRemoveAds grantRemoveAds})
-      : _grantRemoveAds = grantRemoveAds {
+  IapService({required VerifyRemoveAds verifyRemoveAds})
+      : _verifyRemoveAds = verifyRemoveAds {
     _init();
   }
 
-  final GrantRemoveAds _grantRemoveAds;
+  final VerifyRemoveAds _verifyRemoveAds;
   final InAppPurchase _iap = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _sub;
   List<ProductDetails> _products = [];
@@ -80,6 +88,11 @@ class IapService {
       debugPrint('[IAP] Products not found: ${response.notFoundIDs}');
     }
     _products = response.productDetails;
+    for (final p in _products) {
+      debugPrint(
+        '[IAP] ${p.id} price=${p.price} raw=${p.rawPrice} currency=${p.currencyCode}',
+      );
+    }
   }
 
   /// Starts Remove Ads purchase. Completes when the store confirms or fails.
@@ -152,7 +165,7 @@ class IapService {
         case PurchaseStatus.purchased:
         case PurchaseStatus.restored:
           if (isRemoveAds) {
-            final ok = await _grantRemoveAds();
+            final ok = await _verifyPurchaseWithBackend(purchase);
             _finishPendingPurchase(ok);
             _finishPendingRestore(ok);
           }
@@ -177,6 +190,34 @@ class IapService {
       if (purchase.pendingCompletePurchase) {
         await _iap.completePurchase(purchase);
       }
+    }
+  }
+
+  Future<bool> _verifyPurchaseWithBackend(PurchaseDetails purchase) async {
+    if (kIsWeb) return false;
+
+    final platform = Platform.isIOS
+        ? 'ios'
+        : Platform.isAndroid
+            ? 'android'
+            : null;
+    if (platform == null) return false;
+
+    try {
+      return await _verifyRemoveAds(
+        platform: platform,
+        productId: purchase.productID,
+        packageName: Platform.isAndroid ? AppEnv.androidPackageName : null,
+        purchaseToken: Platform.isAndroid
+            ? purchase.verificationData.serverVerificationData
+            : null,
+        verificationData: purchase.verificationData.serverVerificationData,
+        localVerificationData:
+            purchase.verificationData.localVerificationData,
+      );
+    } catch (e) {
+      debugPrint('[IAP] verifyRemoveAdsPurchase error: $e');
+      return false;
     }
   }
 

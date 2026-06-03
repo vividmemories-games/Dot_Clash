@@ -51,7 +51,17 @@ abstract class ProfileRepository {
 
   Future<bool> claimDailyMission(String missionId);
 
-  /// Idempotent: sets [UserProfile.removeAds] when Remove Ads IAP is purchased/restored.
+  /// Verifies Remove Ads with the store, then sets [UserProfile.removeAds] server-side.
+  Future<bool> verifyRemoveAdsPurchase({
+    required String platform,
+    required String productId,
+    String? packageName,
+    String? purchaseToken,
+    String? verificationData,
+    String? localVerificationData,
+  });
+
+  /// Dev/mock only — prod must use [verifyRemoveAdsPurchase].
   Future<bool> grantRemoveAds();
 
   Future<void> recordMatch({
