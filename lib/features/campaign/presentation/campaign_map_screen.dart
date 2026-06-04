@@ -12,7 +12,6 @@ import '../domain/campaign_world.dart';
 import '../providers/campaign_providers.dart';
 import '../../home/presentation/widgets/lives_refill_sheet.dart';
 import '../../profile/providers/lives_provider.dart';
-import '../../profile/providers/profile_providers.dart';
 import '../../tutorial/providers/tutorial_provider.dart';
 import '../../../services/ads/ad_reward_router.dart';
 import 'level_brief_sheet.dart';
@@ -80,7 +79,6 @@ Future<void> _playLevel(
   final tutorialFree = ref.read(tutorialFreeAttemptProvider(levelId));
   if (lives.effectiveLives <= 0 && !tutorialFree) {
     final v = context.dc;
-    final coins = ref.read(profileProvider).valueOrNull?.coins ?? 0;
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: v.surface,
@@ -89,8 +87,6 @@ Future<void> _playLevel(
         side: BorderSide(color: v.cardBorder),
       ),
       builder: (_) => LivesRefillSheet(
-        snapshot: lives,
-        coins: coins,
         onBuyLife: () => ref.read(livesControllerProvider).purchaseLife(),
         onWatchAd: () =>
             ref.read(adRewardRouterProvider).showRewardedLifeAd(),

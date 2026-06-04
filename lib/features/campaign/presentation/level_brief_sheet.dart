@@ -7,7 +7,6 @@ import '../../../core/theme/dot_clash_visuals.dart';
 import '../../../features/home/presentation/widgets/lives_refill_sheet.dart';
 import '../../../features/profile/domain/lives_logic.dart';
 import '../../../features/profile/providers/lives_provider.dart';
-import '../../../features/profile/providers/profile_providers.dart';
 import '../../../features/tutorial/providers/tutorial_provider.dart';
 import '../../../services/ads/ad_reward_router.dart';
 import '../../../shared/layout/app_spacing.dart';
@@ -181,7 +180,6 @@ class LevelBriefSheet extends ConsumerWidget {
 
     final tutorialFree = ref.read(tutorialFreeAttemptProvider(level.id));
     if (livesSnapshot.effectiveLives <= 0 && !tutorialFree) {
-      final coins = ref.read(profileProvider).valueOrNull?.coins ?? 0;
       await showModalBottomSheet<void>(
         context: context,
         backgroundColor: v.surface,
@@ -190,8 +188,6 @@ class LevelBriefSheet extends ConsumerWidget {
           side: BorderSide(color: v.cardBorder),
         ),
         builder: (_) => LivesRefillSheet(
-          snapshot: livesSnapshot,
-          coins: coins,
           onBuyLife: () => ref.read(livesControllerProvider).purchaseLife(),
           onWatchAd: () =>
               ref.read(adRewardRouterProvider).showRewardedLifeAd(),

@@ -69,7 +69,6 @@ class ShopScreen extends ConsumerWidget {
     final iap = ref.read(iapServiceProvider);
 
     void openLivesSheet() {
-      final profile = ref.read(profileProvider).valueOrNull;
       showModalBottomSheet<void>(
         context: context,
         backgroundColor: v.surface,
@@ -78,8 +77,6 @@ class ShopScreen extends ConsumerWidget {
           side: BorderSide(color: v.cardBorder),
         ),
         builder: (_) => LivesRefillSheet(
-          snapshot: livesSnapshot,
-          coins: profile?.coins ?? 0,
           onBuyLife: livesController.purchaseLife,
           onWatchAd: () =>
               ref.read(adRewardRouterProvider).showRewardedLifeAd(),
@@ -189,7 +186,13 @@ class ShopScreen extends ConsumerWidget {
                             onWatchAdForCoins: () => ref
                                 .read(adRewardRouterProvider)
                                 .showRewardedShopCoins(),
-                            onPurchaseRemoveAds: () => iap.purchaseRemoveAds(),
+                            onPurchaseRemoveAds: () async {
+                              final ok = await iap.purchaseRemoveAds();
+                              return (
+                                ok,
+                                ok ? null : iap.lastPurchaseError,
+                              );
+                            },
                             onRestorePurchases: () => iap.restorePurchases(),
                           ),
                         ],
@@ -730,7 +733,7 @@ class _BoostsAndStoreTab extends StatelessWidget {
   final Future<bool> Function() onWatchAdForLife;
   final Future<bool> Function() onClaimDaily;
   final Future<bool> Function() onWatchAdForCoins;
-  final Future<bool> Function() onPurchaseRemoveAds;
+  final Future<(bool ok, String? error)> Function() onPurchaseRemoveAds;
   final Future<bool> Function() onRestorePurchases;
 
   static const _boostTypes = [
@@ -1240,7 +1243,7 @@ class _RemoveAdsSection extends StatelessWidget {
 
   final bool removeAds;
   final String? priceLabel;
-  final Future<bool> Function() onPurchase;
+  final Future<(bool ok, String? error)> Function() onPurchase;
   final Future<bool> Function() onRestore;
 
   @override
@@ -1294,14 +1297,16 @@ class _RemoveAdsSection extends StatelessWidget {
                 _RemoveAdsPriceButton(
                   price: price,
                   onPressed: () async {
-                    final ok = await onPurchase();
+                    final result = await onPurchase();
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          ok
+                          result.$1
                               ? 'Remove Ads unlocked!'
-                              : 'Purchase was not completed.',
+                              : (result.$2?.trim().isNotEmpty == true
+                                  ? result.$2!.trim()
+                                  : 'Purchase was not completed.'),
                         ),
                       ),
                     );

@@ -150,8 +150,6 @@ class HomeScreen extends ConsumerWidget {
         side: BorderSide(color: v.cardBorder),
       ),
       builder: (_) => LivesRefillSheet(
-        snapshot: livesSnapshot,
-        coins: coins,
         onBuyLife: () => ref.read(livesControllerProvider).purchaseLife(),
       ),
     );

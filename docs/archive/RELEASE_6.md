@@ -1,8 +1,12 @@
-# Release 6 — Cosmetics expansion
+# Release 6 — Cosmetics expansion (archived)
+
+**Status:** Retired 2026-06-04. Active release tracking: [`../RELEASE_9.md`](../RELEASE_9.md).
+
+---
 
 Ship **8 board themes**, **8 avatar orbs**, and **8 initial styles** in the Shop, plus groundwork for future bundle IAP.
 
-## What ships in this build
+## What shipped in this build
 
 | Category | Count | New in R6 |
 |----------|------:|----------:|
@@ -50,7 +54,7 @@ Initial styles apply on **Profile** and **Home** (when display name is not a lon
 | `bundle_ice_queen` | Frost + Ice + Chrome initial | 950 coins |
 | `bundle_void_master` | Void + Violet + Arcade initial | 1100 coins |
 
-**R7+ implementation checklist**
+**Later implementation checklist**
 
 1. Add `purchaseBundle(bundleId)` on `ProfileRepository` (atomic coin debit + grant all `itemIds`).  
 2. Shop tab “Bundles” — only list `bundles.where((b) => b.enabled)`.  
@@ -58,7 +62,7 @@ Initial styles apply on **Profile** and **Home** (when display name is not a lon
 4. Analytics: `cosmetic_bundle_purchase`, `cosmetic_bundle_view`.  
 5. Remote catalog: move `MockCatalogRepository` → Firestore/config when ready.
 
-## Pre-release QA
+## Pre-release QA (historical)
 
 - [ ] Buy and equip each **new theme** — board, home, shop colors update app-wide.  
 - [ ] Buy and equip each **new orb** — home + profile show correct color.  
@@ -73,14 +77,3 @@ Initial styles apply on **Profile** and **Home** (when display name is not a lon
 - Screenshot: Shop **Themes** tab showing Sunset / Frost / Void swatches.  
 - Screenshot: **Avatars** with orb previews.  
 - Release note line: *“8 new neon looks — themes, orbs, and initial styles in the Shop.”*  
-
-## Build commands
-
-```bash
-flutter analyze
-flutter test
-flutter build appbundle --flavor prod --dart-define=FLAVOR=prod --release
-flutter build ipa --flavor prod --dart-define=FLAVOR=prod --release
-```
-
-See `SETUP.md` and `flutter_firebase_store_release_checklist.md` for signing, App Check, and rollout.

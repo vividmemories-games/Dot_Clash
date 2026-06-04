@@ -2,7 +2,8 @@
 
 Nostalgia-powered Dots and Boxes — Flutter mobile game with Firebase, AdMob, and in-app purchases.
 
-Full setup (Firebase, flavors, signing, store checklist): **[SETUP.md](SETUP.md)**
+Full setup (Firebase, flavors, signing, store checklist): **[SETUP.md](SETUP.md)**  
+Active closed-testing release tracker: **[docs/RELEASE_9.md](docs/RELEASE_9.md)**
 
 ---
 

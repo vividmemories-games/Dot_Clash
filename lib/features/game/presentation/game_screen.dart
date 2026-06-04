@@ -53,7 +53,8 @@ class GameScreen extends ConsumerStatefulWidget {
   ConsumerState<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends ConsumerState<GameScreen> {
+class _GameScreenState extends ConsumerState<GameScreen>
+    with WidgetsBindingObserver {
   static const _extraTurnsGrant = 3;
 
   int _hintsLeft = 3;
@@ -73,9 +74,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   /// Deferred campaign settlement after mini-boss post-win spotlight.
   GameState? _pendingSettleState;
 
+  /// Unique owner for match coach-tour [GlobalKey]s (see [CoachTourGameScope]).
+  final Object _gameTourScope = Object();
+
   @override
   void initState() {
     super.initState();
+    CoachTourTargetRegistry.claimGameScope(_gameTourScope);
+    WidgetsBinding.instance.addObserver(this);
     if (widget.config.mode == GameMode.campaign &&
         widget.config.campaignLevelId != null) {
       _bossIntroDismissed = false;
@@ -124,8 +130,25 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      ref.read(gameProvider.notifier).onAppPaused();
+    } else if (state == AppLifecycleState.resumed) {
+      ref.read(gameProvider.notifier).onAppResumed();
+    }
+  }
+
+  @override
   void deactivate() {
-    CoachTourTargetRegistry.releaseGameTargets();
+    CoachTourTargetRegistry.releaseGameScope(_gameTourScope);
     // Provider writes are not allowed during deactivate (mid-build).
     final container = ProviderScope.containerOf(context, listen: false);
     Future.microtask(() {
@@ -472,7 +495,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               canUndo: state.moveHistory.isNotEmpty && !state.isOver,
               onUndo: _onUndo,
               onRestart: () => _confirmNewGame(context),
-              onExit: () => context.go('/home'),
+              onExit: () => _leaveGameRoute(() => context.go('/home')),
               extraTurnsAvailable: showBoosts &&
                   session.hasTurnBudget &&
                   !session.extraTurnsUsed &&
@@ -507,14 +530,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       );
     }
 
-    return Scaffold(
-      backgroundColor: v.scaffold,
-      body: SafeArea(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            body,
-            if (showBossIntro)
+    return CoachTourGameScope(
+      owner: _gameTourScope,
+      child: Scaffold(
+        backgroundColor: v.scaffold,
+        body: SafeArea(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              body,
+              if (showBossIntro)
               BossIntroOverlay(
                 bossName: _campaignLevel?.bossName ?? playerBName,
                 persona: bossPersona,
@@ -532,7 +557,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           ],
         ),
       ),
+      ),
     );
+  }
+
+  void _leaveGameRoute(void Function() navigate) {
+    CoachTourTargetRegistry.releaseAllGameTargets();
+    navigate();
   }
 
   // ── Header ─────────────────────────────────────────────────────────────────
@@ -547,7 +578,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             icon: Icons.home_outlined,
             onTap: () {
               AppHaptics.lightImpact();
-              context.go('/home');
+              _leaveGameRoute(() => context.go('/home'));
             },
           ),
           Expanded(child: _buildTitle()),
@@ -907,6 +938,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final initialCoins = ref.read(profileProvider).valueOrNull?.coins ?? 0;
     final removeAds = ref.read(profileProvider).valueOrNull?.removeAds ?? false;
     final adRewardRouter = ref.read(adRewardRouterProvider);
+    final consumeLifeOnLoss = !_tutorialFreeAttempt;
 
     if (widget.config.isDailyPuzzle) {
       if (humanWon) {
@@ -960,7 +992,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           win: humanWon,
           boxesCaptured: boxesCaptured,
           powerUpRewards: powerUpRewards,
-          consumeLife: !_tutorialFreeAttempt,
+          consumeLife: consumeLifeOnLoss,
         );
         await repo.recordMatch(
           result: humanWon ? MatchResult.win : MatchResult.loss,
@@ -1046,7 +1078,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         labelB: _labelB(),
         onHome: () {
           Navigator.pop(context);
-          context.go('/home');
+          _leaveGameRoute(() => context.go('/home'));
         },
         onPlayAgain: () {
           Navigator.pop(context);

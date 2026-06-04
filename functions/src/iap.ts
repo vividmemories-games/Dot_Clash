@@ -16,6 +16,9 @@ const ALLOWED_PACKAGES = new Set([
 const projectId = process.env.GCLOUD_PROJECT ?? '';
 const isProd = projectId === 'dot-clash-72cc6';
 
+const APPLE_PROD_HOST = 'https://api.storekit.itunes.apple.com';
+const APPLE_SANDBOX_HOST = 'https://api.storekit-sandbox.itunes.apple.com';
+
 interface VerifyRemoveAdsRequest {
   platform: 'ios' | 'android';
   productId: string;
@@ -70,30 +73,77 @@ async function verifyAndroidPurchase(
   }
 }
 
-function applePrivateKey(): string | null {
-  const inline = process.env.APPLE_IAP_PRIVATE_KEY?.replace(/\\n/g, '\n');
-  if (inline) return inline;
-  return null;
+/** Firebase env vars often store the .p8 as one line — normalize to PEM newlines. */
+export function normalizeApplePrivateKey(raw: string): string {
+  let key = raw.trim();
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1).trim();
+  }
+  key = key.replace(/\\n/g, '\n');
+
+  if (key.includes('BEGIN PRIVATE KEY') && !key.includes('\n')) {
+    key = key
+      .replace('-----BEGIN PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----\n')
+      .replace('-----END PRIVATE KEY-----', '\n-----END PRIVATE KEY-----');
+  }
+
+  return key.trim();
 }
 
-function createAppleJwt(): string | null {
+function applePrivateKey(): string | null {
+  const raw = process.env.APPLE_IAP_PRIVATE_KEY;
+  if (!raw?.trim()) return null;
+
+  const key = normalizeApplePrivateKey(raw);
+  if (!key.includes('BEGIN PRIVATE KEY')) {
+    console.error('[IAP] APPLE_IAP_PRIVATE_KEY missing PEM headers');
+    return null;
+  }
+
+  try {
+    crypto.createPrivateKey(key);
+    return key;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[IAP] APPLE_IAP_PRIVATE_KEY is not a valid ES256 key:', message);
+    return null;
+  }
+}
+
+function createAppleJwt(): string {
   const keyId = process.env.APPLE_IAP_KEY_ID;
   const issuerId = process.env.APPLE_IAP_ISSUER_ID;
   const key = applePrivateKey();
-  if (!keyId || !issuerId || !key) return null;
+  if (!keyId || !issuerId || !key) {
+    throw new HttpsError(
+      'failed-precondition',
+      'iOS IAP verification not configured (check APPLE_IAP_KEY_ID, APPLE_IAP_ISSUER_ID, APPLE_IAP_PRIVATE_KEY).',
+    );
+  }
 
-  const now = Math.floor(Date.now() / 1000);
-  return jwt.sign(
-    {
-      iss: issuerId,
-      iat: now,
-      exp: now + 1200,
-      aud: 'appstoreconnect-v1',
-      bid: process.env.APPLE_IAP_BUNDLE_ID ?? 'com.vividmemories.dotclash',
-    },
-    key,
-    { algorithm: 'ES256', keyid: keyId },
-  );
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    return jwt.sign(
+      {
+        iss: issuerId,
+        iat: now,
+        exp: now + 1200,
+        aud: 'appstoreconnect-v1',
+        bid: process.env.APPLE_IAP_BUNDLE_ID ?? 'com.vividmemories.dotclash',
+      },
+      key,
+      { algorithm: 'ES256', keyid: keyId },
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new HttpsError(
+      'failed-precondition',
+      `Apple signing key invalid: ${message}`,
+    );
+  }
 }
 
 function decodeJwsPayload(jws: string): Record<string, unknown> | null {
@@ -111,6 +161,30 @@ function decodeJwsPayload(jws: string): Record<string, unknown> | null {
   }
 }
 
+async function fetchAppleTransaction(
+  transactionId: string,
+  appleJwt: string,
+): Promise<Response> {
+  const prodUrl = `${APPLE_PROD_HOST}/inApps/v1/transactions/${transactionId}`;
+  const prodRes = await fetch(prodUrl, {
+    headers: { Authorization: `Bearer ${appleJwt}` },
+  });
+
+  // TestFlight / sandbox receipts 404 on production API — retry sandbox on prod.
+  if (isProd && (prodRes.status === 404 || prodRes.status === 401)) {
+    const sandboxUrl = `${APPLE_SANDBOX_HOST}/inApps/v1/transactions/${transactionId}`;
+    const sandboxRes = await fetch(sandboxUrl, {
+      headers: { Authorization: `Bearer ${appleJwt}` },
+    });
+    if (sandboxRes.ok) {
+      console.info('[IAP] Verified via App Store sandbox API (TestFlight/sandbox).');
+      return sandboxRes;
+    }
+  }
+
+  return prodRes;
+}
+
 async function verifyIosPurchase(
   verificationData: string,
   localVerificationData: string,
@@ -120,17 +194,16 @@ async function verifyIosPurchase(
     throw new HttpsError('invalid-argument', 'Missing iOS verification data.');
   }
 
-  const appleJwt = createAppleJwt();
-  if (!appleJwt) {
-    if (!isProd) {
+  if (!isProd) {
+    const keyId = process.env.APPLE_IAP_KEY_ID;
+    const issuerId = process.env.APPLE_IAP_ISSUER_ID;
+    if (!keyId || !issuerId || !applePrivateKey()) {
       console.warn('[IAP] iOS verify skipped (dev): APPLE_IAP_* secrets not set');
       return;
     }
-    throw new HttpsError(
-      'failed-precondition',
-      'iOS IAP verification not configured (set APPLE_IAP_KEY_ID, APPLE_IAP_ISSUER_ID, APPLE_IAP_PRIVATE_KEY).',
-    );
   }
+
+  const appleJwt = createAppleJwt();
 
   const payload = decodeJwsPayload(jws);
   const transactionId =
@@ -141,14 +214,7 @@ async function verifyIosPurchase(
     throw new HttpsError('invalid-argument', 'Could not read transaction id from receipt.');
   }
 
-  const host = isProd
-    ? 'https://api.storekit.itunes.apple.com'
-    : 'https://api.storekit-sandbox.itunes.apple.com';
-
-  const url = `${host}/inApps/v1/transactions/${transactionId}`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${appleJwt}` },
-  });
+  const res = await fetchAppleTransaction(transactionId, appleJwt);
 
   if (!res.ok) {
     const body = await res.text();

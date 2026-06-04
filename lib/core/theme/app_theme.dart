@@ -141,10 +141,16 @@ abstract final class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: v.surfaceElevated,
-        contentTextStyle: TextStyle(color: v.textPrimary),
+        contentTextStyle: TextStyle(
+          color: v.textPrimary,
+          fontWeight: FontWeight.w600,
+        ),
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12)),
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: v.playerA.withValues(alpha: 0.85), width: 2),
+        ),
         behavior: SnackBarBehavior.floating,
+        insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       ),
       dividerTheme: DividerThemeData(
         color: v.cardBorder,

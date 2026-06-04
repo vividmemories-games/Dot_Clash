@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -47,6 +48,7 @@ class IapService {
   List<ProductDetails> _products = [];
   Completer<bool>? _pendingPurchase;
   Completer<bool>? _pendingRestore;
+  String? _lastPurchaseError;
 
   List<ProductDetails> get products => List.unmodifiable(_products);
 
@@ -95,17 +97,24 @@ class IapService {
     }
   }
 
+  String? get lastPurchaseError => _lastPurchaseError;
+
   /// Starts Remove Ads purchase. Completes when the store confirms or fails.
   Future<bool> purchaseRemoveAds() async {
+    _lastPurchaseError = null;
     await ensureProductsLoaded();
     final product = removeAdsProduct;
     if (product == null) {
+      _lastPurchaseError = 'Store product not available.';
       debugPrint('[IAP] removeAds product not loaded');
       return false;
     }
 
     if (_pendingPurchase != null) {
-      return _pendingPurchase!.future;
+      if (!_pendingPurchase!.isCompleted) {
+        return _pendingPurchase!.future;
+      }
+      _pendingPurchase = null;
     }
     _pendingPurchase = Completer<bool>();
 
@@ -114,6 +123,7 @@ class IapService {
         purchaseParam: PurchaseParam(productDetails: product),
       );
       if (!started) {
+        _lastPurchaseError = 'Could not open the store purchase sheet.';
         _finishPendingPurchase(false);
         return false;
       }
@@ -173,12 +183,15 @@ class IapService {
         case PurchaseStatus.error:
           debugPrint('[IAP] purchase error: ${purchase.error}');
           if (isRemoveAds) {
+            _lastPurchaseError ??=
+                purchase.error?.message ?? 'Store purchase failed.';
             _finishPendingPurchase(false);
             _finishPendingRestore(false);
           }
           break;
         case PurchaseStatus.canceled:
           if (isRemoveAds) {
+            _lastPurchaseError ??= 'Purchase canceled.';
             _finishPendingPurchase(false);
             _finishPendingRestore(false);
           }
@@ -215,7 +228,12 @@ class IapService {
         localVerificationData:
             purchase.verificationData.localVerificationData,
       );
+    } on FirebaseFunctionsException catch (e) {
+      _lastPurchaseError = e.message ?? e.code;
+      debugPrint('[IAP] verifyRemoveAdsPurchase: ${e.code} ${e.message}');
+      return false;
     } catch (e) {
+      _lastPurchaseError = 'Could not verify purchase with the server.';
       debugPrint('[IAP] verifyRemoveAdsPurchase error: $e');
       return false;
     }

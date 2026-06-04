@@ -1,30 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/dot_clash_visuals.dart';
-import '../../../../features/profile/domain/lives_logic.dart';
 import '../../../../features/profile/domain/progression.dart';
+import '../../../../features/profile/providers/lives_provider.dart';
+import '../../../../features/profile/providers/profile_providers.dart';
+import '../../../../shared/feedback/app_snackbar.dart';
 import '../../../../shared/layout/app_spacing.dart';
 import '../../../../shared/widgets/neon_button.dart';
 
-class LivesRefillSheet extends StatelessWidget {
+class LivesRefillSheet extends ConsumerWidget {
   const LivesRefillSheet({
     super.key,
-    required this.snapshot,
-    required this.coins,
     required this.onBuyLife,
     this.onWatchAd,
   });
 
-  final LivesSnapshot snapshot;
-  final int coins;
   final Future<bool> Function() onBuyLife;
   final Future<bool> Function()? onWatchAd;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final v = context.dc;
     final t = context.txt;
+    final snapshot = ref.watch(livesSnapshotProvider);
+    final coins = ref.watch(profileProvider).valueOrNull?.coins ?? 0;
     final canBuy =
         !snapshot.isFull && coins >= Progression.lifeRefillPriceCoins;
 
@@ -35,12 +36,14 @@ class LivesRefillSheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppSpacing.vGapSM,
-          Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: v.cardBorder,
-              borderRadius: AppSpacing.roundedFull,
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: v.cardBorder,
+                borderRadius: AppSpacing.roundedFull,
+              ),
             ),
           ),
           AppSpacing.vGapMD,
@@ -72,11 +75,9 @@ class LivesRefillSheet extends StatelessWidget {
                 ? () async {
                     final ok = await onBuyLife();
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content:
-                            Text(ok ? 'Life purchased!' : 'Purchase failed.'),
-                      ),
+                    AppSnackBar.show(
+                      context,
+                      ok ? 'Life purchased!' : 'Purchase failed.',
                     );
                   }
                 : null,
@@ -90,12 +91,11 @@ class LivesRefillSheet extends StatelessWidget {
               onPressed: () async {
                 final ok = await onWatchAd!();
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      ok ? 'Life restored!' : 'Ad unavailable or daily cap reached.',
-                    ),
-                  ),
+                AppSnackBar.show(
+                  context,
+                  ok
+                      ? 'Life restored!'
+                      : 'Ad unavailable or daily cap reached.',
                 );
               },
             ),

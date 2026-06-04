@@ -90,6 +90,58 @@ abstract final class CampaignMoveMetrics {
     return maxInSegment;
   }
 
+  /// Boxes the AI claimed in its **most recently completed** control period.
+  ///
+  /// Used for Riposte offers (must be ≥3 on the chain that just ended, not any
+  /// earlier chain in the match). Returns 0 if the AI has not finished a segment
+  /// yet (human still waiting on AI) or never moved.
+  static int lastAiSegmentBoxCount(GameState state, String humanPlayerId) {
+    if (state.moveHistory.isEmpty) return 0;
+
+    final aiId = state.playerIds.firstWhere(
+      (id) => id != humanPlayerId,
+      orElse: () => state.playerIds.last,
+    );
+
+    var current = GameState.initial(
+      rows: state.rows,
+      cols: state.cols,
+      playerIds: state.playerIds,
+      disabledCells: state.disabledCells,
+    );
+
+    var segmentBoxes = 0;
+    var inAiSegment = false;
+    var lastEndedAiSegment = 0;
+
+    for (final edge in state.moveHistory) {
+      final isAiTurn = current.currentPlayerId == aiId;
+
+      if (isAiTurn && !inAiSegment) {
+        segmentBoxes = 0;
+        inAiSegment = true;
+      } else if (!isAiTurn && inAiSegment) {
+        lastEndedAiSegment = segmentBoxes;
+        inAiSegment = false;
+        segmentBoxes = 0;
+      }
+
+      final boxesBefore = current.claimedBoxes.length;
+      current = GameRules.applyMove(current, edge);
+      final boxesAfter = current.claimedBoxes.length;
+
+      if (isAiTurn) {
+        segmentBoxes += boxesAfter - boxesBefore;
+      }
+    }
+
+    if (inAiSegment && current.currentPlayerId == humanPlayerId) {
+      lastEndedAiSegment = segmentBoxes;
+    }
+
+    return lastEndedAiSegment;
+  }
+
   /// Move index in [GameState.moveHistory] where the AI's most recent control
   /// period began. Rewinding to this index restores the board to just before
   /// that AI run (used by Riposte).

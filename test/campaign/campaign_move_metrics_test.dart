@@ -157,6 +157,34 @@ void main() {
     });
   });
 
+  group('CampaignMoveMetrics.lastAiSegmentBoxCount', () {
+    test('returns boxes from the latest completed AI segment', () {
+      final state = _replay([
+        'H_0_0', 'H_1_0', 'H_0_1', 'H_1_1', 'V_0_0', 'V_0_2',
+        'V_1_0', 'V_0_1', // AI closes 2 boxes
+        'H_2_0', // human to play — segment complete
+      ]);
+
+      expect(CampaignMoveMetrics.lastAiSegmentBoxCount(state, _human), 2);
+      expect(CampaignMoveMetrics.aiMaxChainBoxes(state, _human), 2);
+    });
+
+    test('is never greater than aiMaxChainBoxes', () {
+      final state = _replay([
+        'H_0_0', 'H_1_0', 'H_0_1', 'H_1_1', 'V_0_0', 'V_0_2',
+        'V_1_0', 'V_0_1', 'H_2_0',
+      ]);
+      final last = CampaignMoveMetrics.lastAiSegmentBoxCount(state, _human);
+      final max = CampaignMoveMetrics.aiMaxChainBoxes(state, _human);
+      expect(last, lessThanOrEqualTo(max));
+    });
+
+    test('returns 0 while AI segment is still in progress', () {
+      final state = _replay(['H_0_0', 'H_1_0']);
+      expect(CampaignMoveMetrics.lastAiSegmentBoxCount(state, _human), 0);
+    });
+  });
+
   group('CampaignMoveMetrics.lastAiControlPeriodStartMoveIndex', () {
     test('returns null when AI never moved', () {
       final state = _replay(['H_0_0']);

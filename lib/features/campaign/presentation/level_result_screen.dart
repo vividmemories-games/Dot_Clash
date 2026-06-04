@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../../core/theme/dot_clash_visuals.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../features/profile/providers/lives_provider.dart';
+import '../../../features/tutorial/providers/coach_tour_provider.dart';
 import '../../../services/ads/ad_reward_router.dart';
+import '../../../shared/feedback/app_snackbar.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/widgets/neon_button.dart';
 import '../../../shared/widgets/neon_card.dart';
@@ -180,16 +181,15 @@ class LevelResultPanel extends ConsumerWidget {
                     .read(adRewardRouterProvider)
                     .showRewardedRetry();
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      ok
-                          ? 'Life refunded — try again!'
-                          : 'Retry ad unavailable.',
-                    ),
-                  ),
+                AppSnackBar.show(
+                  context,
+                  ok
+                      ? 'Life refunded — try again!'
+                      : 'Retry ad unavailable.',
                 );
-                if (ok) context.pop();
+                if (ok) {
+                  CampaignPlayNavigation.exitToReplayLevel(context, level.id);
+                }
               },
             ),
           if (!humanWon) AppSpacing.vGapSM,
@@ -197,11 +197,25 @@ class LevelResultPanel extends ConsumerWidget {
             label: 'TRY AGAIN',
             color: v.red,
             width: double.infinity,
-            onPressed: () => context.pop(),
+            onPressed: () => _tryReplayLevel(context, ref, level),
           ),
         ],
       ),
     );
+  }
+
+  static void _tryReplayLevel(
+    BuildContext context,
+    WidgetRef ref,
+    CampaignLevel level,
+  ) {
+    final tutorialFree = ref.read(tutorialFreeAttemptProvider(level.id));
+    final lives = ref.read(livesSnapshotProvider);
+    if (lives.effectiveLives <= 0 && !tutorialFree) {
+      AppSnackBar.show(context, 'No lives left. Wait for refill or buy one.');
+      return;
+    }
+    CampaignPlayNavigation.exitToReplayLevel(context, level.id);
   }
 
   static String? _nextLevelId(CampaignLevel level) {

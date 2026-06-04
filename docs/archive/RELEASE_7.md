@@ -1,4 +1,8 @@
-# Release 7 — Security + beta hotfixes
+# Release 7 — Security + beta hotfixes (archived)
+
+**Status:** Retired 2026-06-04. Shipped through builds **1.1.0+7** / **+8**. Active release tracking: [`../RELEASE_9.md`](../RELEASE_9.md).
+
+---
 
 ## Done before Release 7
 
@@ -26,7 +30,7 @@
 
 ## Release 7 scope
 
-See plan: [`.cursor/plans/release_7_security_133b2307.plan.md`](../.cursor/plans/release_7_security_133b2307.plan.md)
+See plan: [`.cursor/plans/release_7_security_133b2307.plan.md`](../../.cursor/plans/release_7_security_133b2307.plan.md)
 
 ### Shipped (backend + client in repo)
 
@@ -51,13 +55,23 @@ Android: grant the default Functions service account **View financial data** in 
 
 Dev project skips store verification when secrets/API are missing.
 
-### Still to do
+### Crashlytics (prod `dot-clash-72cc6`, ~14 days — 2026-06-03)
 
-- Ship Release 7 app build to TestFlight / Play closed testing
-- Confirm Norway pricing tier in App Store Connect
-- `npm audit` in `functions/` (low priority)
+| Priority | Issue | Platform | Notes |
+|----------|--------|----------|--------|
+| P0 | `cloud_firestore/permission-denied` | Android (160), iOS (48) | Often first second of session — old builds or App Check / rules mismatch; Release 7 client avoids economy Firestore writes on prod |
+| P1 | `Cannot use "ref" after disposed` in `_pushCampaignCompleteScreen.runSave` | iOS (35), Android (32) | Campaign exit race — fixed in **1.1.0+8** |
+| P2 | `firebase_functions/unauthenticated` | Android | Callable/App Check |
+| P2 | `firebase_auth/network-request-failed` | Android | Transient |
 
-## Deploy
+### Remove Ads (TestFlight / closed testing)
+
+**Prod function logs (`verifyRemoveAdsPurchase`):**
+
+- `secretOrPrivateKey must be an asymmetric key when using ES256` — single-line PEM in env. Fixed in `functions/src/iap.ts` via `normalizeApplePrivateKey()` + TestFlight sandbox API fallback.
+- Client **1.1.0+8+** shows server error text in shop snackbar.
+
+## Deploy (historical)
 
 ```bash
 firebase use dev
@@ -67,4 +81,4 @@ firebase use prod
 firebase deploy --only functions
 ```
 
-Prod functions were deployed on 2026-06-02 with the callables above.
+Prod functions deployed 2026-06-02; IAP key fix deployed 2026-06-04.

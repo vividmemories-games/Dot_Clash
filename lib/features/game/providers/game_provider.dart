@@ -8,6 +8,8 @@ import '../../../shared/feedback/app_haptics.dart';
 import '../../ai/ai_player.dart';
 import '../../campaign/domain/campaign_move_metrics.dart';
 import '../../powerups/domain/power_up.dart';
+import '../../settings/providers/settings_provider.dart';
+import '../../tutorial/providers/coach_tour_provider.dart';
 import '../domain/ai_pacing.dart';
 import '../domain/models/game_state.dart';
 import '../domain/models/match_session.dart';
@@ -34,6 +36,17 @@ class TurnTimerNotifier extends StateNotifier<int> {
   void reset() {
     _timer?.cancel();
     state = AppEnv.turnTimerSeconds;
+    _startTicking();
+  }
+
+  /// Restarts the countdown without resetting [state] (e.g. after app foreground).
+  void resume() {
+    _timer?.cancel();
+    if (state <= 0) return;
+    _startTicking();
+  }
+
+  void _startTicking() {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (state > 0) {
         state--;
@@ -155,10 +168,35 @@ class GameNotifier extends StateNotifier<GameState> {
 
   void _checkRiposteOffer() {
     if (state.isOver) return;
-    final aiChain = CampaignMoveMetrics.aiMaxChainBoxes(state, _humanId);
-    if (aiChain >= 3 && !_session.riposteUsed) {
+    final lastChain =
+        CampaignMoveMetrics.lastAiSegmentBoxCount(state, _humanId);
+    if (lastChain >= 3 && !_session.riposteUsed) {
       _setSession(_session.copyWith(pendingRiposteOffer: true));
     }
+  }
+
+  /// Pauses turn timer and cancels scheduled AI / handoff while app is backgrounded.
+  void onAppPaused() {
+    _ref.read(turnTimerProvider.notifier).stop();
+    _cancelAiSchedule();
+    _cancelHandoff();
+  }
+
+  /// Restores timer and AI scheduling after returning to foreground.
+  void onAppResumed() {
+    if (state.isOver || _session.outOfTurnsPending) return;
+
+    final showTimer = _ref.read(settingsProvider).showTimer;
+    final tourPaused = _ref.read(matchCoachTourProvider).matchPaused;
+    if (showTimer && !tourPaused && state.currentPlayerId == _humanId) {
+      final secondsLeft = _ref.read(turnTimerProvider);
+      if (secondsLeft <= 0) {
+        onTurnTimedOut();
+      } else {
+        _ref.read(turnTimerProvider.notifier).resume();
+      }
+    }
+    _maybeScheduleAiMove();
   }
 
   void clearRiposteOffer() {

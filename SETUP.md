@@ -342,7 +342,7 @@ Cloud Functions use the project’s **default compute service account** and Appl
 4. Check [Firebase Functions logs](https://console.firebase.google.com/project/dot-clash-72cc6/functions/logs) for `verifyRemoveAdsPurchase` — success, not `IAP verification not configured` or `Play verification failed`.
 5. In Firestore, profile should show `removeAds: true` (client cannot set this via rules).
 
-**Norway / USD price on device:** localized price comes from the store (`ProductDetails.price`). Confirm product pricing in App Store Connect / Play Console and that the tester’s Apple ID region matches (see `docs/RELEASE_7.md`).
+**Norway / USD price on device:** localized price comes from the store (`ProductDetails.price`). Confirm product pricing in App Store Connect / Play Console and that the tester’s Apple ID region matches (see `docs/RELEASE_9.md`).
 
 ---
 
