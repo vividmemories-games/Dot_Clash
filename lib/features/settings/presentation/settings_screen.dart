@@ -2,10 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../core/app/package_info_provider.dart';
+import '../../../core/env/app_env.dart';
 import '../../../core/legal/legal_links.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/router/auth_router_refresh.dart';
@@ -16,6 +20,7 @@ import '../../../features/auth/providers/auth_provider.dart';
 import '../../../services/ads/ad_consent_service.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/widgets/auth_provider_leading.dart';
+import '../../../shared/feedback/app_snackbar.dart';
 import '../../../shared/widgets/neon_button.dart';
 import '../../../shared/widgets/neon_card.dart';
 import '../../tutorial/data/ftue_preferences.dart';
@@ -532,6 +537,15 @@ class _HelpLegalSectionState extends ConsumerState<_HelpLegalSection> {
     });
   }
 
+  Future<void> _showAboutSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => const _AboutSheet(),
+    );
+  }
+
   Future<void> _showTermsAndPrivacySheet() async {
     final firebaseOn = ref.read(firebaseConfiguredProvider);
     await showModalBottomSheet<void>(
@@ -712,6 +726,13 @@ class _HelpLegalSectionState extends ConsumerState<_HelpLegalSection> {
               ),
               const Divider(height: 1),
               ListTile(
+                leading: Icon(Icons.info_outline, color: v.gold),
+                title: const Text('About'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _showAboutSheet,
+              ),
+              const Divider(height: 1),
+              ListTile(
                 leading: Icon(Icons.shield_outlined, color: v.playerA),
                 title: const Text('Terms and Privacy'),
                 trailing: const Icon(Icons.chevron_right),
@@ -721,6 +742,164 @@ class _HelpLegalSectionState extends ConsumerState<_HelpLegalSection> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _AboutSheet extends ConsumerWidget {
+  const _AboutSheet();
+
+  static String _environmentLabel() {
+    if (AppEnv.isDev) return 'Development';
+    if (AppEnv.betaAds) return 'Production (closed testing — test ads)';
+    return 'Production';
+  }
+
+  static String _copyLine(PackageInfo info) {
+    final env = AppEnv.flavor;
+    final beta = AppEnv.betaAds ? ' beta_ads' : '';
+    return '${info.appName} ${info.version} (${info.buildNumber}) $env$beta';
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final v = context.dc;
+    final t = context.txt;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final infoAsync = ref.watch(packageInfoProvider);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: v.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(color: v.cardBorder),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        AppSpacing.md + bottomInset,
+      ),
+      child: infoAsync.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.all(AppSpacing.xl),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (_, __) => Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Text(
+            'Could not load app info.',
+            style: t.body.copyWith(color: v.textSecondary),
+          ),
+        ),
+        data: (info) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: v.cardBorder,
+                    borderRadius: AppSpacing.roundedFull,
+                  ),
+                ),
+              ),
+              Text('ABOUT', style: t.scoreLabel),
+              AppSpacing.vGapSM,
+              NeonCard(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                child: Column(
+                  children: [
+                    _AboutRow(
+                      label: 'App',
+                      value: info.appName,
+                    ),
+                    _AboutRow(
+                      label: 'Version',
+                      value: info.version,
+                    ),
+                    _AboutRow(
+                      label: 'Build',
+                      value: info.buildNumber,
+                    ),
+                    _AboutRow(
+                      label: 'Environment',
+                      value: _environmentLabel(),
+                    ),
+                    _AboutRow(
+                      label: 'Package',
+                      value: info.packageName,
+                      mono: true,
+                    ),
+                  ],
+                ),
+              ),
+              AppSpacing.vGapMD,
+              NeonButton(
+                label: 'Copy for support',
+                icon: Icons.copy_outlined,
+                onPressed: () async {
+                  await Clipboard.setData(
+                    ClipboardData(text: _copyLine(info)),
+                  );
+                  if (context.mounted) {
+                    AppSnackBar.show(context, 'Copied version info');
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _AboutRow extends StatelessWidget {
+  const _AboutRow({
+    required this.label,
+    required this.value,
+    this.mono = false,
+  });
+
+  final String label;
+  final String value;
+  final bool mono;
+
+  @override
+  Widget build(BuildContext context) {
+    final v = context.dc;
+    final t = context.txt;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 108,
+            child: Text(
+              label,
+              style: t.bodySmall.copyWith(color: v.textSecondary),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: (mono ? t.bodySmall : t.body).copyWith(
+                fontFamily: mono ? 'monospace' : null,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

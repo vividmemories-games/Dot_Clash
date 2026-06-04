@@ -573,6 +573,8 @@ cp android/key.properties.example android/key.properties
 
 Release AABs use that upload key when `android/key.properties` exists; otherwise Gradle falls back to debug signing with a warning.
 
+**New Mac?** Back up the keystore and passwords first — see [docs/MIGRATION_RUNBOOK.md](../docs/MIGRATION_RUNBOOK.md).
+
 ### Android
 ```bash
 # Prod release AAB (upload to Play Store — public launch, real ads)

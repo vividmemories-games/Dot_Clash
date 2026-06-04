@@ -1,6 +1,6 @@
 # Release 9 — Closed testing (TestFlight / Play)
 
-**App version:** `1.1.0+9` (`pubspec.yaml`)  
+**App version:** `1.2.1+10` (`pubspec.yaml`)  
 **Track:** Prod package + Firebase (`dot-clash-72cc6`), `BETA_ADS=true` (test ads)  
 **Prior release docs:** [archive/RELEASE_6.md](archive/RELEASE_6.md), [archive/RELEASE_7.md](archive/RELEASE_7.md) (retired)
 
@@ -35,8 +35,9 @@
 
 ### Done (R9)
 
-- All five tester items above (build **+9**)
-- Build number **+9** for closed-testing upload
+- All five tester items above
+- Build **+10** (`1.2.1`) — includes About screen for version/build visibility
+- Settings → Help & Legal → **About** (version, build, environment, copy for support)
 - Release docs: R6/R7 archived
 
 ---
@@ -45,7 +46,7 @@
 
 ```bash
 cd "/path/to/Dot_Clash"
-# Bump version in pubspec.yaml before each store upload (currently 1.1.0+9)
+# Bump version in pubspec.yaml before each store upload (currently 1.2.1+10)
 
 bash scripts/build_closed_testing.sh          # both
 bash scripts/build_closed_testing.sh android
@@ -62,18 +63,18 @@ bash scripts/build_closed_testing.sh ios
 - [ ] `pubspec.yaml` build number incremented
 - [ ] Prod functions deployed if backend changed: `firebase deploy --only functions -P dot-clash-72cc6`
 - [ ] Smoke: campaign loss → Try Again (fresh board); lives sheet updates on buy; minimize app (timer pauses); riposte only after 3+ chain
-- [ ] Crashlytics: filter **1.1.0 (9)** after rollout
+- [ ] Crashlytics: filter **1.2.1 (10)** after rollout
 
 ---
 
 ## Crashlytics watch (prod)
 
-After **+9** is in testers’ hands, confirm these drop vs **1.1.0 (7)**:
+After **+10** is in testers’ hands, confirm these drop vs older builds (e.g. **1.1.0 (7–9)**):
 
 - `ref` after disposed — `game_screen.dart` `runSave`
 - `permission-denied` — should fall as old builds age out (R7+ client uses callables on prod)
 
-Firebase Console → Crashlytics → filter version **1.1.0 (9)**.
+Firebase Console → Crashlytics → filter version **1.2.1 (10)**.
 
 ---
 

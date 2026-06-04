@@ -1,7 +1,7 @@
 name: dot_clash
 description: "The childhood notebook game becomes a battle arena."
 publish_to: 'none'
-version: 1.1.0+9
+version: 1.2.1+10
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -38,6 +38,7 @@ dependencies:
   flutter_svg: ^2.3.0
   firebase_app_check: ^0.4.4+1
   url_launcher: ^6.3.2
+  package_info_plus: ^8.3.0
 
 dev_dependencies:
   flutter_test:
