@@ -385,3 +385,18 @@ export const settleQuickMatch = onCall(callableOptions, async (request) => {
     return { success: true };
   });
 });
+
+const projectId = process.env.GCLOUD_PROJECT ?? '';
+
+/** Dev-only: clears daily claim cooldown for QA on simulators. */
+export const devResetDailyClaim = onCall(callableOptions, async (request) => {
+  if (projectId !== 'dot-clash-dev') {
+    throw new HttpsError('permission-denied', 'Dev project only.');
+  }
+  const uid = assertAuth(request);
+  await profileRef(uid).update({
+    lastDailyClaimAt: FieldValue.delete(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  return { success: true };
+});

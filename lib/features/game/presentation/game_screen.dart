@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/dot_clash_visuals.dart';
 import '../../../shared/feedback/app_haptics.dart';
+import '../../../shared/feedback/app_snackbar.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/widgets/neon_tag.dart';
 import '../../campaign/data/campaign_content_repository.dart';
@@ -15,6 +16,7 @@ import '../../campaign/domain/campaign_level.dart';
 import '../../campaign/domain/campaign_move_metrics.dart';
 import '../../campaign/domain/level_evaluator.dart';
 import '../../campaign/presentation/campaign_level_complete_screen.dart';
+import '../../campaign/providers/campaign_play_ready_provider.dart';
 import '../../campaign/presentation/widgets/campaign_objectives_bar.dart';
 import '../../../services/analytics/analytics_service.dart';
 import '../../profile/data/profile_repository.dart';
@@ -40,6 +42,7 @@ import 'widgets/turn_ambient_backdrop.dart';
 import 'widgets/turn_countdown_bar.dart';
 import '../../powerups/domain/power_up_catalog.dart';
 import '../../tutorial/domain/coach_tour_step.dart';
+import '../../tutorial/domain/coach_tour_catalog.dart';
 import '../../tutorial/presentation/coach_tour_target.dart';
 import '../../tutorial/presentation/spotlight_overlay.dart';
 import '../../tutorial/providers/coach_tour_provider.dart';
@@ -74,6 +77,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
   /// Deferred campaign settlement after mini-boss post-win spotlight.
   GameState? _pendingSettleState;
 
+  /// Prevents pushing two victory overlays if settlement fires twice.
+  bool _campaignResultPushed = false;
+
+  /// True after [gameConfigProvider] matches [widget.config] (Riverpod-safe).
+  bool _configSynced = false;
+
   /// Unique owner for match coach-tour [GlobalKey]s (see [CoachTourGameScope]).
   final Object _gameTourScope = Object();
 
@@ -86,25 +95,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
         widget.config.campaignLevelId != null) {
       _bossIntroDismissed = false;
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      ref.read(gameConfigProvider.notifier).state = widget.config;
-      ref.read(adRewardRouterProvider).resetMatchRescueFlag();
-      final campaignLevelId = widget.config.campaignLevelId;
-      if (widget.config.mode == GameMode.campaign && campaignLevelId != null) {
-        _tutorialFreeAttempt = ref.read(
-          tutorialFreeAttemptProvider(campaignLevelId),
-        );
-        await ref.read(matchCoachTourProvider.notifier).startSession(
-              campaignLevelId,
-            );
-      }
-      final tourPaused = ref.read(matchCoachTourProvider).matchPaused;
-      if (tourPaused) {
-        ref.read(turnTimerProvider.notifier).stop();
-      } else if (ref.read(settingsProvider).showTimer) {
-        ref.read(turnTimerProvider.notifier).reset();
-      }
-    });
+    // Riverpod forbids provider writes in initState; apply after build completes.
+    Future(() => _syncGameConfig());
     final campaignLevelId = widget.config.campaignLevelId;
     if (widget.config.mode == GameMode.campaign && campaignLevelId != null) {
       CampaignContentRepository.instance.levelById(campaignLevelId).then((level) {
@@ -127,6 +119,40 @@ class _GameScreenState extends ConsumerState<GameScreen>
         }
       });
     }
+  }
+
+  Future<void> _syncGameConfig() async {
+    if (!mounted) return;
+    ref.read(gameConfigProvider.notifier).state = widget.config;
+    ref.read(adRewardRouterProvider).resetMatchRescueFlag();
+    if (!mounted) return;
+    setState(() => _configSynced = true);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final levelId = widget.config.campaignLevelId;
+      final gameState = ref.read(gameProvider);
+      if (widget.config.mode == GameMode.campaign &&
+          levelId != null &&
+          !gameState.isOver) {
+        ref.read(campaignPlayReadyProvider.notifier).state = levelId;
+      }
+      final campaignLevelId = widget.config.campaignLevelId;
+      if (widget.config.mode == GameMode.campaign && campaignLevelId != null) {
+        _tutorialFreeAttempt = ref.read(
+          tutorialFreeAttemptProvider(campaignLevelId),
+        );
+        await ref.read(matchCoachTourProvider.notifier).startSession(
+              campaignLevelId,
+            );
+      }
+      final tourPaused = ref.read(matchCoachTourProvider).matchPaused;
+      if (tourPaused) {
+        ref.read(turnTimerProvider.notifier).stop();
+      } else if (ref.read(settingsProvider).showTimer) {
+        ref.read(turnTimerProvider.notifier).reset();
+      }
+    });
   }
 
   @override
@@ -162,6 +188,13 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (!_configSynced) {
+      return Scaffold(
+        backgroundColor: context.dc.scaffold,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final state = ref.watch(gameProvider);
     final session = ref.watch(matchSessionProvider);
     final secondsLeft = ref.watch(turnTimerProvider);
@@ -697,17 +730,46 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
   // ── Boosts & crisis modals ─────────────────────────────────────────────────
 
+  void _showBoostMessage(String message) {
+    if (!mounted) return;
+    AppSnackBar.show(context, message);
+  }
+
   Future<void> _onBoostTap(PowerUpType type) async {
     final repo = ref.read(profileRepositoryProvider);
     final game = ref.read(gameProvider.notifier);
     final session = ref.read(matchSessionProvider);
+    final state = ref.read(gameProvider);
+    final humanId = state.playerIds[0];
+    final inventory =
+        ref.read(profileProvider).valueOrNull?.powerUpInventory ?? const {};
 
     if (type == PowerUpType.hold) {
-      if (session.holdUsed) return;
-      final ok = await repo.consumePowerUp(PowerUpType.hold.id);
-      if (!ok) return;
-      await game.useHold();
+      if (session.holdUsed) {
+        _showBoostMessage('Hold already used this match.');
+        return;
+      }
+      if ((inventory[PowerUpType.hold.id] ?? 0) <= 0) {
+        _showBoostMessage('No Hold boosts in inventory.');
+        return;
+      }
+      if (state.currentPlayerId != humanId) {
+        _showBoostMessage('Use Hold on your turn.');
+        return;
+      }
+      final applied = await game.useHold();
+      if (!applied) {
+        _showBoostMessage('Hold could not be used right now.');
+        return;
+      }
+      final consumed = await repo.consumePowerUp(PowerUpType.hold.id);
+      if (!consumed) {
+        game.revertHold();
+        _showBoostMessage('Could not use Hold. Try again.');
+        return;
+      }
       ref.read(matchCoachTourProvider.notifier).advanceNext();
+      _showBoostMessage('Hold active — rival\'s next turn skipped.');
       return;
     }
 
@@ -735,9 +797,17 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
     if (type == PowerUpType.extraTurns) {
       if (session.extraTurnsUsed || !session.hasTurnBudget) return;
-      final ok = await repo.consumePowerUp(PowerUpType.extraTurns.id);
-      if (!ok) return;
+      if ((inventory[PowerUpType.extraTurns.id] ?? 0) <= 0) {
+        _showBoostMessage('No Extra Turns boosts in inventory.');
+        return;
+      }
+      final consumed = await repo.consumePowerUp(PowerUpType.extraTurns.id);
+      if (!consumed) {
+        _showBoostMessage('Could not use Extra Turns. Try again.');
+        return;
+      }
       game.addTurnsFromBoost(_extraTurnsGrant);
+      _showBoostMessage('+$_extraTurnsGrant turns added.');
     }
   }
 
@@ -930,6 +1000,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
     GameState state,
     CampaignLevel level,
   ) async {
+    if (_campaignResultPushed) return;
+    _campaignResultPushed = true;
+
     final levelId = level.id;
     final humanId = state.playerIds[0];
     final humanWon = state.winnerId == humanId;
@@ -1007,7 +1080,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
           isBoss: level.isBoss,
           humanWon: humanWon,
         );
-        unawaited(adRewardRouter.handleMatchFinished(removeAds: removeAds));
+        if (!CoachTourCatalog.isCampaignFtueLevel(levelId)) {
+          unawaited(adRewardRouter.handleMatchFinished(removeAds: removeAds));
+        }
       } catch (e, st) {
         await AnalyticsService.instance.recordError(e, st);
         rethrow;
@@ -1016,7 +1091,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
     if (!context.mounted) return;
 
-    Navigator.of(context).push(
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(
         fullscreenDialog: true,
         builder: (_) => CampaignLevelCompleteScreen(

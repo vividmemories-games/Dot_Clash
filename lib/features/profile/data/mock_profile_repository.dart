@@ -136,6 +136,12 @@ class MockProfileRepository implements ProfileRepository {
   }
 
   @override
+  Future<bool> devResetDailyClaim() async {
+    _emit(_profile.copyWith(clearLastDailyClaimAt: true));
+    return true;
+  }
+
+  @override
   Future<bool> grantLifeFromAd() async {
     return _grantFreeLife();
   }

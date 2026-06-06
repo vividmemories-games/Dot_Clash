@@ -196,8 +196,14 @@ CustomTransitionPage<void> _campaignGamePage(
   String levelId, {
   required bool isDaily,
 }) {
+  final replayNonce = state.uri.queryParameters['r'] ?? '';
   return CustomTransitionPage<void>(
-    key: state.pageKey,
+    // go_router's default pageKey is the route pattern (`/campaign/play/:levelId`),
+    // so level-to-level navigation must key by [levelId] (and replay nonce) or
+    // [GameScreen] state sticks — see docs/RELEASES.md (Release 12).
+    key: ValueKey(
+      'campaign-play-$levelId$replayNonce${isDaily ? '-daily' : ''}',
+    ),
     child: FutureBuilder<CampaignLevel?>(
       future: CampaignContentRepository.instance.levelById(levelId),
       builder: (context, snap) {
@@ -224,7 +230,7 @@ CustomTransitionPage<void> _campaignGamePage(
                 disabledCells: level.disabledCells,
                 turnBudget: turnBudget,
               );
-        return GameScreen(config: config);
+        return GameScreen(key: ValueKey(level.id), config: config);
       },
     ),
     transitionDuration: const Duration(milliseconds: 280),

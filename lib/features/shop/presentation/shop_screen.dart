@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/env/app_env.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/dot_clash_visuals.dart';
 import '../../../features/home/presentation/widgets/lives_refill_sheet.dart';
@@ -15,7 +16,9 @@ import '../../../features/profile/domain/lives_logic.dart';
 import '../../../features/profile/domain/progression.dart';
 import '../../../features/profile/providers/lives_provider.dart';
 import '../../../features/profile/providers/profile_providers.dart';
+import '../../../shared/feedback/app_haptics.dart';
 import '../../../shared/layout/app_spacing.dart';
+import '../../../shared/navigation/main_shell_swipe.dart';
 import '../../../shared/widgets/equipped_avatar.dart';
 import '../../../shared/widgets/initial_skin_style.dart';
 import '../../../shared/widgets/neon_card.dart';
@@ -23,31 +26,68 @@ import '../../../services/ads/ad_reward_router.dart';
 import '../../../services/analytics/analytics_service.dart';
 import '../../../services/iap/iap_service.dart';
 
+/// True while any shop coin purchase / daily claim is awaiting the server.
+final shopPurchaseInFlightProvider = StateProvider<bool>((ref) => false);
+
 String _formatLifeTimer(Duration duration) {
   final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
   final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
   return '$minutes:$seconds';
 }
 
+String _formatDailyCooldown(Duration duration) {
+  if (duration <= Duration.zero) return 'now';
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60);
+  if (hours > 0) return '${hours}h ${minutes}m';
+  return '${minutes}m';
+}
+
+bool _isDailyClaimAvailable(DateTime? lastDailyClaimAt) {
+  if (lastDailyClaimAt == null) return true;
+  return DateTime.now().difference(lastDailyClaimAt) >= const Duration(hours: 24);
+}
+
+Duration _dailyClaimCooldownRemaining(DateTime? lastDailyClaimAt) {
+  if (lastDailyClaimAt == null) return Duration.zero;
+  const window = Duration(hours: 24);
+  final elapsed = DateTime.now().difference(lastDailyClaimAt);
+  if (elapsed >= window) return Duration.zero;
+  return window - elapsed;
+}
+
 Future<void> _showShopBoolResult(
+  WidgetRef ref,
   BuildContext context, {
   required Future<bool> Function() purchase,
   required String successMessage,
   String failureMessage = 'Not enough coins.',
   String errorMessage = 'Couldn\'t connect. Try again.',
 }) async {
+  if (ref.read(shopPurchaseInFlightProvider)) return;
+  ref.read(shopPurchaseInFlightProvider.notifier).state = true;
+  AppHaptics.lightImpact();
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(successMessage),
+      duration: const Duration(seconds: 2),
+    ),
+  );
   try {
     final ok = await purchase();
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ok ? successMessage : failureMessage)),
-    );
+    if (!ok) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
+    }
   } catch (e, st) {
     unawaited(AnalyticsService.instance.recordError(e, st));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(errorMessage)),
-    );
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(SnackBar(content: Text(errorMessage)));
+  } finally {
+    ref.read(shopPurchaseInFlightProvider.notifier).state = false;
   }
 }
 
@@ -67,6 +107,7 @@ class ShopScreen extends ConsumerWidget {
     final livesController = ref.watch(livesControllerProvider);
     final removeAdsProductAsync = ref.watch(removeAdsProductProvider);
     final iap = ref.read(iapServiceProvider);
+    final purchaseInFlight = ref.watch(shopPurchaseInFlightProvider);
 
     void openLivesSheet() {
       showModalBottomSheet<void>(
@@ -126,9 +167,12 @@ class ShopScreen extends ConsumerWidget {
                     ),
                     const _ShopTabBar(labels: _tabLabels),
                     Expanded(
-                      child: TabBarView(
-                        children: [
+                      child: ShopOuterSwipeBridge(
+                        child: TabBarView(
+                          children: [
                           _CosmeticCatalogTab(
+                            ref: ref,
+                            purchaseInFlight: purchaseInFlight,
                             title: 'CHOOSE YOUR THEME',
                             subtitle:
                                 'Personalize your matches. Only you can see your theme.',
@@ -141,6 +185,8 @@ class ShopScreen extends ConsumerWidget {
                             onEquip: (item) => repo.equipTheme(item.id),
                           ),
                           _CosmeticCatalogTab(
+                            ref: ref,
+                            purchaseInFlight: purchaseInFlight,
                             title: 'CHOOSE YOUR AVATAR',
                             subtitle:
                                 'Show off on the home screen and in matches.',
@@ -153,6 +199,8 @@ class ShopScreen extends ConsumerWidget {
                             onEquip: (item) => repo.equipAvatar(item.id),
                           ),
                           _CosmeticCatalogTab(
+                            ref: ref,
+                            purchaseInFlight: purchaseInFlight,
                             title: 'CHOOSE YOUR INITIAL',
                             subtitle:
                                 'Your letter on the scoreboard during play.',
@@ -167,8 +215,11 @@ class ShopScreen extends ConsumerWidget {
                             onEquip: (item) => repo.equipInitialSkin(item.id),
                           ),
                           _BoostsAndStoreTab(
+                            ref: ref,
+                            purchaseInFlight: purchaseInFlight,
                             inventory: profile.powerUpInventory,
                             coins: profile.coins,
+                            lastDailyClaimAt: profile.lastDailyClaimAt,
                             snapshot: livesSnapshot,
                             removeAds: profile.removeAds,
                             removeAdsPrice:
@@ -183,6 +234,9 @@ class ShopScreen extends ConsumerWidget {
                                 .read(adRewardRouterProvider)
                                 .showRewardedLifeAd(),
                             onClaimDaily: () => repo.claimDaily(),
+                            onDevResetDaily: AppEnv.isDev
+                                ? () => repo.devResetDailyClaim()
+                                : null,
                             onWatchAdForCoins: () => ref
                                 .read(adRewardRouterProvider)
                                 .showRewardedShopCoins(),
@@ -196,6 +250,7 @@ class ShopScreen extends ConsumerWidget {
                             onRestorePurchases: () => iap.restorePurchases(),
                           ),
                         ],
+                        ),
                       ),
                     ),
                   ],
@@ -209,7 +264,7 @@ class ShopScreen extends ConsumerWidget {
   }
 }
 
-class _ShopHeader extends StatelessWidget {
+class _ShopHeader extends StatefulWidget {
   const _ShopHeader({
     required this.coins,
     required this.livesSnapshot,
@@ -223,11 +278,54 @@ class _ShopHeader extends StatelessWidget {
   final VoidCallback onLivesTap;
 
   @override
+  State<_ShopHeader> createState() => _ShopHeaderState();
+}
+
+class _ShopHeaderState extends State<_ShopHeader>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _coinPulse;
+  late final Animation<double> _coinScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _coinPulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    _coinScale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1, end: 1.13),
+        weight: 35,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.13, end: 1),
+        weight: 65,
+      ),
+    ]).animate(CurvedAnimation(parent: _coinPulse, curve: Curves.easeOut));
+  }
+
+  @override
+  void didUpdateWidget(_ShopHeader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.coins != oldWidget.coins) {
+      _coinPulse.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _coinPulse.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final v = context.dc;
     final t = context.txt;
-    final livesColor = livesSnapshot.isFull ? v.green : v.red;
-    final timer = livesSnapshot.timeUntilNextLife ?? Duration.zero;
+    final livesColor =
+        widget.livesSnapshot.isFull ? v.green : v.red;
+    final timer = widget.livesSnapshot.timeUntilNextLife ?? Duration.zero;
     final timerLabel = _formatLifeTimer(timer);
 
     return Padding(
@@ -237,16 +335,19 @@ class _ShopHeader extends StatelessWidget {
           Expanded(
             child: Align(
               alignment: Alignment.centerLeft,
-              child: ResourcePill(
-                icon: Icons.monetization_on_rounded,
-                label: '$coins',
-                iconColor: v.gold,
-                trailing: Icon(
-                  Icons.add_circle_rounded,
-                  size: 14,
-                  color: v.gold,
+              child: ScaleTransition(
+                scale: _coinScale,
+                child: ResourcePill(
+                  icon: Icons.monetization_on_rounded,
+                  label: '${widget.coins}',
+                  iconColor: v.gold,
+                  trailing: Icon(
+                    Icons.add_circle_rounded,
+                    size: 14,
+                    color: v.gold,
+                  ),
+                  onTap: widget.onCoinsTap,
                 ),
-                onTap: onCoinsTap,
               ),
             ),
           ),
@@ -275,16 +376,16 @@ class _ShopHeader extends StatelessWidget {
                   ResourcePill(
                     icon: Icons.favorite_rounded,
                     label:
-                        '${livesSnapshot.effectiveLives}/${Progression.maxLives}',
+                        '${widget.livesSnapshot.effectiveLives}/${Progression.maxLives}',
                     iconColor: livesColor,
                     trailing: Icon(
                       Icons.add_circle_rounded,
                       size: 14,
                       color: livesColor,
                     ),
-                    onTap: onLivesTap,
+                    onTap: widget.onLivesTap,
                   ),
-                  if (!livesSnapshot.isFull) ...[
+                  if (!widget.livesSnapshot.isFull) ...[
                     AppSpacing.vGapXS,
                     Text(
                       'Next life in $timerLabel',
@@ -551,6 +652,8 @@ class _ShopPillButton extends StatelessWidget {
 
 class _CosmeticCatalogTab extends StatelessWidget {
   const _CosmeticCatalogTab({
+    required this.ref,
+    required this.purchaseInFlight,
     required this.title,
     required this.subtitle,
     required this.coins,
@@ -560,6 +663,9 @@ class _CosmeticCatalogTab extends StatelessWidget {
     required this.onBuy,
     required this.onEquip,
   });
+
+  final WidgetRef ref;
+  final bool purchaseInFlight;
 
   final String title;
   final String subtitle;
@@ -636,9 +742,10 @@ class _CosmeticCatalogTab extends StatelessWidget {
                       item: item,
                       owned: owned,
                       equipped: equipped,
-                      canAfford: canAfford,
+                      canAfford: canAfford && !purchaseInFlight,
                       onBuy: () async {
                         await _showShopBoolResult(
+                          ref,
                           context,
                           purchase: () => onBuy(item),
                           successMessage: 'Purchased!',
@@ -707,8 +814,11 @@ double _cosmeticCatalogGridAspectRatio(
 
 class _BoostsAndStoreTab extends StatelessWidget {
   const _BoostsAndStoreTab({
+    required this.ref,
+    required this.purchaseInFlight,
     required this.inventory,
     required this.coins,
+    required this.lastDailyClaimAt,
     required this.snapshot,
     required this.removeAds,
     required this.removeAdsPrice,
@@ -717,13 +827,18 @@ class _BoostsAndStoreTab extends StatelessWidget {
     required this.onOpenLivesSheet,
     required this.onWatchAdForLife,
     required this.onClaimDaily,
+    this.onDevResetDaily,
     required this.onWatchAdForCoins,
     required this.onPurchaseRemoveAds,
     required this.onRestorePurchases,
   });
 
+  final WidgetRef ref;
+  final bool purchaseInFlight;
+
   final Map<String, int> inventory;
   final int coins;
+  final DateTime? lastDailyClaimAt;
   final LivesSnapshot snapshot;
   final bool removeAds;
   final String? removeAdsPrice;
@@ -732,6 +847,7 @@ class _BoostsAndStoreTab extends StatelessWidget {
   final VoidCallback onOpenLivesSheet;
   final Future<bool> Function() onWatchAdForLife;
   final Future<bool> Function() onClaimDaily;
+  final Future<bool> Function()? onDevResetDaily;
   final Future<bool> Function() onWatchAdForCoins;
   final Future<(bool ok, String? error)> Function() onPurchaseRemoveAds;
   final Future<bool> Function() onRestorePurchases;
@@ -747,7 +863,8 @@ class _BoostsAndStoreTab extends StatelessWidget {
     final v = context.dc;
     final t = context.txt;
     final canBuyLife = !snapshot.isFull &&
-        coins >= Progression.lifeRefillPriceCoins;
+        coins >= Progression.lifeRefillPriceCoins &&
+        !purchaseInFlight;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -757,7 +874,7 @@ class _BoostsAndStoreTab extends StatelessWidget {
         ..._boostTypes.map((type) {
           final price = PowerUpCatalog.priceFor(type);
           final owned = inventory[type.id] ?? 0;
-          final canBuy = coins >= price;
+          final canBuy = coins >= price && !purchaseInFlight;
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: NeonCard(
@@ -793,6 +910,7 @@ class _BoostsAndStoreTab extends StatelessWidget {
                     enabled: canBuy,
                     onPressed: canBuy
                         ? () => _showShopBoolResult(
+                              ref,
                               context,
                               purchase: () => onBuyBoost(type),
                               successMessage: 'Boost purchased!',
@@ -847,6 +965,7 @@ class _BoostsAndStoreTab extends StatelessWidget {
                 enabled: canBuyLife,
                 onPressed: canBuyLife
                     ? () => _showShopBoolResult(
+                          ref,
                           context,
                           purchase: onBuyLife,
                           successMessage: 'Life purchased!',
@@ -881,18 +1000,12 @@ class _BoostsAndStoreTab extends StatelessWidget {
           color: v.gold,
         ),
         AppSpacing.vGapSM,
-        _PerkCard(
-          title: 'Claim Daily',
-          description: 'Free coins and XP once per day.',
-          icon: Icons.calendar_month_rounded,
-          color: v.green,
-          actionLabel: 'CLAIM',
-          onAction: () => _showShopBoolResult(
-            context,
-            purchase: onClaimDaily,
-            successMessage: 'Daily claimed! (+coins/+xp)',
-            failureMessage: 'Daily already claimed.',
-          ),
+        _DailyClaimCard(
+          ref: ref,
+          purchaseInFlight: purchaseInFlight,
+          lastDailyClaimAt: lastDailyClaimAt,
+          onClaim: onClaimDaily,
+          onDevReset: onDevResetDaily,
         ),
         AppSpacing.vGapSM,
         _PerkCard(
@@ -964,6 +1077,92 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
+class _DailyClaimCard extends StatefulWidget {
+  const _DailyClaimCard({
+    required this.ref,
+    required this.purchaseInFlight,
+    required this.lastDailyClaimAt,
+    required this.onClaim,
+    this.onDevReset,
+  });
+
+  final WidgetRef ref;
+  final bool purchaseInFlight;
+  final DateTime? lastDailyClaimAt;
+  final Future<bool> Function() onClaim;
+  final Future<bool> Function()? onDevReset;
+
+  @override
+  State<_DailyClaimCard> createState() => _DailyClaimCardState();
+}
+
+class _DailyClaimCardState extends State<_DailyClaimCard> {
+  Timer? _cooldownTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _cooldownTimer?.cancel();
+    super.dispose();
+  }
+
+  bool get _canClaim => _isDailyClaimAvailable(widget.lastDailyClaimAt);
+
+  Duration get _cooldown =>
+      _dailyClaimCooldownRemaining(widget.lastDailyClaimAt);
+
+  @override
+  Widget build(BuildContext context) {
+    final v = context.dc;
+    final canClaim = _canClaim && !widget.purchaseInFlight;
+    final description = canClaim
+        ? 'Free coins and XP once per day.'
+        : 'Next claim in ${_formatDailyCooldown(_cooldown)}.';
+
+    return GestureDetector(
+      onLongPress: widget.onDevReset == null
+          ? null
+          : () async {
+              final ok = await widget.onDevReset!();
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    ok
+                        ? 'Daily reset (dev) — you can claim again.'
+                        : 'Dev reset failed. Deploy devResetDailyClaim function.',
+                  ),
+                ),
+              );
+            },
+      child: _PerkCard(
+        title: 'Claim Daily',
+        description: description,
+        icon: Icons.calendar_month_rounded,
+        color: v.green,
+        actionLabel: canClaim ? 'CLAIM' : 'CLAIMED',
+        enabled: canClaim,
+        onAction: canClaim
+            ? () => _showShopBoolResult(
+                  widget.ref,
+                  context,
+                  purchase: widget.onClaim,
+                  successMessage: 'Daily claimed! (+60 coins · +40 XP)',
+                  failureMessage: 'Daily already claimed.',
+                )
+            : null,
+      ),
+    );
+  }
+}
+
 class _PerkCard extends StatelessWidget {
   const _PerkCard({
     required this.title,
@@ -972,6 +1171,7 @@ class _PerkCard extends StatelessWidget {
     required this.color,
     required this.actionLabel,
     required this.onAction,
+    this.enabled = true,
   });
 
   final String title;
@@ -979,7 +1179,8 @@ class _PerkCard extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String actionLabel;
-  final VoidCallback onAction;
+  final VoidCallback? onAction;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -1015,6 +1216,7 @@ class _PerkCard extends StatelessWidget {
           _ShopPillButton(
             label: actionLabel,
             color: color,
+            enabled: enabled,
             onPressed: onAction,
           ),
         ],

@@ -216,6 +216,19 @@ class GameNotifier extends StateNotifier<GameState> {
     return true;
   }
 
+  /// Rolls back [useHold] when server inventory consume fails after local apply.
+  void revertHold() {
+    final session = _session;
+    if (!session.holdUsed || session.skipAiTurnsRemaining <= 0) return;
+    final powerUpsUsed = Set<PowerUpType>.from(session.powerUpsUsed)
+      ..remove(PowerUpType.hold);
+    _setSession(session.copyWith(
+      holdUsed: false,
+      skipAiTurnsRemaining: session.skipAiTurnsRemaining - 1,
+      powerUpsUsed: powerUpsUsed,
+    ));
+  }
+
   Future<bool> useRiposte() async {
     final session = _session;
     if (session.riposteUsed || state.moveHistory.isEmpty) return false;

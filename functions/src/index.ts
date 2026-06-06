@@ -19,6 +19,7 @@ import {
   purchaseLife,
   purchasePowerUp,
   settleQuickMatch,
+  devResetDailyClaim,
 } from './economy';
 import { onLoss, resolveLives, syncLives } from './lives';
 import { levelForStars, totalStarsFromMap } from './progression';
@@ -39,6 +40,7 @@ export {
   consumePowerUp,
   grantPowerUp,
   syncLives,
+  devResetDailyClaim,
 };
 
 interface CampaignSettleRequest {

@@ -13,32 +13,44 @@ import '../../../features/profile/providers/profile_providers.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/layout/responsive_layout.dart';
 import '../../../shared/widgets/profile_avatar_chip.dart';
+import '../../../shared/widgets/profile_bootstrap_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return const ProfileReadyGate(
+      child: _ProfileScreenBody(),
+    );
+  }
+}
+
+class _ProfileScreenBody extends ConsumerWidget {
+  const _ProfileScreenBody();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final v = context.dc;
-    final profile = ref.watch(profileProvider).valueOrNull;
+    final profile = ref.watch(profileProvider).requireValue;
     final livesSnapshot = ref.watch(livesSnapshotProvider);
 
-    final displayName = profile?.displayName ?? 'Player';
-    final avatarId = profile?.avatarId ?? 'avatar_orb_cyan';
-    final initialSkinId = profile?.initialSkinId ?? 'initial_skin_classic';
-    final rankTier = profile?.rankTier ?? RankTier.bronze;
+    final displayName = profile.displayName;
+    final avatarId = profile.avatarId;
+    final initialSkinId = profile.initialSkinId;
+    final rankTier = profile.rankTier;
     final rankLabel = RankSystem.label(rankTier);
     final rankColor = _rankColor(v, rankTier);
 
-    final level = profile?.campaignPlayerLevel ?? 1;
-    final totalStars = profile?.totalCampaignStars ?? 0;
+    final level = profile.campaignPlayerLevel;
+    final totalStars = profile.totalCampaignStars;
     final starProgress = Progression.starsInCurrentPlayerLevel(totalStars);
 
-    final wins = profile?.wins ?? 0;
-    final gamesPlayed = profile?.gamesPlayed ?? 0;
-    final winStreak = profile?.winStreak ?? 0;
-    final bestStreak = profile?.bestWinStreak ?? 0;
-    final coins = profile?.coins ?? 0;
+    final wins = profile.wins;
+    final gamesPlayed = profile.gamesPlayed;
+    final winStreak = profile.winStreak;
+    final bestStreak = profile.bestWinStreak;
+    final coins = profile.coins;
     final winRate = gamesPlayed == 0 ? 0 : ((wins / gamesPlayed) * 100).round();
 
     final content = SafeArea(

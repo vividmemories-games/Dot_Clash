@@ -76,7 +76,7 @@ Campaign, daily puzzle, and mission **claims** should work when callables are de
 
 ### #3 IAP entitlement granted client-side (High) — **fixed in Release 7 (2026-06-02)**
 
-**Done:** `verifyRemoveAdsPurchase` deployed; client uses callable with store receipt. `grantRemoveAds()` is dev-only. **Prod:** set `APPLE_IAP_*` secrets (see `SETUP.md` §4b and `docs/RELEASE_9.md`). **Ship new app build** for testers.
+**Done:** `verifyRemoveAdsPurchase` deployed; client uses callable with store receipt. `grantRemoveAds()` is dev-only. **Prod:** set `APPLE_IAP_*` secrets (see `SETUP.md` §4b and `docs/RELEASES.md`). **Ship new app build** for testers.
 
 **Kid version:** When you "buy" no ads, the app tells the cloud "trust me, I paid" without showing a receipt. Anyone could also skip the store and just write `removeAds: true` — and before today they could; after today's rules they cannot, but **honest buyers** still need a real path.
 

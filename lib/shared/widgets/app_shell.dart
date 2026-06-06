@@ -4,11 +4,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_text_styles.dart';
 import '../../core/theme/dot_clash_visuals.dart';
+import '../../features/profile/providers/profile_bootstrap_provider.dart';
 import '../../features/tutorial/domain/coach_tour_step.dart';
+import 'profile_bootstrap_screen.dart';
 import '../../features/tutorial/presentation/coach_tour_target.dart';
 import '../../features/tutorial/presentation/spotlight_overlay.dart';
 import '../../features/tutorial/providers/coach_tour_provider.dart';
 import '../layout/app_spacing.dart';
+import '../navigation/main_shell_swipe.dart';
 
 /// Persistent shell that renders the active tab above a custom bottom nav bar.
 ///
@@ -24,11 +27,31 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
+  void _goToTab(int index) {
+    final shell = widget.navigationShell;
+    if (index < 0 || index >= MainShellTabs.count) return;
+    shell.goBranch(
+      index,
+      initialLocation: index == shell.currentIndex,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.read(mainShellNavigationHolderProvider).goToTab = _goToTab;
+
+    final bootstrap = ref.watch(profileBootstrapProvider);
+    if (bootstrap == ProfileBootstrapState.loading) {
+      return const ProfileBootstrapScreen();
+    }
+    if (bootstrap == ProfileBootstrapState.error) {
+      return const ProfileBootstrapErrorScreen();
+    }
+
     final v = context.dc;
     final homeTour = ref.watch(homeCoachTourProvider);
     final onHomeTab = widget.navigationShell.currentIndex == 0;
+    final swipeEnabled = !(onHomeTab && homeTour.isActive);
 
     if (onHomeTab) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -41,13 +64,15 @@ class _AppShellState extends ConsumerState<AppShell> {
       children: [
         Scaffold(
           backgroundColor: v.scaffold,
-          body: widget.navigationShell,
+          body: _TabSwipeLayer(
+            enabled: swipeEnabled,
+            currentIndex: widget.navigationShell.currentIndex,
+            onTabChange: _goToTab,
+            child: widget.navigationShell,
+          ),
           bottomNavigationBar: _BottomNav(
             currentIndex: widget.navigationShell.currentIndex,
-            onTap: (i) => widget.navigationShell.goBranch(
-              i,
-              initialLocation: i == widget.navigationShell.currentIndex,
-            ),
+            onTap: _goToTab,
           ),
         ),
         if (onHomeTab && homeTour.isActive && homeTour.logic != null)
@@ -74,6 +99,60 @@ class _HomeTourOverlay extends ConsumerWidget {
       showSkip: logic.showSkipButton,
       onNext: () => ref.read(homeCoachTourProvider.notifier).advanceNext(),
       onSkip: () => ref.read(homeCoachTourProvider.notifier).skipAll(),
+    );
+  }
+}
+
+/// Horizontal swipe between main tabs (Home / Campaign / Profile / Shop).
+class _TabSwipeLayer extends StatefulWidget {
+  const _TabSwipeLayer({
+    required this.enabled,
+    required this.currentIndex,
+    required this.onTabChange,
+    required this.child,
+  });
+
+  final bool enabled;
+  final int currentIndex;
+  final void Function(int index) onTabChange;
+  final Widget child;
+
+  @override
+  State<_TabSwipeLayer> createState() => _TabSwipeLayerState();
+}
+
+class _TabSwipeLayerState extends State<_TabSwipeLayer> {
+  double _dragDx = 0;
+
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    if (!widget.enabled) return;
+
+    // Shop delegates swipe-right-at-Themes to [ShopOuterSwipeBridge].
+    if (widget.currentIndex == MainShellTabs.shop) return;
+
+    final velocity = details.primaryVelocity ?? 0;
+    final swipeLeft = _dragDx < -MainShellSwipeThresholds.distance ||
+        velocity < -MainShellSwipeThresholds.velocity;
+    final swipeRight = _dragDx > MainShellSwipeThresholds.distance ||
+        velocity > MainShellSwipeThresholds.velocity;
+
+    if (swipeLeft && widget.currentIndex < MainShellTabs.count - 1) {
+      widget.onTabChange(widget.currentIndex + 1);
+    } else if (swipeRight && widget.currentIndex > 0) {
+      widget.onTabChange(widget.currentIndex - 1);
+    }
+    _dragDx = 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onHorizontalDragStart: widget.enabled ? (_) => _dragDx = 0 : null,
+      onHorizontalDragUpdate:
+          widget.enabled ? (details) => _dragDx += details.delta.dx : null,
+      onHorizontalDragEnd: widget.enabled ? _onHorizontalDragEnd : null,
+      behavior: HitTestBehavior.translucent,
+      child: widget.child,
     );
   }
 }

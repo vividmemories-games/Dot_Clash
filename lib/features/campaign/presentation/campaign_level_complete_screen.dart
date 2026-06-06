@@ -13,6 +13,7 @@ import '../../../shared/feedback/app_haptics.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../home/presentation/widgets/resource_pill.dart';
 import '../domain/campaign_level.dart';
+import 'campaign_play_navigation.dart';
 import 'campaign_save_status.dart';
 import 'level_result_screen.dart';
 import 'widgets/dot_confetti_layer.dart';
@@ -59,6 +60,8 @@ class _CampaignLevelCompleteScreenState
   int _displayCoins = 0;
 
   CampaignSaveStatus _saveStatus = CampaignSaveStatus.saving;
+  bool _navigatingAway = false;
+  String _navigatingMessage = 'Loading next level…';
   late AnimationController _coinCtrl;
   late AnimationController _bossCtrl;
   final List<Timer> _timers = [];
@@ -174,6 +177,24 @@ class _CampaignLevelCompleteScreenState
     _goToResults();
   }
 
+  Future<void> _leaveToPlayLevel(
+    String levelId, {
+    required bool replay,
+  }) async {
+    if (_navigatingAway) return;
+    setState(() {
+      _navigatingAway = true;
+      _navigatingMessage = replay ? 'Restarting level…' : 'Loading next level…';
+    });
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    if (replay) {
+      await CampaignPlayNavigation.exitToReplayLevel(context, levelId);
+    } else {
+      await CampaignPlayNavigation.exitToNextLevel(context, levelId);
+    }
+  }
+
   @override
   void dispose() {
     for (final t in _timers) {
@@ -206,6 +227,7 @@ class _CampaignLevelCompleteScreenState
                       starsEarned: widget.starsEarned,
                       humanWon: widget.humanWon,
                       saveStatus: _saveStatus,
+                      onLeaveToPlayLevel: _leaveToPlayLevel,
                       onRetrySave: () async {
                         setState(() => _saveStatus = CampaignSaveStatus.saving);
                         try {
@@ -248,6 +270,28 @@ class _CampaignLevelCompleteScreenState
                     'Syncing progress…',
                     style: context.txt.bodySmall.copyWith(
                       color: v.textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+            if (_navigatingAway)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: v.scaffold.withValues(alpha: 0.94),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(color: v.playerA),
+                        AppSpacing.vGapMD,
+                        Text(
+                          _navigatingMessage,
+                          style: context.txt.body.copyWith(
+                            color: v.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

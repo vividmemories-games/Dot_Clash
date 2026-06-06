@@ -144,6 +144,7 @@ class UserProfile {
     DateTime? nextLifeAt,
     DateTime? lastDailyClaimAt,
     DateTime? lastRewardedAdAt,
+    bool clearLastDailyClaimAt = false,
     Map<String, int>? campaignStars,
     String? lastCampaignLevelId,
     bool clearLastCampaignLevelId = false,
@@ -181,7 +182,9 @@ class UserProfile {
       ownedInitialSkinIds: ownedInitialSkinIds ?? this.ownedInitialSkinIds,
       lives: lives ?? this.lives,
       nextLifeAt: nextLifeAt ?? this.nextLifeAt,
-      lastDailyClaimAt: lastDailyClaimAt ?? this.lastDailyClaimAt,
+      lastDailyClaimAt: clearLastDailyClaimAt
+          ? null
+          : (lastDailyClaimAt ?? this.lastDailyClaimAt),
       lastRewardedAdAt: lastRewardedAdAt ?? this.lastRewardedAdAt,
       campaignStars: campaignStars ?? this.campaignStars,
       lastCampaignLevelId: clearLastCampaignLevelId

@@ -6,7 +6,7 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/dot_clash_visuals.dart';
 import 'features/auth/providers/auth_provider.dart';
-import 'features/profile/providers/profile_providers.dart';
+import 'features/profile/providers/profile_bootstrap_provider.dart';
 import 'services/ads/ad_service_provider.dart';
 import 'services/analytics/analytics_service.dart';
 
@@ -43,8 +43,7 @@ class _DotClashAppState extends ConsumerState<DotClashApp> {
     });
 
     final router = ref.watch(appRouterProvider);
-    final equippedThemeId =
-        ref.watch(profileProvider.select((value) => value.valueOrNull?.themeId));
+    final equippedThemeId = ref.watch(equippedThemeIdProvider);
     final visuals = DotClashVisuals.fromThemeId(equippedThemeId);
 
     return MaterialApp.router(

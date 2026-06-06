@@ -111,7 +111,7 @@ class LevelBriefSheet extends ConsumerWidget {
                     size: 14, color: v.playerA),
                 AppSpacing.hGapXS,
                 Text(
-                  'Turn budget: $turnBudget turns',
+                  'Win within $turnBudget turns',
                   style: t.bodySmall.copyWith(color: v.playerA),
                 ),
               ],

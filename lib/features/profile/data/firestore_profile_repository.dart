@@ -156,6 +156,18 @@ class FirestoreProfileRepository implements ProfileRepository {
     return _economyBool(
       'purchaseCosmetic',
       {'itemId': themeId},
+      optimistic: (p) => _predictCosmeticPurchase(
+        p,
+        itemId: themeId,
+        priceCoins: priceCoins,
+        owned: p.ownedThemeIds,
+        equipOnly: () => p.copyWith(themeId: themeId),
+        buyAndEquip: () => p.copyWith(
+          coins: p.coins - priceCoins,
+          ownedThemeIds: [...p.ownedThemeIds, themeId],
+          themeId: themeId,
+        ),
+      ),
       devFallback: () => _purchase(
         ownedKey: 'ownedThemeIds',
         equipKey: 'themeId',
@@ -170,6 +182,18 @@ class FirestoreProfileRepository implements ProfileRepository {
     return _economyBool(
       'purchaseCosmetic',
       {'itemId': avatarId},
+      optimistic: (p) => _predictCosmeticPurchase(
+        p,
+        itemId: avatarId,
+        priceCoins: priceCoins,
+        owned: p.ownedAvatarIds,
+        equipOnly: () => p.copyWith(avatarId: avatarId),
+        buyAndEquip: () => p.copyWith(
+          coins: p.coins - priceCoins,
+          ownedAvatarIds: [...p.ownedAvatarIds, avatarId],
+          avatarId: avatarId,
+        ),
+      ),
       devFallback: () => _purchase(
         ownedKey: 'ownedAvatarIds',
         equipKey: 'avatarId',
@@ -184,6 +208,18 @@ class FirestoreProfileRepository implements ProfileRepository {
     return _economyBool(
       'purchaseCosmetic',
       {'itemId': skinId},
+      optimistic: (p) => _predictCosmeticPurchase(
+        p,
+        itemId: skinId,
+        priceCoins: priceCoins,
+        owned: p.ownedInitialSkinIds,
+        equipOnly: () => p.copyWith(initialSkinId: skinId),
+        buyAndEquip: () => p.copyWith(
+          coins: p.coins - priceCoins,
+          ownedInitialSkinIds: [...p.ownedInitialSkinIds, skinId],
+          initialSkinId: skinId,
+        ),
+      ),
       devFallback: () => _purchase(
         ownedKey: 'ownedInitialSkinIds',
         equipKey: 'initialSkinId',
@@ -236,6 +272,7 @@ class FirestoreProfileRepository implements ProfileRepository {
     return _economyBool(
       'claimDailyReward',
       const {},
+      optimistic: _predictDailyClaim,
       devFallback: () => _guardBoolTransaction('claimDaily', () async {
       await _ensureExists();
       return _firestore.runTransaction<bool>((txn) async {
@@ -262,6 +299,20 @@ class FirestoreProfileRepository implements ProfileRepository {
       });
     }),
     );
+  }
+
+  @override
+  Future<bool> devResetDailyClaim() async {
+    if (!AppEnv.isDev) return false;
+    final result = await _tryCallableWithResult('devResetDailyClaim', const {});
+    if (result != null && result['success'] == true) {
+      if (_latestProfile != null) {
+        _emit(_latestProfile!.copyWith(clearLastDailyClaimAt: true));
+      }
+      unawaited(_refreshProfileFromServer());
+      return true;
+    }
+    return false;
   }
 
   @override
@@ -347,6 +398,8 @@ class FirestoreProfileRepository implements ProfileRepository {
     return _economyBool(
       'purchasePowerUp',
       {'powerUpId': powerUpId, 'quantity': quantity},
+      optimistic: (p) =>
+          _predictPowerUpPurchase(p, powerUpId, priceCoins, quantity),
       devFallback: () => _guardBoolTransaction('purchasePowerUp', () async {
       await _ensureExists();
       return _firestore.runTransaction<bool>((txn) async {
@@ -707,23 +760,102 @@ class FirestoreProfileRepository implements ProfileRepository {
     return msg.contains('permission to the requested URL');
   }
 
+  /// Runs an economy callable with an optional [optimistic] local prediction.
+  ///
+  /// When [optimistic] is supplied and a profile is cached, the predicted
+  /// profile is emitted immediately so the UI (coins, inventory, cosmetics)
+  /// updates on the next frame instead of waiting for the network round-trip.
+  /// The server write is reconciled in the background via [watchProfile]'s
+  /// snapshot listener plus a non-blocking refresh. A local guard returning
+  /// null (e.g. not enough coins) fails fast with no network call, and a
+  /// server rejection rolls the optimistic emit back.
   Future<bool> _economyBool(
     String name,
     Map<String, dynamic> data, {
     required Future<bool> Function() devFallback,
+    UserProfile? Function(UserProfile current)? optimistic,
   }) async {
+    UserProfile? previous;
+    if (optimistic != null && _latestProfile != null) {
+      previous = _latestProfile;
+      final predicted = optimistic(previous!);
+      if (predicted == null) return false;
+      _emit(predicted);
+    }
+
     final result = await _tryCallableWithResult(name, data);
     if (result != null) {
       if (result['success'] == true) {
-        await _refreshProfileFromServer();
+        if (previous != null) {
+          // Optimistic emit already updated the UI — reconcile off the hot path.
+          unawaited(_refreshProfileFromServer());
+        } else {
+          await _refreshProfileFromServer();
+        }
         return true;
       }
+      if (previous != null) _emit(previous);
       return false;
     }
     if (_allowEconomyLocalFallback) {
-      return devFallback();
+      final ok = await devFallback();
+      if (!ok && previous != null) _emit(previous);
+      return ok;
     }
+    if (previous != null) _emit(previous);
     return false;
+  }
+
+  // ── Optimistic predictors ───────────────────────────────────────────────
+  // Each mirrors the corresponding server (and dev-fallback) economy logic so
+  // the brief optimistic state matches what streams back from Firestore.
+
+  UserProfile? _predictCosmeticPurchase(
+    UserProfile p, {
+    required String itemId,
+    required int priceCoins,
+    required List<String> owned,
+    required UserProfile Function() equipOnly,
+    required UserProfile Function() buyAndEquip,
+  }) {
+    if (owned.contains(itemId)) return equipOnly();
+    if (p.coins < priceCoins) return null;
+    return buyAndEquip();
+  }
+
+  UserProfile? _predictPowerUpPurchase(
+    UserProfile p,
+    String powerUpId,
+    int priceCoins,
+    int quantity,
+  ) {
+    if (p.coins < priceCoins) return null;
+    return p.copyWith(
+      coins: p.coins - priceCoins,
+      powerUpInventory: {
+        ...p.powerUpInventory,
+        powerUpId: (p.powerUpInventory[powerUpId] ?? 0) + quantity,
+      },
+    );
+  }
+
+  UserProfile? _predictDailyClaim(UserProfile p) {
+    final now = DateTime.now();
+    final last = p.lastDailyClaimAt;
+    if (last != null && now.difference(last) < const Duration(hours: 24)) {
+      return null;
+    }
+    final boost = PowerUpCatalog.todayDailyBoost(now.toUtc());
+    final inv = Map<String, int>.from(p.powerUpInventory);
+    inv[boost.id] = (inv[boost.id] ?? 0) + PowerUpCatalog.dailyBoostQuantity;
+    final newXp = p.xp + 40;
+    return p.copyWith(
+      coins: p.coins + 60,
+      xp: newXp,
+      level: Progression.levelForXp(newXp),
+      powerUpInventory: inv,
+      lastDailyClaimAt: now,
+    );
   }
 
   /// Force-reads the profile from Firestore server (bypasses offline cache) and

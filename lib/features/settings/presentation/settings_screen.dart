@@ -476,14 +476,6 @@ class SettingsScreen extends ConsumerWidget {
           const _HelpLegalSection(),
 
           AppSpacing.vGapLG,
-
-          Center(
-            child: Text(
-              'Dot Clash  v1.0.0',
-              style: t.bodySmall,
-            ),
-          ),
-          AppSpacing.vGapLG,
         ],
       ),
     );
@@ -833,10 +825,9 @@ class _AboutSheet extends ConsumerWidget {
                       label: 'Environment',
                       value: _environmentLabel(),
                     ),
-                    _AboutRow(
-                      label: 'Package',
-                      value: info.packageName,
-                      mono: true,
+                    const _AboutRow(
+                      label: 'Provider',
+                      value: 'VividMemories-Games',
                     ),
                   ],
                 ),

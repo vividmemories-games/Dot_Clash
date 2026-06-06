@@ -16,6 +16,7 @@ abstract class ProfileRepository {
   Future<bool> purchaseLife();
 
   Future<bool> claimDaily();
+  Future<bool> devResetDailyClaim();
   Future<bool> claimRewardedAd();
   Future<bool> grantLifeFromAd();
   Future<bool> refundLastCampaignLife();

@@ -25,14 +25,25 @@ import '../../../features/tutorial/domain/coach_tour_step.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/layout/responsive_layout.dart';
 import '../../../shared/widgets/neon_button.dart';
+import '../../../shared/widgets/profile_bootstrap_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profileAsync = ref.watch(profileProvider);
-    final profile = profileAsync.valueOrNull;
+    return ProfileReadyGate(
+      child: _HomeScreenBody(),
+    );
+  }
+}
+
+class _HomeScreenBody extends ConsumerWidget {
+  const _HomeScreenBody();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(profileProvider).requireValue;
     final livesSnapshot = ref.watch(livesSnapshotProvider);
     final missions = ref.watch(dailyMissionsProvider);
     final continueId = ref.watch(continueLevelIdProvider);
@@ -41,7 +52,7 @@ class HomeScreen extends ConsumerWidget {
 
     final campaignLocked =
         !livesSnapshot.canPlayRanked && !tutorialFreeAttempt;
-    final lockSubtitle = _lockSubtitle(livesSnapshot);
+    final lockSubtitle = homeLockSubtitle(livesSnapshot);
 
     final content = SafeArea(
       child: MaxWidthBox(
@@ -54,11 +65,11 @@ class HomeScreen extends ConsumerWidget {
               onOpenSettings: () => context.push(AppRoutes.settings),
               onOpenShop: () => context.go(AppRoutes.shop),
               onOpenProfile: () => context.go(AppRoutes.profile),
-              onLivesTap: () => _showLivesSheet(
+              onLivesTap: () => showHomeLivesSheet(
                 context: context,
                 ref: ref,
                 livesSnapshot: livesSnapshot,
-                coins: profile?.coins ?? 0,
+                coins: profile.coins,
               ),
             ),
             Expanded(
@@ -78,11 +89,11 @@ class HomeScreen extends ConsumerWidget {
                       child: CampaignHeroCard(
                         campaignLocked: campaignLocked,
                         lockSubtitle: lockSubtitle,
-                        onNeedsLives: () => _showLivesSheet(
+                        onNeedsLives: () => showHomeLivesSheet(
                           context: context,
                           ref: ref,
                           livesSnapshot: livesSnapshot,
-                          coins: profile?.coins ?? 0,
+                          coins: profile.coins,
                         ),
                       ),
                     ),
@@ -90,8 +101,8 @@ class HomeScreen extends ConsumerWidget {
 
                     // ── Zone 3: Action row (Quick Match / Daily Puzzle / Local) ─
                     HomeActionRow(
-                      onAiTap: () => _startVsAiChallenge(context, ref),
-                      onLocalTap: () => _pickLocalBoardSize(context, ref),
+                      onAiTap: () => startVsAiChallenge(context, ref),
+                      onLocalTap: () => pickLocalBoardSize(context, ref),
                     ),
                     AppSpacing.vGapMD,
 
@@ -127,82 +138,82 @@ class HomeScreen extends ConsumerWidget {
       body: HomeScreenBackground(child: content),
     );
   }
+}
 
-  static String _lockSubtitle(LivesSnapshot livesSnapshot) {
-    if (livesSnapshot.timeUntilNextLife == null) {
-      return 'No lives. Wait for refill or buy from the shop.';
-    }
-    return 'No lives. Next life in ${_formatMmSs(livesSnapshot.timeUntilNextLife!)}.';
+String homeLockSubtitle(LivesSnapshot livesSnapshot) {
+  if (livesSnapshot.timeUntilNextLife == null) {
+    return 'No lives. Wait for refill or buy from the shop.';
   }
+  return 'No lives. Next life in ${_formatHomeMmSs(livesSnapshot.timeUntilNextLife!)}.';
+}
 
-  Future<void> _showLivesSheet({
-    required BuildContext context,
-    required WidgetRef ref,
-    required LivesSnapshot livesSnapshot,
-    required int coins,
-  }) async {
-    final v = context.dc;
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: v.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        side: BorderSide(color: v.cardBorder),
-      ),
-      builder: (_) => LivesRefillSheet(
-        onBuyLife: () => ref.read(livesControllerProvider).purchaseLife(),
-      ),
+Future<void> showHomeLivesSheet({
+  required BuildContext context,
+  required WidgetRef ref,
+  required LivesSnapshot livesSnapshot,
+  required int coins,
+}) async {
+  final v = context.dc;
+  await showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: v.surface,
+    shape: RoundedRectangleBorder(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      side: BorderSide(color: v.cardBorder),
+    ),
+    builder: (_) => LivesRefillSheet(
+      onBuyLife: () => ref.read(livesControllerProvider).purchaseLife(),
+    ),
+  );
+}
+
+String _formatHomeMmSs(Duration duration) {
+  final mm = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+  final ss = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+  return '$mm:$ss';
+}
+
+Future<void> pickLocalBoardSize(BuildContext context, WidgetRef ref) async {
+  final v = context.dc;
+  final size = await showModalBottomSheet<int>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: v.surface,
+    shape: RoundedRectangleBorder(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      side: BorderSide(color: v.cardBorder),
+    ),
+    builder: (_) => const _LocalBoardSizePicker(),
+  );
+
+  if (size != null && context.mounted) {
+    final config = GameConfig(
+      mode: GameMode.local,
+      rows: size,
+      cols: size,
     );
+    ref.read(gameConfigProvider.notifier).state = config;
+    context.push('/game', extra: config);
   }
+}
 
-  static String _formatMmSs(Duration duration) {
-    final mm = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final ss = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$mm:$ss';
-  }
+Future<void> startVsAiChallenge(BuildContext context, WidgetRef ref) async {
+  final v = context.dc;
+  final preset = AiPreset.random();
+  final play = await showModalBottomSheet<bool>(
+    context: context,
+    backgroundColor: v.surface,
+    shape: RoundedRectangleBorder(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      side: BorderSide(color: v.cardBorder),
+    ),
+    builder: (_) => _AiPresetBriefSheet(preset: preset),
+  );
 
-  Future<void> _pickLocalBoardSize(BuildContext context, WidgetRef ref) async {
-    final v = context.dc;
-    final size = await showModalBottomSheet<int>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: v.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        side: BorderSide(color: v.cardBorder),
-      ),
-      builder: (_) => const _LocalBoardSizePicker(),
-    );
-
-    if (size != null && context.mounted) {
-      final config = GameConfig(
-        mode: GameMode.local,
-        rows: size,
-        cols: size,
-      );
-      ref.read(gameConfigProvider.notifier).state = config;
-      context.push('/game', extra: config);
-    }
-  }
-
-  Future<void> _startVsAiChallenge(BuildContext context, WidgetRef ref) async {
-    final v = context.dc;
-    final preset = AiPreset.random();
-    final play = await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: v.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        side: BorderSide(color: v.cardBorder),
-      ),
-      builder: (_) => _AiPresetBriefSheet(preset: preset),
-    );
-
-    if (play == true && context.mounted) {
-      final config = GameConfig.vsAi(preset);
-      ref.read(gameConfigProvider.notifier).state = config;
-      context.push('/game', extra: config);
-    }
+  if (play == true && context.mounted) {
+    final config = GameConfig.vsAi(preset);
+    ref.read(gameConfigProvider.notifier).state = config;
+    context.push('/game', extra: config);
   }
 }
 

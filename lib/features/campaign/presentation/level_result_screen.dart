@@ -56,6 +56,7 @@ class LevelResultPanel extends ConsumerWidget {
     required this.humanWon,
     this.saveStatus = CampaignSaveStatus.saved,
     this.onRetrySave,
+    this.onLeaveToPlayLevel,
   });
 
   final CampaignLevel level;
@@ -63,6 +64,9 @@ class LevelResultPanel extends ConsumerWidget {
   final bool humanWon;
   final CampaignSaveStatus saveStatus;
   final Future<void> Function()? onRetrySave;
+  /// When set, parent shows a loading overlay before route swap (victory screen).
+  final Future<void> Function(String levelId, {required bool replay})?
+      onLeaveToPlayLevel;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -157,10 +161,7 @@ class LevelResultPanel extends ConsumerWidget {
               color: v.green,
               width: double.infinity,
               onPressed: saveReady
-                  ? () => CampaignPlayNavigation.exitToNextLevel(
-                        context,
-                        nextId,
-                      )
+                  ? () => _leaveToPlayLevel(context, nextId, replay: false)
                   : null,
             ),
           AppSpacing.vGapSM,
@@ -188,7 +189,7 @@ class LevelResultPanel extends ConsumerWidget {
                       : 'Retry ad unavailable.',
                 );
                 if (ok) {
-                  CampaignPlayNavigation.exitToReplayLevel(context, level.id);
+                  await _leaveToPlayLevel(context, level.id, replay: true);
                 }
               },
             ),
@@ -204,7 +205,23 @@ class LevelResultPanel extends ConsumerWidget {
     );
   }
 
-  static void _tryReplayLevel(
+  Future<void> _leaveToPlayLevel(
+    BuildContext context,
+    String levelId, {
+    required bool replay,
+  }) async {
+    if (onLeaveToPlayLevel != null) {
+      await onLeaveToPlayLevel!(levelId, replay: replay);
+      return;
+    }
+    if (replay) {
+      await CampaignPlayNavigation.exitToReplayLevel(context, levelId);
+    } else {
+      await CampaignPlayNavigation.exitToNextLevel(context, levelId);
+    }
+  }
+
+  void _tryReplayLevel(
     BuildContext context,
     WidgetRef ref,
     CampaignLevel level,
@@ -215,7 +232,7 @@ class LevelResultPanel extends ConsumerWidget {
       AppSnackBar.show(context, 'No lives left. Wait for refill or buy one.');
       return;
     }
-    CampaignPlayNavigation.exitToReplayLevel(context, level.id);
+    _leaveToPlayLevel(context, level.id, replay: true);
   }
 
   static String? _nextLevelId(CampaignLevel level) {
