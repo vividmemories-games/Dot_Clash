@@ -26,6 +26,14 @@ import { levelForStars, totalStarsFromMap } from './progression';
 import { deleteUserData } from './compliance';
 import { assertAuth, callableOptions, db } from './shared';
 import { verifyRemoveAdsPurchase } from './iap';
+import {
+  abandonChallenge,
+  createChallenge,
+  joinChallenge,
+  submitChallengeMove,
+} from './challenge';
+import { processChallengeTimeouts } from './challenge_scheduler';
+import { registerFcmToken } from './notifications';
 
 export { deleteUserData };
 export {
@@ -41,6 +49,12 @@ export {
   grantPowerUp,
   syncLives,
   devResetDailyClaim,
+  createChallenge,
+  joinChallenge,
+  submitChallengeMove,
+  abandonChallenge,
+  registerFcmToken,
+  processChallengeTimeouts,
 };
 
 interface CampaignSettleRequest {
