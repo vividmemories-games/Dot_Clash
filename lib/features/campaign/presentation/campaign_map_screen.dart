@@ -88,8 +88,7 @@ Future<void> _playLevel(
       ),
       builder: (_) => LivesRefillSheet(
         onBuyLife: () => ref.read(livesControllerProvider).purchaseLife(),
-        onWatchAd: () =>
-            ref.read(adRewardRouterProvider).showRewardedLifeAd(),
+        onWatchAd: () => ref.read(adRewardRouterProvider).showRewardedLifeAd(),
       ),
     );
     return;

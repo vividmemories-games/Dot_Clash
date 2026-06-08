@@ -4,8 +4,7 @@ import '../env/app_env.dart';
 
 /// Opens legal / info URLs from [AppEnv] in the system browser.
 abstract final class LegalLinks {
-  static Future<bool> openPrivacyPolicy() =>
-      _open(AppEnv.privacyPolicyUrl);
+  static Future<bool> openPrivacyPolicy() => _open(AppEnv.privacyPolicyUrl);
 
   static Future<bool> openTerms() => _open(AppEnv.termsUrl);
 

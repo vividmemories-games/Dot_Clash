@@ -28,9 +28,8 @@ class AuthProviderLeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fallbackDisabled =
-        disabledColor ??
-            Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45);
+    final fallbackDisabled = disabledColor ??
+        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45);
     return switch (_brand) {
       _AuthProviderBrand.google => SizedBox.square(
           dimension: size,

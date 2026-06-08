@@ -68,4 +68,3 @@ class CatalogSnapshot {
   final List<CatalogItem> initialSkins;
   final List<CatalogBundle> bundles;
 }
-

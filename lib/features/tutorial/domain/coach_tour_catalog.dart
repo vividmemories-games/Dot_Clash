@@ -43,7 +43,8 @@ abstract final class CoachTourCatalog {
     CoachTourStep(
       id: 'home_local',
       title: 'Local Play',
-      body: 'Pass-and-play with a friend on this device — just like the notebook days.',
+      body:
+          'Pass-and-play with a friend on this device — just like the notebook days.',
       targetId: CoachTourTargetId.homeLocal,
       showSkip: true,
     ),
@@ -58,14 +59,16 @@ abstract final class CoachTourCatalog {
     CoachTourStep(
       id: 'home_nav_campaign',
       title: 'Campaign Map',
-      body: 'The full world map lives here — replay levels to chase more stars.',
+      body:
+          'The full world map lives here — replay levels to chase more stars.',
       targetId: CoachTourTargetId.homeNavCampaign,
       showSkip: true,
     ),
     CoachTourStep(
       id: 'home_start',
       title: 'You\'re Ready!',
-      body: 'Tap Continue to start Level 1 — we\'ll teach you the rules in the match.',
+      body:
+          'Tap Continue to start Level 1 — we\'ll teach you the rules in the match.',
       targetId: CoachTourTargetId.homeCampaignHero,
       showSkip: true,
     ),
@@ -120,7 +123,8 @@ abstract final class CoachTourCatalog {
     CoachTourStep(
       id: 'l02_star2',
       title: 'Bonus Star',
-      body: 'This level\'s ★2 asks you to win by a margin — check the pill for details.',
+      body:
+          'This level\'s ★2 asks you to win by a margin — check the pill for details.',
       targetId: CoachTourTargetId.gameObjectivesStar2,
       showSkip: true,
     ),
@@ -177,7 +181,8 @@ abstract final class CoachTourCatalog {
     CoachTourStep(
       id: 'l04_hold',
       title: 'Hold Boost',
-      body: 'Tap Hold to skip the rival\'s next turn. You have one — use it wisely!',
+      body:
+          'Tap Hold to skip the rival\'s next turn. You have one — use it wisely!',
       targetId: CoachTourTargetId.gamePowerUpHold,
       advanceOn: CoachAdvanceTrigger.tapTarget,
       showSkip: true,
@@ -196,7 +201,8 @@ abstract final class CoachTourCatalog {
   static const miniBossPowerUpStep = CoachTourStep(
     id: 'l05_powerups',
     title: 'Boosts Unlocked!',
-    body: 'You earned Hold and Riposte. Tap them in the panel below during tough spots.',
+    body:
+        'You earned Hold and Riposte. Tap them in the panel below during tough spots.',
     targetId: CoachTourTargetId.gamePowerUpPanel,
     showSkip: true,
   );

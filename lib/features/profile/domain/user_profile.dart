@@ -192,8 +192,7 @@ class UserProfile {
           : (lastCampaignLevelId ?? this.lastCampaignLevelId),
       dailyPuzzleDate: dailyPuzzleDate ?? this.dailyPuzzleDate,
       dailyPuzzleLevelId: dailyPuzzleLevelId ?? this.dailyPuzzleLevelId,
-      dailyPuzzleCompleted:
-          dailyPuzzleCompleted ?? this.dailyPuzzleCompleted,
+      dailyPuzzleCompleted: dailyPuzzleCompleted ?? this.dailyPuzzleCompleted,
       dailyPuzzleStreak: dailyPuzzleStreak ?? this.dailyPuzzleStreak,
       dailyMissions: dailyMissions ?? this.dailyMissions,
       powerUpInventory: powerUpInventory ?? this.powerUpInventory,

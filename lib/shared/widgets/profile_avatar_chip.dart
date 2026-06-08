@@ -106,8 +106,7 @@ class ProfileAvatarChip extends StatelessWidget {
     final trimmed = name.trim();
     if (trimmed.isEmpty || trimmed.toLowerCase() == 'player') return true;
     if (trimmed.contains(' ')) return false;
-    return trimmed.length >= 20 &&
-        RegExp(r'^[a-zA-Z0-9]+$').hasMatch(trimmed);
+    return trimmed.length >= 20 && RegExp(r'^[a-zA-Z0-9]+$').hasMatch(trimmed);
   }
 
   static String _rankAuraAsset(RankTier tier) => switch (tier) {

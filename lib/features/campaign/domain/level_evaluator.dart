@@ -59,13 +59,11 @@ abstract final class LevelEvaluator {
         ObjectiveType.win => payload.humanWon,
         ObjectiveType.margin => payload.margin >= (obj.min ?? 1),
         // maxMoves now uses human TURN count (chains = 1 turn).
-        ObjectiveType.maxMoves =>
-          payload.humanTurnCount <= (obj.value ?? 999),
+        ObjectiveType.maxMoves => payload.humanTurnCount <= (obj.value ?? 999),
         // preventChain: true if the AI never captured ≥3 boxes in any single turn.
         ObjectiveType.preventChain => payload.aiMaxChainBoxes < 3,
         // maxAiBoxes: true if the AI's total final box count is within the cap.
-        ObjectiveType.maxAiBoxes =>
-          payload.aiBoxCount <= (obj.value ?? 999),
+        ObjectiveType.maxAiBoxes => payload.aiBoxCount <= (obj.value ?? 999),
         ObjectiveType.none => true,
       };
 }

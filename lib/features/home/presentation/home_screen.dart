@@ -50,8 +50,7 @@ class _HomeScreenBody extends ConsumerWidget {
     final tutorialFreeAttempt = continueId != null &&
         ref.watch(tutorialFreeAttemptProvider(continueId));
 
-    final campaignLocked =
-        !livesSnapshot.canPlayRanked && !tutorialFreeAttempt;
+    final campaignLocked = !livesSnapshot.canPlayRanked && !tutorialFreeAttempt;
     final lockSubtitle = homeLockSubtitle(livesSnapshot);
 
     final content = SafeArea(
@@ -117,7 +116,9 @@ class _HomeScreenBody extends ConsumerWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                ok ? 'Mission reward claimed!' : 'Mission not ready yet.',
+                                ok
+                                    ? 'Mission reward claimed!'
+                                    : 'Mission not ready yet.',
                               ),
                             ),
                           );

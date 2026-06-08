@@ -9,7 +9,8 @@ import '../domain/home_ui_models.dart';
 /// Daily mission rows derived from the live profile.
 final dailyMissionsProvider = Provider<List<DailyMission>>((ref) {
   final profile = ref.watch(profileProvider).valueOrNull;
-  final progress = profile?.dailyMissions.forToday() ?? const DailyMissionProgress.empty().forToday();
+  final progress = profile?.dailyMissions.forToday() ??
+      const DailyMissionProgress.empty().forToday();
 
   return [
     (

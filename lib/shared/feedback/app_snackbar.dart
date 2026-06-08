@@ -22,7 +22,8 @@ abstract final class AppSnackBar {
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: v.playerA.withValues(alpha: 0.85), width: 2),
+            side:
+                BorderSide(color: v.playerA.withValues(alpha: 0.85), width: 2),
           ),
         ),
       );

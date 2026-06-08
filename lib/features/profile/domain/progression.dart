@@ -37,7 +37,8 @@ abstract final class Progression {
   }
 
   /// Progress of [totalStars] within the current player level.
-  static ({int intoLevel, int forLevel, double fraction}) starsInCurrentPlayerLevel(
+  static ({int intoLevel, int forLevel, double fraction})
+      starsInCurrentPlayerLevel(
     int totalStars,
   ) {
     final level = levelForStars(totalStars);

@@ -168,7 +168,8 @@ class _BottomNav extends StatelessWidget {
   final int currentIndex;
   final void Function(int) onTap;
 
-  static const _destinations = <({IconData icon, IconData iconSelected, String label})>[
+  static const _destinations =
+      <({IconData icon, IconData iconSelected, String label})>[
     (
       icon: Icons.home_outlined,
       iconSelected: Icons.home_rounded,
@@ -277,7 +278,8 @@ class _NavItem extends StatelessWidget {
               curve: Curves.easeInOut,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: selected ? v.playerA.withOpacity(0.14) : Colors.transparent,
+                color:
+                    selected ? v.playerA.withOpacity(0.14) : Colors.transparent,
                 borderRadius: AppSpacing.roundedFull,
               ),
               child: Icon(

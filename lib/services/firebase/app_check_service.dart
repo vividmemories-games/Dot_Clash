@@ -25,7 +25,8 @@ abstract final class AppCheckService {
 
     if (kIsWeb) {
       if (kDebugMode) {
-        debugPrint('[AppCheck] Web: App Check not configured (mobile-only app).');
+        debugPrint(
+            '[AppCheck] Web: App Check not configured (mobile-only app).');
       }
       return;
     }
@@ -36,9 +37,8 @@ abstract final class AppCheckService {
       providerAndroid = const AndroidPlayIntegrityProvider();
       providerApple = const AppleAppAttestWithDeviceCheckFallbackProvider();
     } else {
-      final debugToken = AppEnv.appCheckDebugToken.isEmpty
-          ? null
-          : AppEnv.appCheckDebugToken;
+      final debugToken =
+          AppEnv.appCheckDebugToken.isEmpty ? null : AppEnv.appCheckDebugToken;
       providerAndroid = AndroidDebugProvider(debugToken: debugToken);
       providerApple = AppleDebugProvider(debugToken: debugToken);
     }
@@ -79,8 +79,8 @@ abstract final class AppCheckService {
   static Future<void> warmUp() async {
     if (!_activated || kIsWeb) return;
     try {
-      final token =
-          await FirebaseAppCheck.instanceFor(app: Firebase.app()).getToken(true);
+      final token = await FirebaseAppCheck.instanceFor(app: Firebase.app())
+          .getToken(true);
       if (kDebugMode && token != null && token.isNotEmpty) {
         debugPrint('[AppCheck] token warm-up OK');
       }
@@ -93,7 +93,8 @@ abstract final class AppCheckService {
             'Pass --dart-define=APP_CHECK_DEBUG_TOKEN=... (register in Firebase Console) '
             'and do a full restart after changing native iOS build scripts.',
           );
-        } else if (message.contains('403') || message.contains('PERMISSION_DENIED')) {
+        } else if (message.contains('403') ||
+            message.contains('PERMISSION_DENIED')) {
           _printDebugSetupHint(is403: true);
         } else {
           debugPrint('[AppCheck] token warm-up failed: $e');

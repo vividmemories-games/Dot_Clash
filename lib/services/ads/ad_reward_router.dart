@@ -114,7 +114,8 @@ class AdRewardRouter {
 
     final granted = await _showRewardedAndGrant(
       placement: AdPlacement.riposteRescue,
-      grant: () => _repo.grantPowerUp(PowerUpType.riposte.id, 1).then((_) => true),
+      grant: () =>
+          _repo.grantPowerUp(PowerUpType.riposte.id, 1).then((_) => true),
       onAdEarned: () {
         _rescueUsedThisMatch = true;
         _rescueAdsToday++;
@@ -143,7 +144,8 @@ class AdRewardRouter {
 
     return _showRewardedAndGrant(
       placement: placement,
-      grant: () => _repo.grantPowerUp(PowerUpType.extraTurns.id, 1).then((_) => true),
+      grant: () =>
+          _repo.grantPowerUp(PowerUpType.extraTurns.id, 1).then((_) => true),
       onAdEarned: () {
         _rescueUsedThisMatch = true;
         _rescueAdsToday++;

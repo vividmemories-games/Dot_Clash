@@ -34,5 +34,6 @@ final profileBootstrapProvider = Provider<ProfileBootstrapState>((ref) {
 final equippedThemeIdProvider = Provider<String?>((ref) {
   final bootstrap = ref.watch(profileBootstrapProvider);
   if (bootstrap != ProfileBootstrapState.ready) return null;
-  return ref.watch(profileProvider.select((value) => value.valueOrNull?.themeId));
+  return ref
+      .watch(profileProvider.select((value) => value.valueOrNull?.themeId));
 });

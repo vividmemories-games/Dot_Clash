@@ -200,9 +200,7 @@ class _ActionCard extends StatelessWidget {
                       subtitle,
                       style: t.bodySmall.copyWith(
                         fontSize: 11,
-                        color: backgroundImage != null
-                            ? Colors.white70
-                            : null,
+                        color: backgroundImage != null ? Colors.white70 : null,
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 2,
@@ -239,9 +237,7 @@ class _DailyPuzzleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final featureColor = v.playerB;
     final timeUntilMidnight = _timeUntilMidnight();
-    final timerLabel = completed
-        ? _formatDuration(timeUntilMidnight)
-        : null;
+    final timerLabel = completed ? _formatDuration(timeUntilMidnight) : null;
 
     return GestureDetector(
       onTap: onTap,
@@ -253,134 +249,143 @@ class _DailyPuzzleCard extends StatelessWidget {
             width: completed ? 1 : 1.5,
           ),
           boxShadow: v.useGlow && !completed
-              ? [BoxShadow(color: featureColor.withOpacity(0.18), blurRadius: 16)]
+              ? [
+                  BoxShadow(
+                      color: featureColor.withOpacity(0.18), blurRadius: 16)
+                ]
               : null,
         ),
         child: ClipRRect(
           borderRadius: AppSpacing.roundedLG,
           child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Background image
-            Image.asset(
-              'assets/images/card_daily_puzzle.png',
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-            ),
-
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.black.withOpacity(0.5),
-                    Color.lerp(Colors.black, featureColor, 0.25)!.withOpacity(0.8),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
+            fit: StackFit.expand,
+            children: [
+              // Background image
+              Image.asset(
+                'assets/images/card_daily_puzzle.png',
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
               ),
-            ),
 
-            // Content
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.sm,
-                AppSpacing.md,
-                AppSpacing.sm,
-                AppSpacing.sm,
-              ),
-              child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Streak badge
-            if (streak > 0)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+              DecoratedBox(
                 decoration: BoxDecoration(
-                  color: v.gold.withOpacity(0.15),
-                  borderRadius: AppSpacing.roundedFull,
-                  border: Border.all(color: v.gold.withOpacity(0.4)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.local_fire_department_rounded,
-                        size: 11, color: v.gold),
-                    const SizedBox(width: 3),
-                    Text(
-                      '$streak',
-                      style: t.bodySmall.copyWith(
-                        color: v.gold,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-            // Icon
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: featureColor.withOpacity(completed ? 0.08 : 0.15),
-                shape: BoxShape.circle,
-                border:
-                    Border.all(color: featureColor.withOpacity(completed ? 0.2 : 0.45)),
-              ),
-              child: Icon(
-                completed ? Icons.check_circle_outline_rounded : Icons.extension_rounded,
-                color: completed ? v.green : featureColor,
-                size: 25,
-              ),
-            ),
-            AppSpacing.vGapSM,
-
-            Text(
-              'DAILY PUZZLE',
-              style: t.playerName.copyWith(
-                color: completed ? v.textSecondary : featureColor,
-                fontSize: 11,
-                letterSpacing: 1.0,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            AppSpacing.vGapXS,
-
-            if (completed && timerLabel != null)
-              Text(
-                'New in $timerLabel',
-                style: t.bodySmall.copyWith(
-                  fontSize: 10,
-                  color: Colors.white70,
-                ),
-                textAlign: TextAlign.center,
-              )
-            else
-              Container(
-                margin: const EdgeInsets.only(top: 2),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: featureColor,
-                  borderRadius: AppSpacing.roundedFull,
-                ),
-                child: Text(
-                  'PLAY NOW',
-                  style: t.bodySmall.copyWith(
-                    color: Colors.black,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.black.withOpacity(0.5),
+                      Color.lerp(Colors.black, featureColor, 0.25)!
+                          .withOpacity(0.8),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
                 ),
               ),
-          ],
+
+              // Content
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.sm,
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.sm,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Streak badge
+                    if (streak > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 2),
+                        margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+                        decoration: BoxDecoration(
+                          color: v.gold.withOpacity(0.15),
+                          borderRadius: AppSpacing.roundedFull,
+                          border: Border.all(color: v.gold.withOpacity(0.4)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.local_fire_department_rounded,
+                                size: 11, color: v.gold),
+                            const SizedBox(width: 3),
+                            Text(
+                              '$streak',
+                              style: t.bodySmall.copyWith(
+                                color: v.gold,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    // Icon
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color:
+                            featureColor.withOpacity(completed ? 0.08 : 0.15),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: featureColor
+                                .withOpacity(completed ? 0.2 : 0.45)),
+                      ),
+                      child: Icon(
+                        completed
+                            ? Icons.check_circle_outline_rounded
+                            : Icons.extension_rounded,
+                        color: completed ? v.green : featureColor,
+                        size: 25,
+                      ),
+                    ),
+                    AppSpacing.vGapSM,
+
+                    Text(
+                      'DAILY PUZZLE',
+                      style: t.playerName.copyWith(
+                        color: completed ? v.textSecondary : featureColor,
+                        fontSize: 11,
+                        letterSpacing: 1.0,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    AppSpacing.vGapXS,
+
+                    if (completed && timerLabel != null)
+                      Text(
+                        'New in $timerLabel',
+                        style: t.bodySmall.copyWith(
+                          fontSize: 10,
+                          color: Colors.white70,
+                        ),
+                        textAlign: TextAlign.center,
+                      )
+                    else
+                      Container(
+                        margin: const EdgeInsets.only(top: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: featureColor,
+                          borderRadius: AppSpacing.roundedFull,
+                        ),
+                        child: Text(
+                          'PLAY NOW',
+                          style: t.bodySmall.copyWith(
+                            color: Colors.black,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
     );

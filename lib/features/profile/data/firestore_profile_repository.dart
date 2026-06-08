@@ -235,35 +235,35 @@ class FirestoreProfileRepository implements ProfileRepository {
       'purchaseLife',
       const {},
       devFallback: () => _guardBoolTransaction('purchaseLife', () async {
-      await _ensureExists();
-      return _firestore.runTransaction<bool>((txn) async {
-      final snap = await txn.get(_doc);
-      final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
-      final now = DateTime.now();
-      final resolved = LivesLogic.resolve(
-        lives: profile.lives,
-        nextLifeAt: profile.nextLifeAt,
-        now: now,
-      );
-      if (resolved.effectiveLives >= Progression.maxLives) return false;
-      if (profile.coins < Progression.lifeRefillPriceCoins) return false;
+        await _ensureExists();
+        return _firestore.runTransaction<bool>((txn) async {
+          final snap = await txn.get(_doc);
+          final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
+          final now = DateTime.now();
+          final resolved = LivesLogic.resolve(
+            lives: profile.lives,
+            nextLifeAt: profile.nextLifeAt,
+            now: now,
+          );
+          if (resolved.effectiveLives >= Progression.maxLives) return false;
+          if (profile.coins < Progression.lifeRefillPriceCoins) return false;
 
-      final purchased = LivesLogic.onPurchase(
-        lives: resolved.effectiveLives,
-        nextLifeAt: resolved.nextLifeAt,
-        now: now,
-      );
-      txn.update(_doc, {
-        'coins': profile.coins - Progression.lifeRefillPriceCoins,
-        'lives': purchased.lives,
-        'nextLifeAt': purchased.nextLifeAt == null
-            ? null
-            : Timestamp.fromDate(purchased.nextLifeAt!),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      return true;
-      });
-    }),
+          final purchased = LivesLogic.onPurchase(
+            lives: resolved.effectiveLives,
+            nextLifeAt: resolved.nextLifeAt,
+            now: now,
+          );
+          txn.update(_doc, {
+            'coins': profile.coins - Progression.lifeRefillPriceCoins,
+            'lives': purchased.lives,
+            'nextLifeAt': purchased.nextLifeAt == null
+                ? null
+                : Timestamp.fromDate(purchased.nextLifeAt!),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          return true;
+        });
+      }),
     );
   }
 
@@ -274,30 +274,32 @@ class FirestoreProfileRepository implements ProfileRepository {
       const {},
       optimistic: _predictDailyClaim,
       devFallback: () => _guardBoolTransaction('claimDaily', () async {
-      await _ensureExists();
-      return _firestore.runTransaction<bool>((txn) async {
-      final snap = await txn.get(_doc);
-      final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
-      final now = DateTime.now();
-      final last = profile.lastDailyClaimAt;
-      if (last != null && now.difference(last) < const Duration(hours: 24)) {
-        return false;
-      }
-      final boost = PowerUpCatalog.todayDailyBoost(now.toUtc());
-      final inv = Map<String, int>.from(profile.powerUpInventory);
-      inv[boost.id] = (inv[boost.id] ?? 0) + PowerUpCatalog.dailyBoostQuantity;
-      final newXp = profile.xp + 40;
-      txn.update(_doc, {
-        'coins': profile.coins + 60,
-        'xp': newXp,
-        'level': Progression.levelForXp(newXp),
-        'powerUpInventory': inv,
-        'lastDailyClaimAt': Timestamp.fromDate(now),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      return true;
-      });
-    }),
+        await _ensureExists();
+        return _firestore.runTransaction<bool>((txn) async {
+          final snap = await txn.get(_doc);
+          final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
+          final now = DateTime.now();
+          final last = profile.lastDailyClaimAt;
+          if (last != null &&
+              now.difference(last) < const Duration(hours: 24)) {
+            return false;
+          }
+          final boost = PowerUpCatalog.todayDailyBoost(now.toUtc());
+          final inv = Map<String, int>.from(profile.powerUpInventory);
+          inv[boost.id] =
+              (inv[boost.id] ?? 0) + PowerUpCatalog.dailyBoostQuantity;
+          final newXp = profile.xp + 40;
+          txn.update(_doc, {
+            'coins': profile.coins + 60,
+            'xp': newXp,
+            'level': Progression.levelForXp(newXp),
+            'powerUpInventory': inv,
+            'lastDailyClaimAt': Timestamp.fromDate(now),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          return true;
+        });
+      }),
     );
   }
 
@@ -321,23 +323,24 @@ class FirestoreProfileRepository implements ProfileRepository {
       'claimRewardedAd',
       const {},
       devFallback: () => _guardBoolTransaction('claimRewardedAd', () async {
-      await _ensureExists();
-      return _firestore.runTransaction<bool>((txn) async {
-      final snap = await txn.get(_doc);
-      final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
-      final now = DateTime.now();
-      final last = profile.lastRewardedAdAt;
-      if (last != null && now.difference(last) < const Duration(minutes: 30)) {
-        return false;
-      }
-      txn.update(_doc, {
-        'coins': profile.coins + 35,
-        'lastRewardedAdAt': Timestamp.fromDate(now),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      return true;
-      });
-    }),
+        await _ensureExists();
+        return _firestore.runTransaction<bool>((txn) async {
+          final snap = await txn.get(_doc);
+          final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
+          final now = DateTime.now();
+          final last = profile.lastRewardedAdAt;
+          if (last != null &&
+              now.difference(last) < const Duration(minutes: 30)) {
+            return false;
+          }
+          txn.update(_doc, {
+            'coins': profile.coins + 35,
+            'lastRewardedAdAt': Timestamp.fromDate(now),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          return true;
+        });
+      }),
     );
   }
 
@@ -363,28 +366,28 @@ class FirestoreProfileRepository implements ProfileRepository {
     return _guardBoolTransaction('grantFreeLife', () async {
       await _ensureExists();
       return _firestore.runTransaction<bool>((txn) async {
-      final snap = await txn.get(_doc);
-      final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
-      final now = DateTime.now();
-      final resolved = LivesLogic.resolve(
-        lives: profile.lives,
-        nextLifeAt: profile.nextLifeAt,
-        now: now,
-      );
-      if (resolved.effectiveLives >= Progression.maxLives) return false;
-      final updated = LivesLogic.onPurchase(
-        lives: resolved.effectiveLives,
-        nextLifeAt: resolved.nextLifeAt,
-        now: now,
-      );
-      txn.update(_doc, {
-        'lives': updated.lives,
-        'nextLifeAt': updated.nextLifeAt == null
-            ? null
-            : Timestamp.fromDate(updated.nextLifeAt!),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      return true;
+        final snap = await txn.get(_doc);
+        final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
+        final now = DateTime.now();
+        final resolved = LivesLogic.resolve(
+          lives: profile.lives,
+          nextLifeAt: profile.nextLifeAt,
+          now: now,
+        );
+        if (resolved.effectiveLives >= Progression.maxLives) return false;
+        final updated = LivesLogic.onPurchase(
+          lives: resolved.effectiveLives,
+          nextLifeAt: resolved.nextLifeAt,
+          now: now,
+        );
+        txn.update(_doc, {
+          'lives': updated.lives,
+          'nextLifeAt': updated.nextLifeAt == null
+              ? null
+              : Timestamp.fromDate(updated.nextLifeAt!),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        return true;
       });
     });
   }
@@ -401,21 +404,21 @@ class FirestoreProfileRepository implements ProfileRepository {
       optimistic: (p) =>
           _predictPowerUpPurchase(p, powerUpId, priceCoins, quantity),
       devFallback: () => _guardBoolTransaction('purchasePowerUp', () async {
-      await _ensureExists();
-      return _firestore.runTransaction<bool>((txn) async {
-      final snap = await txn.get(_doc);
-      final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
-      if (profile.coins < priceCoins) return false;
-      final inv = Map<String, int>.from(profile.powerUpInventory);
-      inv[powerUpId] = (inv[powerUpId] ?? 0) + quantity;
-      txn.update(_doc, {
-        'coins': profile.coins - priceCoins,
-        'powerUpInventory': inv,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      return true;
-      });
-    }),
+        await _ensureExists();
+        return _firestore.runTransaction<bool>((txn) async {
+          final snap = await txn.get(_doc);
+          final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
+          if (profile.coins < priceCoins) return false;
+          final inv = Map<String, int>.from(profile.powerUpInventory);
+          inv[powerUpId] = (inv[powerUpId] ?? 0) + quantity;
+          txn.update(_doc, {
+            'coins': profile.coins - priceCoins,
+            'powerUpInventory': inv,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          return true;
+        });
+      }),
     );
   }
 
@@ -425,26 +428,26 @@ class FirestoreProfileRepository implements ProfileRepository {
       'consumePowerUp',
       {'powerUpId': powerUpId, 'quantity': quantity},
       devFallback: () => _guardBoolTransaction('consumePowerUp', () async {
-      await _ensureExists();
-      return _firestore.runTransaction<bool>((txn) async {
-      final snap = await txn.get(_doc);
-      final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
-      final current = profile.powerUpInventory[powerUpId] ?? 0;
-      if (current < quantity) return false;
-      final inv = Map<String, int>.from(profile.powerUpInventory);
-      final left = current - quantity;
-      if (left <= 0) {
-        inv.remove(powerUpId);
-      } else {
-        inv[powerUpId] = left;
-      }
-      txn.update(_doc, {
-        'powerUpInventory': inv,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      return true;
-      });
-    }),
+        await _ensureExists();
+        return _firestore.runTransaction<bool>((txn) async {
+          final snap = await txn.get(_doc);
+          final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
+          final current = profile.powerUpInventory[powerUpId] ?? 0;
+          if (current < quantity) return false;
+          final inv = Map<String, int>.from(profile.powerUpInventory);
+          final left = current - quantity;
+          if (left <= 0) {
+            inv.remove(powerUpId);
+          } else {
+            inv[powerUpId] = left;
+          }
+          txn.update(_doc, {
+            'powerUpInventory': inv,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          return true;
+        });
+      }),
     );
   }
 
@@ -571,10 +574,10 @@ class FirestoreProfileRepository implements ProfileRepository {
     }
 
     final missions = profile.dailyMissions.forToday().copyWithBump(
-      win: win,
-      gamePlayed: true,
-      boxesCaptured: 0,
-    );
+          win: win,
+          gamePlayed: true,
+          boxesCaptured: 0,
+        );
 
     final updated = profile.copyWith(
       coins: profile.coins + deltaCoins,
@@ -589,8 +592,7 @@ class FirestoreProfileRepository implements ProfileRepository {
       rating: newRating,
       seasonBestRating: seasonBest,
       seasonWins: profile.seasonWins + (win ? 1 : 0),
-      seasonLosses:
-          profile.seasonLosses + (result == MatchResult.loss ? 1 : 0),
+      seasonLosses: profile.seasonLosses + (result == MatchResult.loss ? 1 : 0),
       seasonTies: profile.seasonTies + (tie ? 1 : 0),
       lives: updatedLives,
       nextLifeAt: updatedNextLifeAt,
@@ -905,7 +907,8 @@ class FirestoreProfileRepository implements ProfileRepository {
 
     final currentBest = profile.campaignStars[levelId] ?? 0;
     final newStars = starsEarned > currentBest
-        ? (Map<String, int>.from(profile.campaignStars)..[levelId] = starsEarned)
+        ? (Map<String, int>.from(profile.campaignStars)
+          ..[levelId] = starsEarned)
         : profile.campaignStars;
 
     final newXp = profile.xp + (win ? xpReward : xpReward ~/ 4);
@@ -959,10 +962,10 @@ class FirestoreProfileRepository implements ProfileRepository {
       campaignStars: newStars,
       lastCampaignLevelId: levelId,
       dailyMissions: profile.dailyMissions.forToday().copyWithBump(
-        win: win,
-        gamePlayed: true,
-        boxesCaptured: boxesCaptured,
-      ),
+            win: win,
+            gamePlayed: true,
+            boxesCaptured: boxesCaptured,
+          ),
       powerUpInventory: inv,
     );
   }
@@ -1017,10 +1020,10 @@ class FirestoreProfileRepository implements ProfileRepository {
       dailyPuzzleCompleted: true,
       dailyPuzzleStreak: streak,
       dailyMissions: profile.dailyMissions.forToday().copyWithBump(
-        win: true,
-        gamePlayed: true,
-        boxesCaptured: boxesCaptured,
-      ),
+            win: true,
+            gamePlayed: true,
+            boxesCaptured: boxesCaptured,
+          ),
     );
     _emit(updated);
     await _withRetry(() => _doc.set({
@@ -1094,9 +1097,8 @@ class FirestoreProfileRepository implements ProfileRepository {
                 outcome: outcome,
                 modeLabel: data['modeLabel'] as String? ?? 'Game',
                 opponentLabel: data['opponentLabel'] as String? ?? 'Opponent',
-                playedAt: playedAt is Timestamp
-                    ? playedAt.toDate()
-                    : DateTime.now(),
+                playedAt:
+                    playedAt is Timestamp ? playedAt.toDate() : DateTime.now(),
               );
             }).toList());
   }
@@ -1119,28 +1121,28 @@ class FirestoreProfileRepository implements ProfileRepository {
     return _guardBoolTransaction('purchase', () async {
       await _ensureExists();
       return _firestore.runTransaction<bool>((txn) async {
-      final snap = await txn.get(_doc);
-      final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
-      final owned = switch (ownedKey) {
-        'ownedThemeIds' => profile.ownedThemeIds,
-        'ownedAvatarIds' => profile.ownedAvatarIds,
-        _ => profile.ownedInitialSkinIds,
-      };
-      if (owned.contains(itemId)) {
+        final snap = await txn.get(_doc);
+        final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
+        final owned = switch (ownedKey) {
+          'ownedThemeIds' => profile.ownedThemeIds,
+          'ownedAvatarIds' => profile.ownedAvatarIds,
+          _ => profile.ownedInitialSkinIds,
+        };
+        if (owned.contains(itemId)) {
+          txn.update(_doc, {
+            equipKey: itemId,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          return true;
+        }
+        if (profile.coins < priceCoins) return false;
         txn.update(_doc, {
+          'coins': profile.coins - priceCoins,
+          ownedKey: [...owned, itemId],
           equipKey: itemId,
           'updatedAt': FieldValue.serverTimestamp(),
         });
         return true;
-      }
-      if (profile.coins < priceCoins) return false;
-      txn.update(_doc, {
-        'coins': profile.coins - priceCoins,
-        ownedKey: [...owned, itemId],
-        equipKey: itemId,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      return true;
       });
     });
   }

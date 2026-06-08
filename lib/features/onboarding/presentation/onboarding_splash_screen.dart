@@ -110,17 +110,17 @@ class _OnboardingSplashScreenState extends ConsumerState<OnboardingSplashScreen>
                   Text(
                     'DOT CLASH',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontSize: 42,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 6,
-                          shadows: [
-                            Shadow(
-                              color: v.playerA.withOpacity(0.8),
-                              blurRadius: 24,
-                            ),
-                          ],
+                      fontSize: 42,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 6,
+                      shadows: [
+                        Shadow(
+                          color: v.playerA.withOpacity(0.8),
+                          blurRadius: 24,
                         ),
+                      ],
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),

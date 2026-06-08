@@ -154,7 +154,8 @@ class _ProfileScreenBody extends ConsumerWidget {
                     ),
                   ),
                   onPressed: () => context.push(AppRoutes.settings),
-                  icon: Icon(Icons.settings_outlined, size: 18, color: v.textSecondary),
+                  icon: Icon(Icons.settings_outlined,
+                      size: 18, color: v.textSecondary),
                   label: Text(
                     'SETTINGS',
                     style: context.txt.playerName.copyWith(
@@ -369,7 +370,8 @@ class _LevelProgressCard extends StatelessWidget {
               const SizedBox(width: 3),
               Text(
                 '$totalStars',
-                style: t.bodySmall.copyWith(color: v.gold, fontWeight: FontWeight.w700),
+                style: t.bodySmall
+                    .copyWith(color: v.gold, fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -377,7 +379,8 @@ class _LevelProgressCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: v.playerA.withOpacity(0.15),
                   borderRadius: AppSpacing.roundedMD,
@@ -565,4 +568,3 @@ class _StatCard extends StatelessWidget {
     );
   }
 }
-

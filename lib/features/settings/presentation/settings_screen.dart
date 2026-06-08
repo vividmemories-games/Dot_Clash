@@ -58,7 +58,8 @@ class SettingsScreen extends ConsumerWidget {
   bool _isAccountConflictError(Object error) {
     if (error is AuthAccountConflictException) return true;
     final message = error.toString().toLowerCase();
-    return message.contains('already associated with a different user account') ||
+    return message
+            .contains('already associated with a different user account') ||
         message.contains('credential-already-in-use') ||
         message.contains('already linked to another dot clash profile') ||
         message.contains('already in use');
@@ -106,10 +107,9 @@ class SettingsScreen extends ConsumerWidget {
     );
     try {
       User? signedInUser;
-      final pendingCredential =
-          (conflictError is AuthAccountConflictException)
-              ? conflictError.pendingCredential
-              : null;
+      final pendingCredential = (conflictError is AuthAccountConflictException)
+          ? conflictError.pendingCredential
+          : null;
       final canTryResolvedCredential = pendingCredential != null &&
           !(!kIsWeb &&
               defaultTargetPlatform == TargetPlatform.android &&
@@ -146,7 +146,8 @@ class SettingsScreen extends ConsumerWidget {
       }
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Switched to your existing $providerLabel account.')),
+        SnackBar(
+            content: Text('Switched to your existing $providerLabel account.')),
       );
     } catch (e) {
       if (!context.mounted) return;
@@ -168,7 +169,8 @@ class SettingsScreen extends ConsumerWidget {
     final isAnonymousGuest = currentUser?.isAnonymous ?? false;
     final isIos = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
     final providerIds =
-        currentUser?.providerData.map((p) => p.providerId).toSet() ?? <String>{};
+        currentUser?.providerData.map((p) => p.providerId).toSet() ??
+            <String>{};
     final signedInWithGoogle = providerIds.contains('google.com');
     final signedInWithApple = providerIds.contains('apple.com');
 
@@ -233,8 +235,7 @@ class SettingsScreen extends ConsumerWidget {
           AppSpacing.vGapLG,
 
           // ── Player names ────────────────────────────────────────────────
-          Text('PLAYER NAMES',
-              style: t.scoreLabel),
+          Text('PLAYER NAMES', style: t.scoreLabel),
           AppSpacing.vGapSM,
           NeonCard(
             padding: const EdgeInsets.all(AppSpacing.sm),
@@ -711,9 +712,8 @@ class _HelpLegalSectionState extends ConsumerState<_HelpLegalSection> {
                 leading: Icon(Icons.support_agent_outlined, color: v.playerB),
                 title: const Text('Support'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: firebaseOn
-                    ? () => context.push(AppRoutes.contact)
-                    : null,
+                onTap:
+                    firebaseOn ? () => context.push(AppRoutes.contact) : null,
                 enabled: firebaseOn,
               ),
               const Divider(height: 1),
@@ -1006,8 +1006,7 @@ class _TermsAndPrivacySheet extends StatelessWidget {
                 if (firebaseOn) ...[
                   const Divider(height: 1),
                   ListTile(
-                    leading:
-                        Icon(Icons.delete_forever_outlined, color: v.red),
+                    leading: Icon(Icons.delete_forever_outlined, color: v.red),
                     title: Text(
                       'Delete My Account',
                       style: TextStyle(

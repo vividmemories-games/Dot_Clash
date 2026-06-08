@@ -55,7 +55,6 @@ class HomeTopBar extends StatelessWidget {
             onTap: onOpenProfile,
           ),
           AppSpacing.hGapSM,
-
           Expanded(
             child: CoachTourTarget(
               id: CoachTourTargetId.homeTopBarLives,
@@ -88,10 +87,10 @@ class HomeTopBar extends StatelessWidget {
               ),
             ),
           ),
-
           IconButton(
             tooltip: 'Settings',
-            icon: Icon(Icons.settings_outlined, color: v.textSecondary, size: 24),
+            icon:
+                Icon(Icons.settings_outlined, color: v.textSecondary, size: 24),
             padding: const EdgeInsets.all(6),
             constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
             onPressed: onOpenSettings,

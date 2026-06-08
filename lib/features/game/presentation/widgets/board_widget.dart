@@ -117,8 +117,7 @@ class _BoardWidgetState extends State<BoardWidget>
     }
 
     // Start a draw animation for every newly placed edge.
-    final newEdges =
-        widget.state.drawnEdges.difference(old.state.drawnEdges);
+    final newEdges = widget.state.drawnEdges.difference(old.state.drawnEdges);
     for (final edge in newEdges) {
       if (_edgeAnims.containsKey(edge)) continue;
       final ctrl = AnimationController(
@@ -525,7 +524,6 @@ class _BoardPainter extends CustomPainter {
             ],
           ).createShader(rect),
       );
-
     }
   }
 
@@ -541,14 +539,11 @@ class _BoardPainter extends CustomPainter {
       final hoverColor = visuals.onAccent.withOpacity(0.32);
 
       if (isPress) {
-        _strokeLine(canvas, p1, p2, pressColor,
-            width: _edgeW, glow: true);
+        _strokeLine(canvas, p1, p2, pressColor, width: _edgeW, glow: true);
       } else if (isHint) {
         final pulse = 0.55 + pulseValue * 0.45;
-        _strokeLine(canvas, p1, p2,
-            visuals.gold.withOpacity(pulse),
-            width: _edgeW * 0.9,
-            glow: true);
+        _strokeLine(canvas, p1, p2, visuals.gold.withOpacity(pulse),
+            width: _edgeW * 0.9, glow: true);
       } else if (isHover) {
         _strokeLine(canvas, p1, p2, hoverColor,
             width: _edgeW * 0.75, glow: false);
@@ -587,8 +582,7 @@ class _BoardPainter extends CustomPainter {
       final pid = ownership[key] ?? state.playerIds[0];
       final color = visuals.playerColor(pid);
       final progress = edgeProgress[key] ?? 1.0;
-      final endpoint =
-          progress >= 1.0 ? p2 : Offset.lerp(p1, p2, progress)!;
+      final endpoint = progress >= 1.0 ? p2 : Offset.lerp(p1, p2, progress)!;
 
       _strokeLine(canvas, p1, endpoint, color, width: _edgeW, glow: false);
 
@@ -617,8 +611,7 @@ class _BoardPainter extends CustomPainter {
     final pad = layout.cellSize * 0.22;
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTRB(
-            tl.dx - pad, tl.dy - pad, br.dx + pad, br.dy + pad),
+        Rect.fromLTRB(tl.dx - pad, tl.dy - pad, br.dx + pad, br.dy + pad),
         const Radius.circular(18),
       ),
       Paint()..color = visuals.red.withOpacity(0.12 * rewindFadeT),
@@ -726,8 +719,7 @@ class _BoardPainter extends CustomPainter {
       // Player letter
       _drawText(
         canvas,
-        (playerInitials[pid] ?? (pid.isNotEmpty ? pid[0] : '?'))
-            .toUpperCase(),
+        (playerInitials[pid] ?? (pid.isNotEmpty ? pid[0] : '?')).toUpperCase(),
         center.translate(0, layout.cellSize * 0.05),
         TextStyle(
           fontSize: layout.cellSize * 0.35,
@@ -738,14 +730,12 @@ class _BoardPainter extends CustomPainter {
     }
   }
 
-  void _drawText(Canvas canvas, String text, Offset center,
-      TextStyle style) {
+  void _drawText(Canvas canvas, String text, Offset center, TextStyle style) {
     final tp = TextPainter(
       text: TextSpan(text: text, style: style),
       textDirection: TextDirection.ltr,
     )..layout();
-    tp.paint(canvas,
-        center - Offset(tp.width / 2, tp.height / 2));
+    tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
   }
 
   // ── Drawing primitives ─────────────────────────────────────────────────────

@@ -159,7 +159,9 @@ class GameNotifier extends StateNotifier<GameState> {
     } else {
       state = state.copyWith(
         isOver: true,
-        winnerId: humanScore > aiScore ? _humanId : (humanScore < aiScore ? _aiId : null),
+        winnerId: humanScore > aiScore
+            ? _humanId
+            : (humanScore < aiScore ? _aiId : null),
         clearWinner: humanScore == aiScore,
       );
     }
@@ -312,7 +314,9 @@ class GameNotifier extends StateNotifier<GameState> {
       cols: cols ?? _config.cols,
       disabledCells: Set<String>.from(_config.disabledCells),
     );
-    _ref.read(matchSessionProvider.notifier).init(turnBudget: _config.turnBudget);
+    _ref
+        .read(matchSessionProvider.notifier)
+        .init(turnBudget: _config.turnBudget);
     _ref.read(turnTimerProvider.notifier).reset();
     _cancelAiSchedule();
     _ref.read(opponentLastEdgeProvider.notifier).state = null;
@@ -362,9 +366,8 @@ class GameNotifier extends StateNotifier<GameState> {
     if (!_isVsAi || state.isOver || _session.outOfTurnsPending) return;
 
     if (state.currentPlayerId == _aiId) {
-      final delayMs = wasHumanTurn
-          ? AiPacing.thinkBeforeFirstMs
-          : AiPacing.afterAiMoveMs;
+      final delayMs =
+          wasHumanTurn ? AiPacing.thinkBeforeFirstMs : AiPacing.afterAiMoveMs;
       _scheduleAiMove(delayMs: delayMs);
       return;
     }

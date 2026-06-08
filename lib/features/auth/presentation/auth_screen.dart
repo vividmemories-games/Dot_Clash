@@ -455,7 +455,9 @@ class _AuthPanel extends StatelessWidget {
             // "LOGIN TO CONTINUE" header
             Row(
               children: [
-                Expanded(child: Divider(color: Colors.white.withOpacity(0.15), thickness: 1)),
+                Expanded(
+                    child: Divider(
+                        color: Colors.white.withOpacity(0.15), thickness: 1)),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text(
@@ -468,7 +470,9 @@ class _AuthPanel extends StatelessWidget {
                     ),
                   ),
                 ),
-                Expanded(child: Divider(color: Colors.white.withOpacity(0.15), thickness: 1)),
+                Expanded(
+                    child: Divider(
+                        color: Colors.white.withOpacity(0.15), thickness: 1)),
               ],
             ),
             const SizedBox(height: 20),
@@ -492,10 +496,12 @@ class _AuthPanel extends StatelessWidget {
             // Google button (always shown when configured)
             _AuthOutlineButton(
               onPressed: loading || !coreReady ? null : onGoogle,
-              icon: loading ? null : AuthProviderLeading.google(
-                enabled: coreReady,
-                disabledColor: Colors.white24,
-              ),
+              icon: loading
+                  ? null
+                  : AuthProviderLeading.google(
+                      enabled: coreReady,
+                      disabledColor: Colors.white24,
+                    ),
               label: loading ? 'Connecting...' : 'CONTINUE WITH GOOGLE',
             ),
 
@@ -504,7 +510,9 @@ class _AuthPanel extends StatelessWidget {
             // OR divider
             Row(
               children: [
-                Expanded(child: Divider(color: Colors.white.withOpacity(0.12), thickness: 1)),
+                Expanded(
+                    child: Divider(
+                        color: Colors.white.withOpacity(0.12), thickness: 1)),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   child: Text(
@@ -517,7 +525,9 @@ class _AuthPanel extends StatelessWidget {
                     ),
                   ),
                 ),
-                Expanded(child: Divider(color: Colors.white.withOpacity(0.12), thickness: 1)),
+                Expanded(
+                    child: Divider(
+                        color: Colors.white.withOpacity(0.12), thickness: 1)),
               ],
             ),
             const SizedBox(height: 16),
@@ -621,9 +631,8 @@ class _AuthOutlineButton extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: enabled
-                    ? Colors.white.withOpacity(0.88)
-                    : Colors.white24,
+                color:
+                    enabled ? Colors.white.withOpacity(0.88) : Colors.white24,
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,

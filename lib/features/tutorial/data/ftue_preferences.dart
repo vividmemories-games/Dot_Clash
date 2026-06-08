@@ -49,8 +49,7 @@ class FtuePreferences {
         prefs.getStringList(kLegacyTutorialLevelsDoneKey) ?? const [];
 
     final homeComplete = prefs.getBool(kHomeFtueCompleteKey) ?? false;
-    final homeSkipped =
-        prefs.getBool(kHomeFtueSkippedKey) ?? legacySkipped;
+    final homeSkipped = prefs.getBool(kHomeFtueSkippedKey) ?? legacySkipped;
     final campaignSkipped =
         prefs.getBool(kCampaignFtueSkippedKey) ?? legacySkipped;
     final campaignDone = {

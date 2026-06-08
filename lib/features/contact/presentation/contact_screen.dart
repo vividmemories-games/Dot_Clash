@@ -51,62 +51,62 @@ class ContactScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         child: ListView(
-            padding: AppSpacing.pagePadding,
-            children: [
-              Text(
-                'Questions about gameplay, privacy, ads, or your account?',
-                style: t.body,
+          padding: AppSpacing.pagePadding,
+          children: [
+            Text(
+              'Questions about gameplay, privacy, ads, or your account?',
+              style: t.body,
+            ),
+            AppSpacing.vGapMD,
+            NeonCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Email support',
+                    style: t.playerName.copyWith(color: v.playerB),
+                  ),
+                  AppSpacing.vGapSM,
+                  Text(
+                    'Tap below to open your mail app with a pre-filled message. '
+                    'Add a short description of your issue and send — we usually '
+                    'reply within a few business days.',
+                    style: t.bodySmall,
+                  ),
+                  AppSpacing.vGapMD,
+                  Text(
+                    'Helpful to include:',
+                    style: t.bodySmall.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  AppSpacing.vGapXS,
+                  Text(
+                    '• What you were doing when the issue happened\n'
+                    '• Your display name in the app\n'
+                    '• How you sign in (Google, Apple, or guest)',
+                    style: t.bodySmall,
+                  ),
+                  AppSpacing.vGapLG,
+                  SizedBox(
+                    width: double.infinity,
+                    child: NeonButton(
+                      label: 'Email support',
+                      icon: Icons.mail_outline_rounded,
+                      color: v.playerB,
+                      onPressed: () => _emailSupport(context, ref),
+                    ),
+                  ),
+                ],
               ),
-              AppSpacing.vGapMD,
-              NeonCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Email support',
-                      style: t.playerName.copyWith(color: v.playerB),
-                    ),
-                    AppSpacing.vGapSM,
-                    Text(
-                      'Tap below to open your mail app with a pre-filled message. '
-                      'Add a short description of your issue and send — we usually '
-                      'reply within a few business days.',
-                      style: t.bodySmall,
-                    ),
-                    AppSpacing.vGapMD,
-                    Text(
-                      'Helpful to include:',
-                      style: t.bodySmall.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    AppSpacing.vGapXS,
-                    Text(
-                      '• What you were doing when the issue happened\n'
-                      '• Your display name in the app\n'
-                      '• How you sign in (Google, Apple, or guest)',
-                      style: t.bodySmall,
-                    ),
-                    AppSpacing.vGapLG,
-                    SizedBox(
-                      width: double.infinity,
-                      child: NeonButton(
-                        label: 'Email support',
-                        icon: Icons.mail_outline_rounded,
-                        color: v.playerB,
-                        onPressed: () => _emailSupport(context, ref),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              AppSpacing.vGapMD,
-              Text(
-                'Support: ${AppEnv.contactEmail}',
-                style: t.bodySmall.copyWith(color: v.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+            ),
+            AppSpacing.vGapMD,
+            Text(
+              'Support: ${AppEnv.contactEmail}',
+              style: t.bodySmall.copyWith(color: v.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
+      ),
     );
   }
 }

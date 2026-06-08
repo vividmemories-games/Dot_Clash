@@ -62,8 +62,12 @@ abstract final class InitialSkinStyles {
         return _base(fontSize).copyWith(
           color: const Color(0xFFE8ECF5),
           shadows: const [
-            Shadow(color: Color(0xFF9AA8C4), blurRadius: 1, offset: Offset(0, 1)),
-            Shadow(color: Color(0xFFFFFFFF), blurRadius: 0, offset: Offset(0, -0.5)),
+            Shadow(
+                color: Color(0xFF9AA8C4), blurRadius: 1, offset: Offset(0, 1)),
+            Shadow(
+                color: Color(0xFFFFFFFF),
+                blurRadius: 0,
+                offset: Offset(0, -0.5)),
           ],
         );
       case 'initial_skin_arcade':
@@ -74,7 +78,10 @@ abstract final class InitialSkinStyles {
           letterSpacing: -0.5,
           color: const Color(0xFFB8FF30),
           shadows: [
-            Shadow(color: Colors.black.withOpacity(0.9), blurRadius: 0, offset: Offset(2, 2)),
+            Shadow(
+                color: Colors.black.withOpacity(0.9),
+                blurRadius: 0,
+                offset: Offset(2, 2)),
             const Shadow(color: Color(0xFF00D4FF), blurRadius: 8),
           ],
         );

@@ -68,7 +68,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: initialLocation,
     debugLogDiagnostics: false,
     refreshListenable: Listenable.merge([authRefresh, onboardingRefresh]),
-
     redirect: (context, state) {
       // Read inside redirect so auth/onboarding refresh re-runs this without
       // recreating GoRouter (which would reset to [initialLocation]).
@@ -81,7 +80,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       String? redirectTarget;
       if (isSplash) {
-        if (isLoggedIn) redirectTarget = AppRoutes.home;
+        if (isLoggedIn)
+          redirectTarget = AppRoutes.home;
         else if (onboardingComplete) redirectTarget = AppRoutes.auth;
       } else if (!onboardingComplete && !isLoggedIn) {
         redirectTarget = AppRoutes.splash;
@@ -97,7 +97,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       return redirectTarget;
     },
-
     routes: [
       // ── Onboarding splash (first launch only) ───────────────────────────
       GoRoute(
@@ -114,7 +113,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.game,
         pageBuilder: (context, state) {
-          final config = state.extra as GameConfig? ?? GameConfig.defaultLocal();
+          final config =
+              state.extra as GameConfig? ?? GameConfig.defaultLocal();
           return _slidePage(state, GameScreen(config: config));
         },
       ),

@@ -116,7 +116,8 @@ class _DotConfettiPainter extends CustomPainter {
       final py = (p.y + p.vy * t) * size.height;
       final opacity = (1 - t).clamp(0.0, 1.0);
       final paint = Paint()
-        ..color = _colors[p.hue % _colors.length].withValues(alpha: opacity * 0.9)
+        ..color =
+            _colors[p.hue % _colors.length].withValues(alpha: opacity * 0.9)
         ..strokeWidth = 2
         ..style = p.isLine ? PaintingStyle.stroke : PaintingStyle.fill;
       if (p.isLine) {

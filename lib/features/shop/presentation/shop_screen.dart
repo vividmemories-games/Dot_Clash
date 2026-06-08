@@ -45,7 +45,8 @@ String _formatDailyCooldown(Duration duration) {
 
 bool _isDailyClaimAvailable(DateTime? lastDailyClaimAt) {
   if (lastDailyClaimAt == null) return true;
-  return DateTime.now().difference(lastDailyClaimAt) >= const Duration(hours: 24);
+  return DateTime.now().difference(lastDailyClaimAt) >=
+      const Duration(hours: 24);
 }
 
 Duration _dailyClaimCooldownRemaining(DateTime? lastDailyClaimAt) {
@@ -170,86 +171,86 @@ class ShopScreen extends ConsumerWidget {
                       child: ShopOuterSwipeBridge(
                         child: TabBarView(
                           children: [
-                          _CosmeticCatalogTab(
-                            ref: ref,
-                            purchaseInFlight: purchaseInFlight,
-                            title: 'CHOOSE YOUR THEME',
-                            subtitle:
-                                'Personalize your matches. Only you can see your theme.',
-                            coins: profile.coins,
-                            items: catalog.themes,
-                            ownedIds: profile.ownedThemeIds,
-                            equippedId: profile.themeId,
-                            onBuy: (item) =>
-                                repo.purchaseTheme(item.id, item.priceCoins),
-                            onEquip: (item) => repo.equipTheme(item.id),
-                          ),
-                          _CosmeticCatalogTab(
-                            ref: ref,
-                            purchaseInFlight: purchaseInFlight,
-                            title: 'CHOOSE YOUR AVATAR',
-                            subtitle:
-                                'Show off on the home screen and in matches.',
-                            coins: profile.coins,
-                            items: catalog.avatars,
-                            ownedIds: profile.ownedAvatarIds,
-                            equippedId: profile.avatarId,
-                            onBuy: (item) =>
-                                repo.purchaseAvatar(item.id, item.priceCoins),
-                            onEquip: (item) => repo.equipAvatar(item.id),
-                          ),
-                          _CosmeticCatalogTab(
-                            ref: ref,
-                            purchaseInFlight: purchaseInFlight,
-                            title: 'CHOOSE YOUR INITIAL',
-                            subtitle:
-                                'Your letter on the scoreboard during play.',
-                            coins: profile.coins,
-                            items: catalog.initialSkins,
-                            ownedIds: profile.ownedInitialSkinIds,
-                            equippedId: profile.initialSkinId,
-                            onBuy: (item) => repo.purchaseInitialSkin(
-                              item.id,
-                              item.priceCoins,
+                            _CosmeticCatalogTab(
+                              ref: ref,
+                              purchaseInFlight: purchaseInFlight,
+                              title: 'CHOOSE YOUR THEME',
+                              subtitle:
+                                  'Personalize your matches. Only you can see your theme.',
+                              coins: profile.coins,
+                              items: catalog.themes,
+                              ownedIds: profile.ownedThemeIds,
+                              equippedId: profile.themeId,
+                              onBuy: (item) =>
+                                  repo.purchaseTheme(item.id, item.priceCoins),
+                              onEquip: (item) => repo.equipTheme(item.id),
                             ),
-                            onEquip: (item) => repo.equipInitialSkin(item.id),
-                          ),
-                          _BoostsAndStoreTab(
-                            ref: ref,
-                            purchaseInFlight: purchaseInFlight,
-                            inventory: profile.powerUpInventory,
-                            coins: profile.coins,
-                            lastDailyClaimAt: profile.lastDailyClaimAt,
-                            snapshot: livesSnapshot,
-                            removeAds: profile.removeAds,
-                            removeAdsPrice:
-                                removeAdsProductAsync.valueOrNull?.price,
-                            onBuyBoost: (type) => repo.purchasePowerUp(
-                              type.id,
-                              PowerUpCatalog.priceFor(type),
+                            _CosmeticCatalogTab(
+                              ref: ref,
+                              purchaseInFlight: purchaseInFlight,
+                              title: 'CHOOSE YOUR AVATAR',
+                              subtitle:
+                                  'Show off on the home screen and in matches.',
+                              coins: profile.coins,
+                              items: catalog.avatars,
+                              ownedIds: profile.ownedAvatarIds,
+                              equippedId: profile.avatarId,
+                              onBuy: (item) =>
+                                  repo.purchaseAvatar(item.id, item.priceCoins),
+                              onEquip: (item) => repo.equipAvatar(item.id),
                             ),
-                            onBuyLife: livesController.purchaseLife,
-                            onOpenLivesSheet: openLivesSheet,
-                            onWatchAdForLife: () => ref
-                                .read(adRewardRouterProvider)
-                                .showRewardedLifeAd(),
-                            onClaimDaily: () => repo.claimDaily(),
-                            onDevResetDaily: AppEnv.isDev
-                                ? () => repo.devResetDailyClaim()
-                                : null,
-                            onWatchAdForCoins: () => ref
-                                .read(adRewardRouterProvider)
-                                .showRewardedShopCoins(),
-                            onPurchaseRemoveAds: () async {
-                              final ok = await iap.purchaseRemoveAds();
-                              return (
-                                ok,
-                                ok ? null : iap.lastPurchaseError,
-                              );
-                            },
-                            onRestorePurchases: () => iap.restorePurchases(),
-                          ),
-                        ],
+                            _CosmeticCatalogTab(
+                              ref: ref,
+                              purchaseInFlight: purchaseInFlight,
+                              title: 'CHOOSE YOUR INITIAL',
+                              subtitle:
+                                  'Your letter on the scoreboard during play.',
+                              coins: profile.coins,
+                              items: catalog.initialSkins,
+                              ownedIds: profile.ownedInitialSkinIds,
+                              equippedId: profile.initialSkinId,
+                              onBuy: (item) => repo.purchaseInitialSkin(
+                                item.id,
+                                item.priceCoins,
+                              ),
+                              onEquip: (item) => repo.equipInitialSkin(item.id),
+                            ),
+                            _BoostsAndStoreTab(
+                              ref: ref,
+                              purchaseInFlight: purchaseInFlight,
+                              inventory: profile.powerUpInventory,
+                              coins: profile.coins,
+                              lastDailyClaimAt: profile.lastDailyClaimAt,
+                              snapshot: livesSnapshot,
+                              removeAds: profile.removeAds,
+                              removeAdsPrice:
+                                  removeAdsProductAsync.valueOrNull?.price,
+                              onBuyBoost: (type) => repo.purchasePowerUp(
+                                type.id,
+                                PowerUpCatalog.priceFor(type),
+                              ),
+                              onBuyLife: livesController.purchaseLife,
+                              onOpenLivesSheet: openLivesSheet,
+                              onWatchAdForLife: () => ref
+                                  .read(adRewardRouterProvider)
+                                  .showRewardedLifeAd(),
+                              onClaimDaily: () => repo.claimDaily(),
+                              onDevResetDaily: AppEnv.isDev
+                                  ? () => repo.devResetDailyClaim()
+                                  : null,
+                              onWatchAdForCoins: () => ref
+                                  .read(adRewardRouterProvider)
+                                  .showRewardedShopCoins(),
+                              onPurchaseRemoveAds: () async {
+                                final ok = await iap.purchaseRemoveAds();
+                                return (
+                                  ok,
+                                  ok ? null : iap.lastPurchaseError,
+                                );
+                              },
+                              onRestorePurchases: () => iap.restorePurchases(),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -323,8 +324,7 @@ class _ShopHeaderState extends State<_ShopHeader>
   Widget build(BuildContext context) {
     final v = context.dc;
     final t = context.txt;
-    final livesColor =
-        widget.livesSnapshot.isFull ? v.green : v.red;
+    final livesColor = widget.livesSnapshot.isFull ? v.green : v.red;
     final timer = widget.livesSnapshot.timeUntilNextLife ?? Duration.zero;
     final timerLabel = _formatLifeTimer(timer);
 
@@ -790,8 +790,7 @@ double _cosmeticCatalogGridAspectRatio(
         i.type == CatalogItemType.avatar ||
         i.type == CatalogItemType.initialSkin,
   );
-  final hasThemeSwatches =
-      items.any((i) => i.type == CatalogItemType.theme);
+  final hasThemeSwatches = items.any((i) => i.type == CatalogItemType.theme);
 
   // Mirrors [_CatalogCard] fixed vertical stack + [NeonCard] padding.
   var minHeight = AppSpacing.md * 2; // NeonCard padding
@@ -1338,9 +1337,7 @@ class _CatalogCard extends StatelessWidget {
 Color _catalogAccent(CatalogItem item, DotClashVisuals v) {
   switch (item.type) {
     case CatalogItemType.theme:
-      return item.previewPrimary != null
-          ? Color(item.previewPrimary!)
-          : v.gold;
+      return item.previewPrimary != null ? Color(item.previewPrimary!) : v.gold;
     case CatalogItemType.avatar:
       return EquippedAvatar.accentForAvatarId(item.id, v);
     case CatalogItemType.initialSkin:
@@ -1366,7 +1363,8 @@ class _CosmeticPreview extends StatelessWidget {
       );
     }
 
-    final accent = EquippedAvatar.accentForAvatarId('avatar_orb_cyan', context.dc);
+    final accent =
+        EquippedAvatar.accentForAvatarId('avatar_orb_cyan', context.dc);
     return SizedBox(
       width: 42,
       height: 42,

@@ -87,8 +87,7 @@ class TutorialSessionLogic {
   bool get blocksInteraction =>
       !isComplete && (currentStep?.blocksInteraction ?? false);
 
-  bool get showSkipButton =>
-      !isComplete && (currentStep?.showSkip ?? false);
+  bool get showSkipButton => !isComplete && (currentStep?.showSkip ?? false);
 
   /// Resolves the edge to pulse for the current step, if any.
   String? highlightEdge(GameState state) {

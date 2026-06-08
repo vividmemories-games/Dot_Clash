@@ -114,8 +114,7 @@ class _MatchMoreDockState extends State<MatchMoreDock> {
                     color: v.newGameColor,
                     onTap: widget.onRestart,
                   ),
-                  if (widget.extraTurnsAvailable &&
-                      widget.onExtraTurns != null)
+                  if (widget.extraTurnsAvailable && widget.onExtraTurns != null)
                     _DockAction(
                       icon: Icons.add_circle_outline_rounded,
                       label: 'Extra',

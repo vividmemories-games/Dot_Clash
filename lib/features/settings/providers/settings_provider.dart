@@ -40,7 +40,8 @@ class SettingsState {
     String? localPlayerBName,
     String? youName,
     String? aiName,
-  }) => SettingsState(
+  }) =>
+      SettingsState(
         hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
         soundEnabled: soundEnabled ?? this.soundEnabled,
         showTimer: showTimer ?? this.showTimer,
@@ -78,10 +79,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       hapticsEnabled: _prefs!.getBool(_Keys.haptics) ?? true,
       soundEnabled: _prefs!.getBool(_Keys.sound) ?? true,
       showTimer: _prefs!.getBool(_Keys.showTimer) ?? true,
-      localPlayerAName:
-          _prefs!.getString(_Keys.localPlayerAName) ?? 'Player A',
-      localPlayerBName:
-          _prefs!.getString(_Keys.localPlayerBName) ?? 'Player B',
+      localPlayerAName: _prefs!.getString(_Keys.localPlayerAName) ?? 'Player A',
+      localPlayerBName: _prefs!.getString(_Keys.localPlayerBName) ?? 'Player B',
       youName: _prefs!.getString(_Keys.youName) ?? 'You',
       aiName: _defaultOpponentName(_prefs!.getString(_Keys.aiName)),
     );

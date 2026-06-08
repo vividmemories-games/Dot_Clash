@@ -44,4 +44,3 @@ final rankLabelProvider = Provider<String>((ref) {
 final catalogProvider = Provider<CatalogSnapshot>((ref) {
   return ref.watch(catalogRepositoryProvider).getCatalog();
 });
-

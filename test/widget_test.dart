@@ -9,7 +9,8 @@ import 'package:dot_clash/features/profile/domain/progression.dart';
 import 'package:dot_clash/features/profile/providers/lives_provider.dart';
 
 void main() {
-  testWidgets('HomeActionRow shows quick match and local actions', (tester) async {
+  testWidgets('HomeActionRow shows quick match and local actions',
+      (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [

@@ -56,7 +56,8 @@ class CoachTourStep {
   final bool showSkip;
   final bool skipIfTimerDisabled;
 
-  bool get isFullScreen => targetId == CoachTourTargetId.none ||
+  bool get isFullScreen =>
+      targetId == CoachTourTargetId.none ||
       targetId == CoachTourTargetId.homeWelcome;
 }
 
@@ -84,8 +85,7 @@ class CoachTourSessionLogic {
   bool get blocksInteraction =>
       !isComplete && (currentStep?.blocksInteraction ?? false);
 
-  bool get showSkipButton =>
-      !isComplete && (currentStep?.showSkip ?? false);
+  bool get showSkipButton => !isComplete && (currentStep?.showSkip ?? false);
 
   String? highlightEdge(GameState state) {
     final step = currentStep;
@@ -169,7 +169,8 @@ class CoachTourSessionLogic {
     if (isComplete) return false;
 
     for (var i = 0; i < steps.length; i++) {
-      if (steps[i].advanceOn == CoachAdvanceTrigger.rivalChain && stepIndex < i) {
+      if (steps[i].advanceOn == CoachAdvanceTrigger.rivalChain &&
+          stepIndex < i) {
         stepIndex = i;
         return true;
       }

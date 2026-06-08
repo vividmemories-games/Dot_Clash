@@ -160,9 +160,8 @@ class GameState {
   int get totalBoxes => (rows - 1) * (cols - 1) - disabledCells.length;
   int get claimedCount => claimedBoxes.length;
   bool get isTie => isOver && winnerId == null;
-  String get opponentOf => currentPlayerId == playerIds[0]
-      ? playerIds[1]
-      : playerIds[0];
+  String get opponentOf =>
+      currentPlayerId == playerIds[0] ? playerIds[1] : playerIds[0];
   int scoreOf(String playerId) => scores[playerId] ?? 0;
 
   // ── Constructor helpers ────────────────────────────────────────────────────
@@ -243,18 +242,19 @@ class GameState {
     final edgeOwners = rawOwners == null
         ? const <String, String>{}
         : Map<String, String>.from(
-            (rawOwners as Map).map((k, v) => MapEntry(k as String, v as String)),
+            (rawOwners as Map)
+                .map((k, v) => MapEntry(k as String, v as String)),
           );
     return GameState(
       rows: (json['rows'] as num).toInt(),
       cols: (json['cols'] as num).toInt(),
       drawnEdges: Set<String>.from(json['drawnEdges'] as List),
       edgeOwners: edgeOwners,
-      claimedBoxes: Map<String, String>.from(
-          (json['claimedBoxes'] as Map).map((k, v) => MapEntry(k as String, v as String))),
+      claimedBoxes: Map<String, String>.from((json['claimedBoxes'] as Map)
+          .map((k, v) => MapEntry(k as String, v as String))),
       currentPlayerId: json['currentPlayerId'] as String,
-      scores: Map<String, int>.from(
-          (json['scores'] as Map).map((k, v) => MapEntry(k as String, (v as num).toInt()))),
+      scores: Map<String, int>.from((json['scores'] as Map)
+          .map((k, v) => MapEntry(k as String, (v as num).toInt()))),
       moveHistory: List<String>.from(json['moveHistory'] as List),
       isOver: json['isOver'] as bool,
       winnerId: json['winnerId'] as String?,

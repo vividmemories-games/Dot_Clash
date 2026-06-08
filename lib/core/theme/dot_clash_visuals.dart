@@ -67,6 +67,7 @@ class DotClashVisuals extends ThemeExtension<DotClashVisuals> {
   final Color dotGlow;
   final Color edgeInactive;
   final Color edgeHover;
+
   /// Playfield fill — kept in sync with [scaffold] so the grid matches the screen.
   final Color boardSurface;
   final Color boardGlow;
@@ -453,8 +454,7 @@ class DotClashVisuals extends ThemeExtension<DotClashVisuals> {
       backgroundGradientTop:
           Color.lerp(backgroundGradientTop, other.backgroundGradientTop, t)!,
       surface: Color.lerp(surface, other.surface, t)!,
-      surfaceElevated:
-          Color.lerp(surfaceElevated, other.surfaceElevated, t)!,
+      surfaceElevated: Color.lerp(surfaceElevated, other.surfaceElevated, t)!,
       cardBorder: Color.lerp(cardBorder, other.cardBorder, t)!,
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
       textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,

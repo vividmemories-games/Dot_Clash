@@ -49,9 +49,8 @@ abstract final class TurnBudgetCalculator {
 
     // When 3-star is a maxMoves challenge, keep the hard lose budget above the
     // skill threshold so winning stays feasible even if 3 stars is missed.
-    final maxMoves3 = level.star3.type == ObjectiveType.maxMoves
-        ? level.star3.value
-        : null;
+    final maxMoves3 =
+        level.star3.type == ObjectiveType.maxMoves ? level.star3.value : null;
     if (maxMoves3 != null) {
       final buffer = level.worldId == 4 ? 6 : 8;
       budget = max(budget, maxMoves3 + buffer);

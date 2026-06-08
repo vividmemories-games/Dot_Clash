@@ -21,7 +21,8 @@ abstract class ProfileRepository {
   Future<bool> grantLifeFromAd();
   Future<bool> refundLastCampaignLife();
 
-  Future<bool> purchasePowerUp(String powerUpId, int priceCoins, {int quantity = 1});
+  Future<bool> purchasePowerUp(String powerUpId, int priceCoins,
+      {int quantity = 1});
   Future<bool> consumePowerUp(String powerUpId, {int quantity = 1});
   Future<void> grantPowerUp(String powerUpId, int quantity);
 

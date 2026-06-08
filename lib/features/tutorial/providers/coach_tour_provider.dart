@@ -13,13 +13,15 @@ import '../domain/coach_tour_step.dart';
 final ftuePreferencesProvider =
     FutureProvider<FtuePreferences>((ref) => FtuePreferences.load());
 
-final shouldShowCampaignFtueProvider = Provider.family<bool, String>((ref, levelId) {
+final shouldShowCampaignFtueProvider =
+    Provider.family<bool, String>((ref, levelId) {
   final prefs = ref.watch(ftuePreferencesProvider).valueOrNull;
   if (prefs == null) return false;
   return prefs.shouldShowCampaignFtue(levelId);
 });
 
-final tutorialFreeAttemptProvider = Provider.family<bool, String>((ref, levelId) {
+final tutorialFreeAttemptProvider =
+    Provider.family<bool, String>((ref, levelId) {
   return ref.watch(shouldShowCampaignFtueProvider(levelId));
 });
 
@@ -131,8 +133,7 @@ class MatchCoachTourState {
   /// mutated [logic] references so listeners can detect pause/resume).
   final bool matchPaused;
 
-  bool get isActive =>
-      levelId != null && logic != null && !(logic!.isComplete);
+  bool get isActive => levelId != null && logic != null && !(logic!.isComplete);
 
   bool get showPostWinSpotlight => postWinStep != null;
 
@@ -310,8 +311,8 @@ class MatchCoachTourNotifier extends StateNotifier<MatchCoachTourState> {
   void reset() => state = const MatchCoachTourState();
 }
 
-final matchCoachTourProvider =
-    StateNotifierProvider.autoDispose<MatchCoachTourNotifier, MatchCoachTourState>(
+final matchCoachTourProvider = StateNotifierProvider.autoDispose<
+    MatchCoachTourNotifier, MatchCoachTourState>(
   MatchCoachTourNotifier.new,
 );
 

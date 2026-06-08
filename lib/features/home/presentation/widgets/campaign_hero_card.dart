@@ -75,8 +75,7 @@ class _HeroCard extends StatefulWidget {
   State<_HeroCard> createState() => _HeroCardState();
 }
 
-class _HeroCardState extends State<_HeroCard>
-    with TickerProviderStateMixin {
+class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
   late final AnimationController _pulse;
   late final AnimationController _pan;
   late final Animation<double> _glowOpacity;
@@ -153,323 +152,325 @@ class _HeroCardState extends State<_HeroCard>
         child: ClipRRect(
           borderRadius: AppSpacing.roundedXL,
           child: Container(
-          color: Colors.black,
-          child: Stack(
-          children: [
-            // Background map image with parallax pan
-            Positioned.fill(
-              child: AnimatedBuilder(
-                animation: _panAlignment,
-                builder: (_, __) => Image.asset(
-                  'assets/images/card_campaign_hero.png',
-                  fit: BoxFit.cover,
-                  alignment: _panAlignment.value,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                ),
-              ),
-            ),
-
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.black.withOpacity(0.3),
-                      Colors.black.withOpacity(0.82),
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-              ),
-            ),
-
-            // Decorative ambient orb (top-right)
-            if (v.useGlow)
-              Positioned(
-                right: -16,
-                top: -16,
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        accentColor.withOpacity(0.18),
-                        Colors.transparent,
-                      ],
+            color: Colors.black,
+            child: Stack(
+              children: [
+                // Background map image with parallax pan
+                Positioned.fill(
+                  child: AnimatedBuilder(
+                    animation: _panAlignment,
+                    builder: (_, __) => Image.asset(
+                      'assets/images/card_campaign_hero.png',
+                      fit: BoxFit.cover,
+                      alignment: _panAlignment.value,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                     ),
                   ),
                 ),
-              ),
 
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Top meta row ──────────────────────────────────────────
-                  Row(
-                    children: [
-                      Icon(Icons.map_outlined, size: 12, color: titleColor),
-                      AppSpacing.hGapXS,
-                      Text(
-                        'CAMPAIGN',
-                        style: t.scoreLabel.copyWith(
-                          color: titleColor,
-                          letterSpacing: 1.5,
-                        ),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.black.withOpacity(0.3),
+                          Colors.black.withOpacity(0.82),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                       ),
-                      AppSpacing.hGapXS,
-                      Container(
-                        width: 3,
-                        height: 3,
-                        decoration: BoxDecoration(
-                          color: v.textDisabled,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      AppSpacing.hGapXS,
-                      Expanded(
-                        child: Text(
-                          'World ${level.worldId}',
-                          style: t.scoreLabel.copyWith(
-                            color: v.textSecondary,
-                            letterSpacing: 1.0,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (totalStars > 0) ...[
-                        Icon(Icons.star_rounded, size: 13, color: v.gold),
-                        AppSpacing.hGapXS,
-                        Text(
-                          '$totalStars',
-                          style: t.scoreLabel.copyWith(color: v.gold),
-                        ),
-                      ],
-                    ],
+                    ),
                   ),
-                  AppSpacing.vGapSM,
+                ),
 
-                  // ── World identity ────────────────────────────────────────
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'WORLD ${level.worldId}',
-                              style: t.heroTitle.copyWith(
-                                fontSize: 26,
-                                color: v.textPrimary,
-                                letterSpacing: 3,
-                              ),
-                            ),
-                            Text(
-                              world.title.toUpperCase(),
-                              style: t.playerName.copyWith(
-                                color: titleColor,
-                                fontSize: 13,
-                                letterSpacing: 2,
-                              ),
-                            ),
+                // Decorative ambient orb (top-right)
+                if (v.useGlow)
+                  Positioned(
+                    right: -16,
+                    top: -16,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            accentColor.withOpacity(0.18),
+                            Colors.transparent,
                           ],
                         ),
                       ),
-                      if (isBoss) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: v.red.withOpacity(0.15),
-                            borderRadius: AppSpacing.roundedFull,
-                            border: Border.all(
-                              color: v.red.withOpacity(0.6),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.whatshot_rounded,
-                                  size: 12, color: v.red),
-                              const SizedBox(width: 4),
-                              Text(
-                                'BOSS',
-                                style: t.scoreLabel.copyWith(
-                                  color: v.red,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ] else ...[
-                        // Current level stars
-                        Row(
-                          children: List.generate(3, (i) {
-                            final lit = i < levelStars;
-                            return Padding(
-                              padding: const EdgeInsets.only(left: 2),
-                              child: Icon(
-                                lit
-                                    ? Icons.star_rounded
-                                    : Icons.star_outline_rounded,
-                                size: 16,
-                                color: lit ? v.gold : v.textDisabled,
-                              ),
-                            );
-                          }),
-                        ),
-                      ],
-                    ],
-                  ),
-                  AppSpacing.vGapSM,
-
-                  // ── World description ─────────────────────────────────────
-                  Text(
-                    world.subtitle,
-                    style: t.bodySmall.copyWith(fontSize: 12),
-                  ),
-                  AppSpacing.vGapMD,
-
-                  // ── Map path nodes ────────────────────────────────────────
-                  _MapPath(
-                    world: world,
-                    currentIndex: level.index,
-                    progress: progress,
-                    accentColor: accentColor,
-                    v: v,
-                    t: t,
-                  ),
-                  AppSpacing.vGapMD,
-
-                  // ── Level progress bar ────────────────────────────────────
-                  Row(
-                    children: [
-                      Text(
-                        'LEVEL PROGRESS',
-                        style: t.scoreLabel,
-                      ),
-                      const Spacer(),
-                      Text(
-                        '${level.index} / ${world.levelCount}',
-                        style: t.bodySmall.copyWith(
-                          color: v.gold,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  ClipRRect(
-                    borderRadius: AppSpacing.roundedFull,
-                    child: LinearProgressIndicator(
-                      value: levelFraction,
-                      minHeight: 7,
-                      backgroundColor: v.cardBorder.withOpacity(0.5),
-                      valueColor: AlwaysStoppedAnimation<Color>(accentColor),
                     ),
                   ),
-                  AppSpacing.vGapSM,
 
-                  // ── Reward preview ────────────────────────────────────────
-                  Row(
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // ── Top meta row ──────────────────────────────────────────
+                      Row(
+                        children: [
+                          Icon(Icons.map_outlined, size: 12, color: titleColor),
+                          AppSpacing.hGapXS,
+                          Text(
+                            'CAMPAIGN',
+                            style: t.scoreLabel.copyWith(
+                              color: titleColor,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          AppSpacing.hGapXS,
+                          Container(
+                            width: 3,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: v.textDisabled,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          AppSpacing.hGapXS,
+                          Expanded(
+                            child: Text(
+                              'World ${level.worldId}',
+                              style: t.scoreLabel.copyWith(
+                                color: v.textSecondary,
+                                letterSpacing: 1.0,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (totalStars > 0) ...[
+                            Icon(Icons.star_rounded, size: 13, color: v.gold),
+                            AppSpacing.hGapXS,
+                            Text(
+                              '$totalStars',
+                              style: t.scoreLabel.copyWith(color: v.gold),
+                            ),
+                          ],
+                        ],
+                      ),
+                      AppSpacing.vGapSM,
+
+                      // ── World identity ────────────────────────────────────────
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'WORLD ${level.worldId}',
+                                  style: t.heroTitle.copyWith(
+                                    fontSize: 26,
+                                    color: v.textPrimary,
+                                    letterSpacing: 3,
+                                  ),
+                                ),
+                                Text(
+                                  world.title.toUpperCase(),
+                                  style: t.playerName.copyWith(
+                                    color: titleColor,
+                                    fontSize: 13,
+                                    letterSpacing: 2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (isBoss) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: v.red.withOpacity(0.15),
+                                borderRadius: AppSpacing.roundedFull,
+                                border: Border.all(
+                                  color: v.red.withOpacity(0.6),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.whatshot_rounded,
+                                      size: 12, color: v.red),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'BOSS',
+                                    style: t.scoreLabel.copyWith(
+                                      color: v.red,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ] else ...[
+                            // Current level stars
+                            Row(
+                              children: List.generate(3, (i) {
+                                final lit = i < levelStars;
+                                return Padding(
+                                  padding: const EdgeInsets.only(left: 2),
+                                  child: Icon(
+                                    lit
+                                        ? Icons.star_rounded
+                                        : Icons.star_outline_rounded,
+                                    size: 16,
+                                    color: lit ? v.gold : v.textDisabled,
+                                  ),
+                                );
+                              }),
+                            ),
+                          ],
+                        ],
+                      ),
+                      AppSpacing.vGapSM,
+
+                      // ── World description ─────────────────────────────────────
                       Text(
-                        'NEXT REWARD',
-                        style: t.scoreLabel,
+                        world.subtitle,
+                        style: t.bodySmall.copyWith(fontSize: 12),
                       ),
-                      AppSpacing.hGapSM,
-                      _RewardBadge(
-                        icon: Icons.star_rounded,
-                        label: '+${level.xpReward} XP',
-                        color: v.playerA,
+                      AppSpacing.vGapMD,
+
+                      // ── Map path nodes ────────────────────────────────────────
+                      _MapPath(
+                        world: world,
+                        currentIndex: level.index,
+                        progress: progress,
+                        accentColor: accentColor,
                         v: v,
                         t: t,
                       ),
-                      AppSpacing.hGapXS,
-                      _RewardBadge(
-                        icon: Icons.monetization_on_rounded,
-                        label: '+${level.coinReward}',
-                        color: v.gold,
-                        v: v,
-                        t: t,
+                      AppSpacing.vGapMD,
+
+                      // ── Level progress bar ────────────────────────────────────
+                      Row(
+                        children: [
+                          Text(
+                            'LEVEL PROGRESS',
+                            style: t.scoreLabel,
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${level.index} / ${world.levelCount}',
+                            style: t.bodySmall.copyWith(
+                              color: v.gold,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: AppSpacing.roundedFull,
+                        child: LinearProgressIndicator(
+                          value: levelFraction,
+                          minHeight: 7,
+                          backgroundColor: v.cardBorder.withOpacity(0.5),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(accentColor),
+                        ),
+                      ),
+                      AppSpacing.vGapSM,
+
+                      // ── Reward preview ────────────────────────────────────────
+                      Row(
+                        children: [
+                          Text(
+                            'NEXT REWARD',
+                            style: t.scoreLabel,
+                          ),
+                          AppSpacing.hGapSM,
+                          _RewardBadge(
+                            icon: Icons.star_rounded,
+                            label: '+${level.xpReward} XP',
+                            color: v.playerA,
+                            v: v,
+                            t: t,
+                          ),
+                          AppSpacing.hGapXS,
+                          _RewardBadge(
+                            icon: Icons.monetization_on_rounded,
+                            label: '+${level.coinReward}',
+                            color: v.gold,
+                            v: v,
+                            t: t,
+                          ),
+                        ],
+                      ),
+                      AppSpacing.vGapMD,
+
+                      // ── CONTINUE CTA button ───────────────────────────────────
+                      AnimatedBuilder(
+                        animation: _glowOpacity,
+                        builder: (context, _) {
+                          return Container(
+                            decoration: v.useGlow
+                                ? BoxDecoration(
+                                    borderRadius: AppSpacing.roundedMD,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: accentColor.withOpacity(
+                                            _glowOpacity.value * 0.45),
+                                        blurRadius: 16,
+                                        spreadRadius: 1,
+                                      ),
+                                    ],
+                                  )
+                                : null,
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: accentColor,
+                                  foregroundColor: Colors.black,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: AppSpacing.roundedMD,
+                                  ),
+                                  elevation: 0,
+                                ),
+                                onPressed: () {
+                                  if (widget.campaignLocked) {
+                                    widget.onNeedsLives();
+                                    return;
+                                  }
+                                  context.push('/campaign/play/${level.id}');
+                                },
+                                icon: Icon(
+                                  widget.campaignLocked
+                                      ? Icons.bolt_rounded
+                                      : Icons.play_arrow_rounded,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  widget.campaignLocked
+                                      ? ('NEED A LIFE')
+                                      : ('CONTINUE'),
+                                  style: t.playerName.copyWith(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 14,
+                                    letterSpacing: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
-                  AppSpacing.vGapMD,
-
-                  // ── CONTINUE CTA button ───────────────────────────────────
-                  AnimatedBuilder(
-                    animation: _glowOpacity,
-                    builder: (context, _) {
-                      return Container(
-                        decoration: v.useGlow
-                            ? BoxDecoration(
-                                borderRadius: AppSpacing.roundedMD,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: accentColor
-                                        .withOpacity(_glowOpacity.value * 0.45),
-                                    blurRadius: 16,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              )
-                            : null,
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: accentColor,
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: AppSpacing.roundedMD,
-                              ),
-                              elevation: 0,
-                            ),
-                            onPressed: () {
-                              if (widget.campaignLocked) {
-                                widget.onNeedsLives();
-                                return;
-                              }
-                              context.push('/campaign/play/${level.id}');
-                            },
-                            icon: Icon(
-                              widget.campaignLocked
-                                  ? Icons.bolt_rounded
-                                  : Icons.play_arrow_rounded,
-                              size: 18,
-                            ),
-                            label: Text(
-                              widget.campaignLocked
-                                  ? ('NEED A LIFE')
-                                  : ('CONTINUE'),
-                              style: t.playerName.copyWith(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 14,
-                                letterSpacing: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-          ),
           ),
         ),
       ),
@@ -736,4 +737,3 @@ class _SkeletonCard extends StatelessWidget {
     );
   }
 }
-

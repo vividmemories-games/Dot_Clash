@@ -51,7 +51,8 @@ abstract final class AiPlayer {
       if (_completesBox(state, edge)) return edge;
     }
     // Safe moves only
-    final safe = moves.where((e) => !_givesOpponentThirdEdge(state, e)).toList();
+    final safe =
+        moves.where((e) => !_givesOpponentThirdEdge(state, e)).toList();
     if (safe.isNotEmpty) return safe[_rng.nextInt(safe.length)];
     // Sacrifice smallest chain — never random
     String? best;
@@ -131,9 +132,8 @@ abstract final class AiPlayer {
     }
 
     // 2. Prefer moves that don't give opponent a 3rd edge on any box
-    final safe = moves
-        .where((e) => !_givesOpponentThirdEdge(state, e))
-        .toList();
+    final safe =
+        moves.where((e) => !_givesOpponentThirdEdge(state, e)).toList();
     if (safe.isNotEmpty) return safe[_rng.nextInt(safe.length)];
 
     // 3. All moves are "risky" – just pick randomly
@@ -151,9 +151,8 @@ abstract final class AiPlayer {
     }
 
     // 2. Safe moves (don't open a box for opponent)
-    final safe = moves
-        .where((e) => !_givesOpponentThirdEdge(state, e))
-        .toList();
+    final safe =
+        moves.where((e) => !_givesOpponentThirdEdge(state, e)).toList();
     if (safe.isNotEmpty) return safe[_rng.nextInt(safe.length)];
 
     // 3. Forced — pick the move that sacrifices the fewest boxes in a chain
@@ -174,7 +173,8 @@ abstract final class AiPlayer {
 
   /// True if playing this edge immediately completes ≥1 box.
   static bool _completesBox(GameState state, String edge) {
-    for (final (r, c) in GameRules.adjacentBoxes(state.rows, state.cols, edge)) {
+    for (final (r, c)
+        in GameRules.adjacentBoxes(state.rows, state.cols, edge)) {
       final key = GameRules.boxKey(r, c);
       if (!state.claimedBoxes.containsKey(key) &&
           GameRules.edgesDrawnForBox(state, r, c) == 3) {
@@ -188,7 +188,8 @@ abstract final class AiPlayer {
   /// exactly 3 drawn edges (handing the opponent a capture next turn).
   static bool _givesOpponentThirdEdge(GameState state, String edge) {
     final futureEdges = {...state.drawnEdges, edge};
-    for (final (r, c) in GameRules.adjacentBoxes(state.rows, state.cols, edge)) {
+    for (final (r, c)
+        in GameRules.adjacentBoxes(state.rows, state.cols, edge)) {
       final key = GameRules.boxKey(r, c);
       if (state.claimedBoxes.containsKey(key)) continue;
       final drawn = GameRules.boxEdges(r, c).where(futureEdges.contains).length;
