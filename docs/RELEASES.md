@@ -1,6 +1,6 @@
 # Dot Clash — Release history & closed-testing tracker
 
-**Active build target:** `1.3.0+12` in `pubspec.yaml` (bump before each store upload)  
+**Active build target:** `1.3.0+13` in `pubspec.yaml` (bump before each store upload)  
 **Track:** Prod package + Firebase (`dot-clash-72cc6`), `BETA_ADS=true` (test ads)  
 **IAP / ops:** `SETUP.md` §4b · **Mac migration:** `MIGRATION_RUNBOOK.md` · **Security:** `SECURITY_FIX_PLAN.md`
 
@@ -22,19 +22,47 @@ bash scripts/build_closed_testing.sh ios
 | Android | `build/app/outputs/bundle/prodRelease/app-prod-release.aab` |
 | iOS | `build/ios/ipa/*.ipa` |
 
-**Pre-upload checklist (Release 12+)**
+**Pre-upload checklist (Release 13+)**
 
-- [ ] `pubspec.yaml` build number incremented (`1.3.0+12`)
-- [ ] Campaign: w1_l02 win → Next level → l03 (no flash of finished board)
-- [ ] Campaign: lose → Try again → fresh board
-- [ ] Campaign: win → Campaign map (no coach-tour GlobalKey crash)
-- [ ] Turn budget: w2_l09 Greedy Counter shows ~24 turns (not 12); playable mid-match
-- [ ] Shop: buy boost / cosmetic → instant snackbar + coin pulse; buttons disabled while in-flight
-- [ ] Shop: daily claim → CLAIMED state + cooldown; long-press reset works on dev only
-- [ ] No interstitial on FTUE levels w1_l01–w1_l04; every 3 matches after
-- [ ] R11 smoke: bootstrap, Hold, tab swipes
+- [ ] `pubspec.yaml` build number incremented (`1.3.0+13`)
+- [ ] Mid-match **Home** / **MORE → Exit** / system back → confirm dialog; **Stay** keeps board
+- [ ] Campaign abandon → **Leave** exits without consuming a life; fresh level (no moves) → no dialog
+- [ ] Quick match / vs AI: generic “Leave match?” copy
+- [ ] R12 smoke: campaign Next level, turn budgets, shop UX (see Release 12 checklist below)
 - [ ] Prod functions if backend changed: `firebase deploy --only functions -P dot-clash-72cc6`
 - [ ] Crashlytics: filter current version after rollout
+
+---
+
+## Release 13 — Leave match confirmation
+
+**Version:** `1.3.0+13`
+
+### Shipped
+
+| Item | Notes |
+|------|--------|
+| Leave match confirmation | Home, MORE → Exit, and system back ask before leaving mid-game |
+| Campaign copy | Level progress lost; life **not** consumed on abandon |
+| No dialog when safe | Fresh board (no moves) or finished game exits immediately |
+
+**Key file:** `lib/features/game/presentation/game_screen.dart` (`_shouldConfirmLeave`, `_requestLeaveGame`, `PopScope`)
+
+### Regression checklist
+
+| Scenario | Expected |
+|----------|----------|
+| Campaign mid-match → Home | Dialog → Stay keeps board; Leave → home, life unchanged |
+| Campaign mid-match → MORE → Exit | Same dialog |
+| Android/iOS back gesture mid-match | Same dialog |
+| Fresh level (0 moves) → Home | No dialog |
+| Game over → result → Home | No leave dialog (direct exit) |
+| Quick match mid-game → Exit | Generic “Leave match?” copy |
+
+### Store notes (draft)
+
+- Confirm before leaving a match so progress isn’t lost by accident
+- Campaign: abandoning a level doesn’t use a life
 
 ---
 

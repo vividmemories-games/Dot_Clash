@@ -528,7 +528,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
               canUndo: state.moveHistory.isNotEmpty && !state.isOver,
               onUndo: _onUndo,
               onRestart: () => _confirmNewGame(context),
-              onExit: () => _leaveGameRoute(() => context.go('/home')),
+              onExit: () => _requestLeaveGame(
+                context,
+                navigate: () => context.go('/home'),
+              ),
               extraTurnsAvailable: showBoosts &&
                   session.hasTurnBudget &&
                   !session.extraTurnsUsed &&
@@ -563,35 +566,92 @@ class _GameScreenState extends ConsumerState<GameScreen>
       );
     }
 
-    return CoachTourGameScope(
-      owner: _gameTourScope,
-      child: Scaffold(
-        backgroundColor: v.scaffold,
-        body: SafeArea(
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              body,
-              if (showBossIntro)
-              BossIntroOverlay(
-                bossName: _campaignLevel?.bossName ?? playerBName,
-                persona: bossPersona,
-                isMiniBoss: (_campaignLevel?.index ?? 0) == 5,
-                soundEnabled: settings.soundEnabled,
-                hapticsEnabled: settings.hapticsEnabled,
-                onBegin: () => setState(() => _bossIntroDismissed = true),
-              ),
-            if (coachTourActive && coachStep != null)
-              ..._buildCoachTourOverlays(
-                step: coachStep,
-                logic: coachLogic,
-                isPostWin: coachTourState.showPostWinSpotlight,
-              ),
-          ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        unawaited(
+          _requestLeaveGame(
+            context,
+            navigate: () => context.go('/home'),
+          ),
+        );
+      },
+      child: CoachTourGameScope(
+        owner: _gameTourScope,
+        child: Scaffold(
+          backgroundColor: v.scaffold,
+          body: SafeArea(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                body,
+                if (showBossIntro)
+                  BossIntroOverlay(
+                    bossName: _campaignLevel?.bossName ?? playerBName,
+                    persona: bossPersona,
+                    isMiniBoss: (_campaignLevel?.index ?? 0) == 5,
+                    soundEnabled: settings.soundEnabled,
+                    hapticsEnabled: settings.hapticsEnabled,
+                    onBegin: () => setState(() => _bossIntroDismissed = true),
+                  ),
+                if (coachTourActive && coachStep != null)
+                  ..._buildCoachTourOverlays(
+                    step: coachStep,
+                    logic: coachLogic,
+                    isPostWin: coachTourState.showPostWinSpotlight,
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
-      ),
     );
+  }
+
+  bool _shouldConfirmLeave(GameState state) =>
+      state.moveHistory.isNotEmpty && !state.isOver;
+
+  Future<void> _requestLeaveGame(
+    BuildContext context, {
+    required void Function() navigate,
+  }) async {
+    final state = ref.read(gameProvider);
+    if (!_shouldConfirmLeave(state)) {
+      _leaveGameRoute(navigate);
+      return;
+    }
+
+    final isCampaign = widget.config.mode == GameMode.campaign;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final v = ctx.dc;
+        return AlertDialog(
+          title: Text(isCampaign ? 'Leave this level?' : 'Leave match?'),
+          content: Text(
+            isCampaign
+                ? 'Your progress on this level will be lost. '
+                    'Your life won\'t be used — you can try again from the map.'
+                : 'Your current game progress will be lost.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Stay'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: TextButton.styleFrom(foregroundColor: v.red),
+              child: const Text('Leave'),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed == true && context.mounted) {
+      _leaveGameRoute(navigate);
+    }
   }
 
   void _leaveGameRoute(void Function() navigate) {
@@ -611,7 +671,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
             icon: Icons.home_outlined,
             onTap: () {
               AppHaptics.lightImpact();
-              _leaveGameRoute(() => context.go('/home'));
+              _requestLeaveGame(
+                context,
+                navigate: () => context.go('/home'),
+              );
             },
           ),
           Expanded(child: _buildTitle()),

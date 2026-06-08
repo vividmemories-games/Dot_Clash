@@ -100,3 +100,26 @@ flutter build ipa --flavor prod --dart-define=FLAVOR=prod --release
 | **prod (closed testing)** | `FLAVOR=prod` + `BETA_ADS=true` | Google test units |
 
 Details and AdMob IDs: [`lib/core/env/app_env.dart`](lib/core/env/app_env.dart)
+
+---
+
+## Release 13 (next upload — `1.3.0+13`)
+
+Ship after **Release 12** (`1.3.0+12`) is in TestFlight / Play closed testing.
+
+### What's in R13
+
+| Item | Notes |
+|------|--------|
+| **Leave match confirmation** | Home, MORE → Exit, and system back ask before leaving mid-game |
+| Campaign copy | Clarifies level progress is lost; life is **not** consumed on abandon |
+
+### Pre-upload smoke (R13)
+
+- [ ] Start campaign level, make a move → tap **Home** → dialog → **Stay** keeps board
+- [ ] Same → **Leave** exits without consuming a life
+- [ ] Fresh level (no moves) → Home exits with no dialog
+- [ ] Android/iOS **back gesture** shows the same dialog mid-match
+- [ ] Quick match / vs AI: generic “Leave match?” copy
+
+Full release history and checklists: **[docs/RELEASES.md](docs/RELEASES.md)**
