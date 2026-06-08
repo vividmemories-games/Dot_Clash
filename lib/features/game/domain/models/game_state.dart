@@ -226,6 +226,7 @@ class GameState {
   Map<String, dynamic> toJson() => {
         'rows': rows,
         'cols': cols,
+        'disabledCells': disabledCells.toList(),
         'drawnEdges': drawnEdges.toList(),
         'edgeOwners': edgeOwners,
         'claimedBoxes': claimedBoxes,
@@ -245,9 +246,14 @@ class GameState {
             (rawOwners as Map)
                 .map((k, v) => MapEntry(k as String, v as String)),
           );
+    final rawDisabled = json['disabledCells'];
+    final disabledCells = rawDisabled == null
+        ? const <String>{}
+        : Set<String>.from(rawDisabled as List);
     return GameState(
       rows: (json['rows'] as num).toInt(),
       cols: (json['cols'] as num).toInt(),
+      disabledCells: disabledCells,
       drawnEdges: Set<String>.from(json['drawnEdges'] as List),
       edgeOwners: edgeOwners,
       claimedBoxes: Map<String, String>.from((json['claimedBoxes'] as Map)

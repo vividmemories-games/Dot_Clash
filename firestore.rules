@@ -122,5 +122,12 @@ service cloud.firestore {
     match /accountDeletions/{docId} {
       allow read, write: if false;
     }
+
+    match /challenges/{code} {
+      allow read: if isSignedIn()
+        && (request.auth.uid == resource.data.hostUid
+            || request.auth.uid == resource.data.guestUid);
+      allow write: if false;
+    }
   }
 }
