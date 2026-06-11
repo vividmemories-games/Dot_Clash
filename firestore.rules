@@ -73,7 +73,8 @@ service cloud.firestore {
         && d.outcome is string
         && d.modeLabel is string
         && d.opponentLabel is string
-        && d.playedAt is timestamp;
+        && d.playedAt is timestamp
+        && (!('challengeCode' in d) || d.challengeCode is string);
     }
 
     match /users/{uid} {

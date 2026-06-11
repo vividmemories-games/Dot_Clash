@@ -451,6 +451,26 @@ class MockProfileRepository implements ProfileRepository {
   }
 
   @override
+  Future<void> recordChallengeMatch({
+    required String code,
+    required MatchResult result,
+    required String opponentLabel,
+  }) async {
+    await settleMatch(result, consumeLife: false);
+    final record = RecentMatchRecord(
+      id: 'mock_${_matches.length}',
+      outcome: result,
+      modeLabel: 'Challenge',
+      opponentLabel: opponentLabel,
+      playedAt: DateTime.now(),
+      challengeCode: code.trim().toUpperCase(),
+    );
+    _matches.insert(0, record);
+    if (_matches.length > 10) _matches.removeLast();
+    _matchesController.add(List.unmodifiable(_matches));
+  }
+
+  @override
   Stream<List<RecentMatchRecord>> watchRecentMatches({int limit = 10}) async* {
     yield _matches.take(limit).toList();
     yield* _matchesController.stream.map((list) => list.take(limit).toList());

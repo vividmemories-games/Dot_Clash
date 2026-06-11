@@ -11,6 +11,7 @@ import '../../../features/game/domain/models/game_state.dart';
 import '../../../features/game/providers/game_provider.dart';
 import '../../../features/home/providers/home_data_providers.dart';
 import '../../../features/home/presentation/widgets/campaign_hero_card.dart';
+import '../../../features/challenge/presentation/challenge_entry_section.dart';
 import '../../../features/home/presentation/widgets/home_action_row.dart';
 import '../../../features/home/presentation/widgets/daily_missions_section.dart';
 import '../../../features/home/presentation/widgets/home_screen_background.dart';
@@ -103,6 +104,10 @@ class _HomeScreenBody extends ConsumerWidget {
                       onAiTap: () => startVsAiChallenge(context, ref),
                       onLocalTap: () => pickLocalBoardSize(context, ref),
                     ),
+                    AppSpacing.vGapMD,
+
+                    // ── Zone 3b: Challenge a Friend (below action row) ───────
+                    const ChallengeEntrySection(),
                     AppSpacing.vGapMD,
 
                     // ── Zone 4: Daily missions ───────────────────────────────

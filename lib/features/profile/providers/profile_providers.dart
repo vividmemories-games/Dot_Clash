@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
+import '../../home/domain/home_ui_models.dart';
+import '../../home/providers/home_data_providers.dart';
 import '../data/firestore_profile_repository.dart';
 import '../data/mock_catalog_repository.dart';
 import '../data/mock_profile_repository.dart';
@@ -43,4 +45,13 @@ final rankLabelProvider = Provider<String>((ref) {
 
 final catalogProvider = Provider<CatalogSnapshot>((ref) {
   return ref.watch(catalogRepositoryProvider).getCatalog();
+});
+
+/// Challenge rows from `profiles/{uid}/matches` (`modeLabel == Challenge`).
+final challengeRecentMatchesProvider =
+    Provider<AsyncValue<List<RecentMatch>>>((ref) {
+  return ref.watch(recentMatchesProvider).whenData(
+        (matches) =>
+            matches.where((m) => m.modeLabel == 'Challenge').toList(),
+      );
 });

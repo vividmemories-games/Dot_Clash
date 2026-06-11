@@ -9,7 +9,13 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import { onCall } from 'firebase-functions/v2/https';
 
 import { GameRules, GameState, type GameStateJson } from './game_rules';
+import { resolveLives } from './lives';
 import { sendChallengeInvitePush } from './notifications';
+import {
+  coinsForMatch,
+  levelForXp,
+  xpForMatch,
+} from './progression';
 import { assertAuth, callableOptions, db } from './shared';
 
 export const CHALLENGE_ROWS = 6;
@@ -46,6 +52,8 @@ export interface ChallengeDoc {
   createdAt: Timestamp;
   expiresAt: Timestamp;
   lastActivityAt: Timestamp;
+  /** Uids that already ran [recordChallengeMatch] (idempotency). */
+  settledUids?: Record<string, boolean>;
 }
 
 export interface CommitMoveResult {
@@ -369,4 +377,135 @@ export const abandonChallenge = onCall(callableOptions, async (request) => {
   });
 
   return { success: true };
+});
+
+function profileRef(uid: string): DocumentReference {
+  return db.collection('profiles').doc(uid);
+}
+
+function outcomeForUid(data: ChallengeDoc, uid: string): 'win' | 'loss' | 'tie' {
+  if (data.status === 'abandoned') {
+    return data.winnerUid === uid ? 'win' : 'loss';
+  }
+  if (!data.gameState) {
+    throw new HttpsError('failed-precondition', 'Challenge has no game state.');
+  }
+  const state = GameState.fromJson(data.gameState);
+  if (state.isOver && state.winnerId == null) return 'tie';
+  const playerId = playerIdForUid(data, uid);
+  if (!playerId || !state.winnerId) return 'loss';
+  return state.winnerId === playerId ? 'win' : 'loss';
+}
+
+/**
+ * Idempotent settlement: profile stats + `profiles/{uid}/matches` entry.
+ * Client calls once when the room reaches a terminal state.
+ */
+export const recordChallengeMatch = onCall(callableOptions, async (request) => {
+  const uid = assertAuth(request);
+  const { code } = request.data as { code?: string };
+  if (!code || typeof code !== 'string') {
+    throw new HttpsError('invalid-argument', 'Missing code.');
+  }
+
+  const normalized = code.trim().toUpperCase();
+  const challengeRef = challengesRef(normalized);
+  const nowMs = Date.now();
+
+  return db.runTransaction(async (txn) => {
+    const challengeSnap = await txn.get(challengeRef);
+    if (!challengeSnap.exists) {
+      throw new HttpsError('not-found', 'Challenge not found.');
+    }
+
+    const data = parseChallengeDoc(challengeSnap);
+    const playerId = playerIdForUid(data, uid);
+    if (!playerId) {
+      throw new HttpsError('permission-denied', 'Not in this challenge.');
+    }
+
+    if (data.status !== 'finished' && data.status !== 'abandoned') {
+      throw new HttpsError('failed-precondition', 'Challenge is not finished.');
+    }
+
+    if (data.settledUids?.[uid]) {
+      return { success: true, alreadySettled: true };
+    }
+
+    const outcome = outcomeForUid(data, uid);
+    const win = outcome === 'win';
+    const tie = outcome === 'tie';
+    const opponentLabel =
+      uid === data.hostUid
+        ? (data.guestDisplayName ?? 'Rival')
+        : data.hostDisplayName;
+
+    const profileSnap = await txn.get(profileRef(uid));
+    if (!profileSnap.exists) {
+      throw new HttpsError('not-found', 'Profile not found.');
+    }
+    const profile = profileSnap.data()!;
+
+    const deltaCoins = coinsForMatch(win, tie);
+    const deltaXp = xpForMatch(win, tie);
+    const newXp = Number(profile.xp ?? 0) + deltaXp;
+
+    let rating = Number(profile.rating ?? 1000);
+    if (win) rating += 18;
+    else if (tie) rating += 2;
+    else rating -= 18;
+    if (rating < 800) rating = 800;
+
+    const seasonBest = Math.max(Number(profile.seasonBestRating ?? 1000), rating);
+
+    const resolved = resolveLives(
+      Number(profile.lives ?? 5),
+      profile.nextLifeAt as Timestamp | null | undefined,
+      nowMs,
+    );
+
+    const newStreak = win
+      ? Number(profile.winStreak ?? 0) + 1
+      : tie
+        ? Number(profile.winStreak ?? 0)
+        : 0;
+    const bestStreak = Math.max(Number(profile.bestWinStreak ?? 0), newStreak);
+
+    const matchesRef = profileRef(uid).collection('matches').doc();
+
+    txn.set(matchesRef, {
+      outcome,
+      modeLabel: 'Challenge',
+      opponentLabel,
+      challengeCode: normalized,
+      playedAt: FieldValue.serverTimestamp(),
+    });
+
+    txn.update(profileRef(uid), {
+      coins: Number(profile.coins ?? 0) + deltaCoins,
+      xp: newXp,
+      level: levelForXp(newXp),
+      wins: Number(profile.wins ?? 0) + (win ? 1 : 0),
+      losses: Number(profile.losses ?? 0) + (outcome === 'loss' ? 1 : 0),
+      ties: Number(profile.ties ?? 0) + (tie ? 1 : 0),
+      gamesPlayed: Number(profile.gamesPlayed ?? 0) + 1,
+      winStreak: newStreak,
+      bestWinStreak: bestStreak,
+      rating,
+      seasonBestRating: seasonBest,
+      seasonWins: Number(profile.seasonWins ?? 0) + (win ? 1 : 0),
+      seasonLosses: Number(profile.seasonLosses ?? 0) + (outcome === 'loss' ? 1 : 0),
+      seasonTies: Number(profile.seasonTies ?? 0) + (tie ? 1 : 0),
+      lives: resolved.lives,
+      nextLifeAt: resolved.nextLifeAt,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    txn.update(challengeRef, {
+      [`settledUids.${uid}`]: true,
+      lastActivityAt: FieldValue.serverTimestamp(),
+    });
+
+    return { success: true, outcome, alreadySettled: false };
+  });
 });

@@ -30,6 +30,7 @@ import {
   abandonChallenge,
   createChallenge,
   joinChallenge,
+  recordChallengeMatch,
   submitChallengeMove,
 } from './challenge';
 import { processChallengeTimeouts } from './challenge_scheduler';
@@ -53,6 +54,7 @@ export {
   joinChallenge,
   submitChallengeMove,
   abandonChallenge,
+  recordChallengeMatch,
   registerFcmToken,
   processChallengeTimeouts,
 };

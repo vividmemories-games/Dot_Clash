@@ -1078,6 +1078,38 @@ class FirestoreProfileRepository implements ProfileRepository {
   }
 
   @override
+  Future<void> recordChallengeMatch({
+    required String code,
+    required MatchResult result,
+    required String opponentLabel,
+  }) async {
+    final normalized = code.trim().toUpperCase();
+    final callable = await _tryCallableWithResult(
+      'recordChallengeMatch',
+      {'code': normalized},
+    );
+    if (callable != null && callable['success'] == true) {
+      await _refreshProfileFromServer();
+      return;
+    }
+    if (!_allowEconomyLocalFallback) return;
+
+    await settleMatch(result, consumeLife: false);
+    final outcome = switch (result) {
+      MatchResult.win => 'win',
+      MatchResult.loss => 'loss',
+      MatchResult.tie => 'tie',
+    };
+    await _withRetry(() => _matches.add({
+          'outcome': outcome,
+          'modeLabel': 'Challenge',
+          'opponentLabel': opponentLabel,
+          'challengeCode': normalized,
+          'playedAt': FieldValue.serverTimestamp(),
+        }));
+  }
+
+  @override
   Stream<List<RecentMatchRecord>> watchRecentMatches({int limit = 10}) {
     return _matches
         .orderBy('playedAt', descending: true)
@@ -1099,6 +1131,7 @@ class FirestoreProfileRepository implements ProfileRepository {
                 opponentLabel: data['opponentLabel'] as String? ?? 'Opponent',
                 playedAt:
                     playedAt is Timestamp ? playedAt.toDate() : DateTime.now(),
+                challengeCode: data['challengeCode'] as String?,
               );
             }).toList());
   }

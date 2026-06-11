@@ -5,12 +5,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/dot_clash_visuals.dart';
 import '../../../shared/feedback/app_haptics.dart';
 import '../../../shared/feedback/app_snackbar.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/widgets/neon_tag.dart';
+import '../../challenge/data/challenge_repository.dart';
+import '../../challenge/domain/challenge_exceptions.dart';
+import '../../challenge/providers/challenge_game_provider.dart';
+import '../../challenge/providers/challenge_providers.dart';
 import '../../campaign/data/campaign_content_repository.dart';
 import '../../campaign/domain/campaign_level.dart';
 import '../../campaign/domain/campaign_move_metrics.dart';
@@ -86,6 +91,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
   /// Unique owner for match coach-tour [GlobalKey]s (see [CoachTourGameScope]).
   final Object _gameTourScope = Object();
 
+  bool get _isChallenge => widget.config.mode == GameMode.challenge;
+
+  String? get _challengeCode => widget.config.challengeCode;
+
+  String get _myPlayerId => widget.config.myPlayerId ?? 'A';
+
   @override
   void initState() {
     super.initState();
@@ -149,7 +160,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
             );
       }
       final tourPaused = ref.read(matchCoachTourProvider).matchPaused;
-      if (tourPaused) {
+      if (_isChallenge) {
+        // Server-synced countdown starts when [challengeTurnTimerProvider] sees
+        // `turnStartedAt` on the room snapshot.
+      } else if (tourPaused) {
         ref.read(turnTimerProvider.notifier).stop();
       } else if (ref.read(settingsProvider).showTimer) {
         ref.read(turnTimerProvider.notifier).reset();
@@ -168,9 +182,20 @@ class _GameScreenState extends ConsumerState<GameScreen>
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive ||
         state == AppLifecycleState.detached) {
-      ref.read(gameProvider.notifier).onAppPaused();
+      if (_isChallenge) {
+        final code = _challengeCode;
+        if (code != null) {
+          ref.read(challengeTurnTimerProvider(code).notifier).stop();
+        }
+      } else {
+        ref.read(gameProvider.notifier).onAppPaused();
+      }
     } else if (state == AppLifecycleState.resumed) {
-      ref.read(gameProvider.notifier).onAppResumed();
+      if (_isChallenge) {
+        // [challengeTurnTimerProvider] re-syncs from the next room snapshot.
+      } else {
+        ref.read(gameProvider.notifier).onAppResumed();
+      }
     }
   }
 
@@ -197,14 +222,19 @@ class _GameScreenState extends ConsumerState<GameScreen>
       );
     }
 
-    final state = ref.watch(gameProvider);
+    final state = _isChallenge
+        ? ref.watch(challengeGameProvider(_challengeCode!))
+        : ref.watch(gameProvider);
     final session = ref.watch(matchSessionProvider);
-    final secondsLeft = ref.watch(turnTimerProvider);
+    final secondsLeft = _isChallenge
+        ? ref.watch(challengeTurnTimerProvider(_challengeCode!))
+        : ref.watch(turnTimerProvider);
     final settings = ref.watch(settingsProvider);
     final profile = ref.watch(profileProvider).valueOrNull;
     final inventory = profile?.powerUpInventory ?? const {};
-    final showBoosts = widget.config.mode == GameMode.ai ||
-        widget.config.mode == GameMode.campaign;
+    final showBoosts = !_isChallenge &&
+        (widget.config.mode == GameMode.ai ||
+            widget.config.mode == GameMode.campaign);
 
     // When the timer is hidden, disable timed gameplay entirely.
     // - stop the countdown so it doesn't reach 0 in the background
@@ -219,16 +249,22 @@ class _GameScreenState extends ConsumerState<GameScreen>
         ref.read(turnTimerProvider.notifier).stop();
       }
     });
-    if (!settings.showTimer) {
+    if (!_isChallenge && !settings.showTimer) {
       ref.read(turnTimerProvider.notifier).stop();
     }
 
+    final challengeOpponent =
+        widget.config.opponentDisplayName ?? 'Rival';
     final playerAName = _scoreboardLabel(switch (widget.config.mode) {
+      GameMode.challenge =>
+        _myPlayerId == 'A' ? settings.youName : challengeOpponent,
       GameMode.ai || GameMode.campaign => settings.youName,
       GameMode.local => settings.localPlayerAName,
     });
     final bossDisplayName = _campaignLevel?.bossName;
     final playerBName = switch (widget.config.mode) {
+      GameMode.challenge =>
+        _myPlayerId == 'B' ? settings.youName : challengeOpponent,
       GameMode.ai || GameMode.campaign => (_campaignLevel?.isBoss ?? false)
           ? (bossDisplayName ?? settings.aiName)
           : settings.aiName,
@@ -246,18 +282,20 @@ class _GameScreenState extends ConsumerState<GameScreen>
       state.playerIds[1]: initialFor(playerBName, fallback: 'B'),
     };
 
-    // Auto-pass the turn when the timer reaches 0.
-    ref.listen<int>(turnTimerProvider, (prev, next) {
-      if (!mounted) return;
-      if (!ref.read(settingsProvider).showTimer) return;
-      if (ref.read(matchCoachTourProvider).matchPaused) return;
-      final prevVal = prev ?? next;
-      if (prevVal > 0 && next == 0) {
-        // Clear hint on timeout so it doesn't look like a forced move.
-        if (mounted) setState(() => _hintEdge = null);
-        ref.read(gameProvider.notifier).onTurnTimedOut();
-      }
-    });
+    // Auto-pass the turn when the timer reaches 0 (local / AI only — server
+    // enforces timeouts for challenge matches).
+    if (!_isChallenge) {
+      ref.listen<int>(turnTimerProvider, (prev, next) {
+        if (!mounted) return;
+        if (!ref.read(settingsProvider).showTimer) return;
+        if (ref.read(matchCoachTourProvider).matchPaused) return;
+        final prevVal = prev ?? next;
+        if (prevVal > 0 && next == 0) {
+          if (mounted) setState(() => _hintEdge = null);
+          ref.read(gameProvider.notifier).onTurnTimedOut();
+        }
+      });
+    }
 
     ref.listen<MatchCoachTourState>(matchCoachTourProvider, (prev, next) {
       if (!mounted) return;
@@ -289,9 +327,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
     });
 
     // Tutorial: react to human moves and box captures.
-    ref.listen<GameState>(gameProvider, (prev, next) {
-      if (!mounted) return;
-      if (prev == null) return;
+    if (!_isChallenge) {
+      ref.listen<GameState>(gameProvider, (prev, next) {
+        if (!mounted) return;
+        if (prev == null) return;
       final coachState = ref.read(matchCoachTourProvider);
       if (!coachState.isActive) return;
 
@@ -312,17 +351,19 @@ class _GameScreenState extends ConsumerState<GameScreen>
           }
         }
       }
-    });
+      });
+    }
 
-    // Show result dialog on game end
-    ref.listen<GameState>(gameProvider, (prev, next) {
-      if (!mounted) return;
-      if (!next.isOver || (prev?.isOver ?? false)) return;
-      setState(() => _hintEdge = null);
+    // Show result dialog on game end (challenge settlement uses room status).
+    if (!_isChallenge) {
+      ref.listen<GameState>(gameProvider, (prev, next) {
+        if (!mounted) return;
+        if (!next.isOver || (prev?.isOver ?? false)) return;
+        setState(() => _hintEdge = null);
 
-      if (widget.config.mode == GameMode.campaign) {
-        _settleCampaign(context, ref, next);
-      } else {
+        if (widget.config.mode == GameMode.campaign) {
+          _settleCampaign(context, ref, next);
+        } else {
         final result = next.isTie
             ? MatchResult.tie
             : (next.winnerId == next.playerIds[0]
@@ -352,15 +393,20 @@ class _GameScreenState extends ConsumerState<GameScreen>
               ));
         }
         _showResultDialog(context, next);
-      }
-    });
+        }
+      });
+    }
 
     final isVsAi = widget.config.mode == GameMode.ai ||
         widget.config.mode == GameMode.campaign;
     final isAiTurn = isVsAi && state.currentPlayerId == state.playerIds[1];
-    final humanTurnReady = ref.watch(humanTurnReadyProvider);
-    final opponentHighlightEdge =
-        isVsAi ? ref.watch(opponentLastEdgeProvider) : null;
+    final isOpponentTurn =
+        _isChallenge && state.currentPlayerId != _myPlayerId;
+    final humanTurnReady =
+        _isChallenge ? true : ref.watch(humanTurnReadyProvider);
+    final opponentHighlightEdge = (isVsAi || _isChallenge)
+        ? ref.watch(opponentLastEdgeProvider)
+        : null;
 
     final coachTourState = ref.watch(matchCoachTourProvider);
     final coachLogic = coachTourState.logic;
@@ -383,6 +429,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
     final canInteract = !state.isOver &&
         !isAiTurn &&
+        !isOpponentTurn &&
         humanTurnReady &&
         !session.outOfTurnsPending &&
         _bossIntroDismissed &&
@@ -391,7 +438,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
     final boostEnabled = canInteract || coachAllowsHint || coachAllowsHold;
 
-    final humanPlayerId = state.playerIds[0];
+    final humanPlayerId =
+        _isChallenge ? _myPlayerId : state.playerIds[0];
     // Count human TURNS (chains = 1 turn, not every line drawn).
     final humanTurnCount =
         CampaignMoveMetrics.humanTurnCount(state, humanPlayerId);
@@ -429,9 +477,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
             playerBInitial: playerInitials[state.playerIds[1]],
             opponentIsBoss: isBossFight,
             bossAccentColor: bossAccent,
-            showTimer: settings.showTimer,
+            showTimer: settings.showTimer || _isChallenge,
             secondsLeft: secondsLeft,
             isLocalMode: widget.config.mode == GameMode.local,
+            localPlayerId: _isChallenge ? _myPlayerId : state.playerIds[0],
           ),
         ),
         SizedBox(height: sectionGap),
@@ -486,7 +535,11 @@ class _GameScreenState extends ConsumerState<GameScreen>
                   if (_hintEdge != null && coachHintEdge == null) {
                     setState(() => _hintEdge = null);
                   }
-                  ref.read(gameProvider.notifier).makeMove(edge);
+                  if (_isChallenge) {
+                    unawaited(_submitChallengeMove(edge));
+                  } else {
+                    ref.read(gameProvider.notifier).makeMove(edge);
+                  }
                 },
               ),
             ),
@@ -518,12 +571,17 @@ class _GameScreenState extends ConsumerState<GameScreen>
           ),
         ],
         MatchMoreDock(
-          canUndo: state.moveHistory.isNotEmpty && !state.isOver,
+          canUndo:
+              !_isChallenge && state.moveHistory.isNotEmpty && !state.isOver,
           onUndo: _onUndo,
-          onRestart: () => _confirmNewGame(context),
+          onRestart: _isChallenge
+              ? () {}
+              : () => _confirmNewGame(context),
           onExit: () => _requestLeaveGame(
             context,
-            navigate: () => context.go('/home'),
+            navigate: () => context.go(
+              _isChallenge ? AppRoutes.home : '/home',
+            ),
           ),
           extraTurnsAvailable: showBoosts &&
               session.hasTurnBudget &&
@@ -537,7 +595,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
     final isHumanTurn = state.currentPlayerId == humanPlayerId;
     final opponentAmbientColor = switch (widget.config.mode) {
-      GameMode.local => v.playerB,
+      GameMode.challenge || GameMode.local => v.playerB,
       GameMode.ai || GameMode.campaign => isBossFight ? bossAccent : v.playerB,
     };
 
@@ -603,28 +661,49 @@ class _GameScreenState extends ConsumerState<GameScreen>
   bool _shouldConfirmLeave(GameState state) =>
       state.moveHistory.isNotEmpty && !state.isOver;
 
+  Future<void> _submitChallengeMove(String edge) async {
+    final code = _challengeCode;
+    if (code == null) return;
+    try {
+      await ref.read(challengeGameProvider(code).notifier).makeMove(edge);
+    } on ChallengeException catch (e) {
+      if (mounted) AppSnackBar.show(context, e.message);
+    }
+  }
+
   Future<void> _requestLeaveGame(
     BuildContext context, {
     required void Function() navigate,
   }) async {
-    final state = ref.read(gameProvider);
+    final state = _isChallenge
+        ? ref.read(challengeGameProvider(_challengeCode!))
+        : ref.read(gameProvider);
     if (!_shouldConfirmLeave(state)) {
-      _leaveGameRoute(navigate);
+      await _leaveGameRoute(navigate);
       return;
     }
 
     final isCampaign = widget.config.mode == GameMode.campaign;
+    final isChallenge = _isChallenge;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
         final v = ctx.dc;
         return AlertDialog(
-          title: Text(isCampaign ? 'Leave this level?' : 'Leave match?'),
+          title: Text(switch ((isCampaign, isChallenge)) {
+            (true, _) => 'Leave this level?',
+            (_, true) => 'Leave challenge?',
+            _ => 'Leave match?',
+          }),
           content: Text(
-            isCampaign
-                ? 'Your progress on this level will be lost. '
-                    'Your life won\'t be used — you can try again from the map.'
-                : 'Your current game progress will be lost.',
+            switch ((isCampaign, isChallenge)) {
+              (true, _) =>
+                'Your progress on this level will be lost. '
+                    'Your life won\'t be used — you can try again from the map.',
+              (_, true) =>
+                'Leaving forfeits the match. Your opponent may win.',
+              _ => 'Your current game progress will be lost.',
+            },
           ),
           actions: [
             TextButton(
@@ -641,11 +720,22 @@ class _GameScreenState extends ConsumerState<GameScreen>
       },
     );
     if (confirmed == true && context.mounted) {
-      _leaveGameRoute(navigate);
+      await _leaveGameRoute(navigate);
     }
   }
 
-  void _leaveGameRoute(void Function() navigate) {
+  Future<void> _leaveGameRoute(void Function() navigate) async {
+    if (_isChallenge) {
+      final code = _challengeCode;
+      final state = ref.read(challengeGameProvider(code!));
+      if (state.moveHistory.isNotEmpty && !state.isOver) {
+        try {
+          await ref.read(challengeRepositoryProvider).abandonChallenge(code);
+        } catch (e) {
+          debugPrint('[Challenge][abandon] failed=$e');
+        }
+      }
+    }
     CoachTourTargetRegistry.releaseAllGameTargets();
     navigate();
   }
@@ -731,6 +821,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
       final subtitle =
           switch ((widget.config.mode, widget.config.isDailyPuzzle)) {
+        (GameMode.challenge, _) => 'Challenge',
         (GameMode.ai, true) => 'Daily puzzle',
         (GameMode.ai, false) => 'Practice',
         (GameMode.local, _) => 'Local match',

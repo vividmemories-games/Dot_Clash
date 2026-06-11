@@ -9,6 +9,7 @@ enum GameMode {
   local, // 2 human players on the same device
   ai, // 1 human vs Practice (free) AI
   campaign, // campaign level vs AI
+  challenge, // live 1v1 via Firestore + Cloud Functions
 }
 
 enum AiDifficulty { easy, medium, hard }
@@ -29,6 +30,9 @@ class GameConfig {
     this.disabledCells = const [],
     this.isDailyPuzzle = false,
     this.turnBudget,
+    this.challengeCode,
+    this.myPlayerId,
+    this.opponentDisplayName,
   });
 
   final GameMode mode;
@@ -50,6 +54,15 @@ class GameConfig {
 
   /// Human turn budget for campaign levels. Null = unlimited.
   final int? turnBudget;
+
+  /// Challenge room code (`challenges/{code}`) when [mode] == challenge.
+  final String? challengeCode;
+
+  /// Local user's server player id (`A` = host, `B` = guest).
+  final String? myPlayerId;
+
+  /// Opponent display name for scoreboard / result UI.
+  final String? opponentDisplayName;
 
   factory GameConfig.defaultLocal() => const GameConfig(mode: GameMode.local);
 
@@ -96,6 +109,22 @@ class GameConfig {
         bossPersona: persona,
         disabledCells: disabledCells,
         isDailyPuzzle: true,
+      );
+
+  factory GameConfig.challenge({
+    required String code,
+    required String myPlayerId,
+    required String opponentDisplayName,
+    int rows = 6,
+    int cols = 6,
+  }) =>
+      GameConfig(
+        mode: GameMode.challenge,
+        rows: rows,
+        cols: cols,
+        challengeCode: code.trim().toUpperCase(),
+        myPlayerId: myPlayerId,
+        opponentDisplayName: opponentDisplayName,
       );
 }
 

@@ -11,6 +11,8 @@ import '../../features/campaign/domain/campaign_level.dart';
 import '../../features/campaign/domain/daily_puzzle.dart';
 import '../../features/campaign/domain/turn_budget_calculator.dart';
 import '../../features/campaign/presentation/campaign_map_screen.dart';
+import '../../features/challenge/presentation/challenge_lobby_screen.dart';
+import '../../features/challenge/presentation/challenge_play_screen.dart';
 import '../../features/contact/presentation/contact_screen.dart';
 import '../../features/game/domain/models/game_state.dart';
 import '../../features/game/presentation/game_screen.dart';
@@ -36,6 +38,14 @@ abstract final class AppRoutes {
   static const String campaignPlay = '/campaign/play/:levelId';
   static const String dailyPuzzle = '/daily-puzzle';
   static const String profile = '/profile';
+  static const String challengeLobby = '/challenge/lobby/:code';
+  static const String challengePlay = '/challenge/play/:code';
+
+  static String challengeLobbyPath(String code) =>
+      '/challenge/lobby/${code.trim().toUpperCase()}';
+
+  static String challengePlayPath(String code) =>
+      '/challenge/play/${code.trim().toUpperCase()}';
 }
 
 bool _isAuthRoute(GoRouterState state) {
@@ -43,6 +53,10 @@ bool _isAuthRoute(GoRouterState state) {
   if (loc.isEmpty || loc == '/') return true;
   final matched = state.matchedLocation;
   return matched == '/' || matched == AppRoutes.auth;
+}
+
+bool _isChallengeRoute(GoRouterState state) {
+  return state.uri.path.startsWith('/challenge/');
 }
 
 // ── Provider ──────────────────────────────────────────────────────────────────
@@ -90,9 +104,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       } else if (!firebaseCoreReady) {
         redirectTarget = null;
       } else if (!isLoggedIn && !isOnAuth) {
-        redirectTarget = AppRoutes.auth;
+        if (_isChallengeRoute(state)) {
+          redirectTarget =
+              '${AppRoutes.auth}?next=${Uri.encodeComponent(state.uri.path)}';
+        } else {
+          redirectTarget = AppRoutes.auth;
+        }
       } else if (isLoggedIn && isOnAuth) {
-        redirectTarget = AppRoutes.home;
+        final next = state.uri.queryParameters['next'];
+        if (next != null &&
+            next.startsWith('/challenge/') &&
+            next.contains('/')) {
+          redirectTarget = next;
+        } else {
+          redirectTarget = AppRoutes.home;
+        }
       }
 
       return redirectTarget;
@@ -138,6 +164,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.dailyPuzzle,
         pageBuilder: (context, state) => _dailyPuzzleGamePage(state),
+      ),
+      GoRoute(
+        path: AppRoutes.challengeLobby,
+        pageBuilder: (context, state) {
+          final code = state.pathParameters['code'] ?? '';
+          return _slidePage(
+            state,
+            ChallengeLobbyScreen(code: code),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.challengePlay,
+        pageBuilder: (context, state) {
+          final code = state.pathParameters['code'] ?? '';
+          return CustomTransitionPage<void>(
+            key: ValueKey('challenge-play-$code'),
+            child: ChallengePlayScreen(code: code),
+            transitionDuration: const Duration(milliseconds: 280),
+            transitionsBuilder: (_, animation, __, child) {
+              final tween = Tween(
+                begin: const Offset(0, 0.06),
+                end: Offset.zero,
+              ).chain(CurveTween(curve: Curves.easeOutCubic));
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: FadeTransition(opacity: animation, child: child),
+              );
+            },
+          );
+        },
       ),
 
       // ── Persistent tab shell ─────────────────────────────────────────────

@@ -14,6 +14,7 @@ import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/layout/responsive_layout.dart';
 import '../../../shared/widgets/profile_avatar_chip.dart';
 import '../../../shared/widgets/profile_bootstrap_screen.dart';
+import 'widgets/profile_challenge_history_section.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -139,6 +140,9 @@ class _ProfileScreenBody extends ConsumerWidget {
                 v: v,
                 t: context.txt,
               ),
+              AppSpacing.vGapLG,
+
+              const ProfileChallengeHistorySection(),
               AppSpacing.vGapLG,
 
               // ── Settings button ─────────────────────────────────────────
