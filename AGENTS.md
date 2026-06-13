@@ -141,6 +141,19 @@ In Cursor, [`.cursor/rules/`](.cursor/rules/) is auto-loaded (reviewer format, b
 
 ---
 
+## Keeping this brain current
+
+Documentation is part of every relevant change:
+
+- Update `AGENTS.md` when workflows, task routing, or safety rules change.
+- Update `docs/DECISIONS.md` when an intended invariant changes deliberately.
+- Update `docs/architecture.md` when system structure or data flow changes.
+- Update `docs/RELEASES.md` for every store build.
+- Do not update historical logs to describe new behavior.
+- Check documentation accuracy before declaring meaningful work complete.
+
+---
+
 ## Doc index
 
 | Doc | When |
