@@ -130,7 +130,6 @@ class _MissionSquareCard extends StatelessWidget {
     final iconData = _iconFor(mission.id);
 
     final bgImage = _imageFor(mission.id);
-    final showBg = bgImage != null;
 
     return GestureDetector(
       onTap: mission.readyToClaim && onClaim != null
@@ -156,13 +155,13 @@ class _MissionSquareCard extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 // Background art
-                if (showBg)
+                if (bgImage != null)
                   Image.asset(
-                    bgImage!,
+                    bgImage,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                   ),
-                if (showBg)
+                if (bgImage != null)
                   DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -175,7 +174,7 @@ class _MissionSquareCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (!showBg) ColoredBox(color: v.surface),
+                if (bgImage == null) ColoredBox(color: v.surface),
 
                 // Content
                 Padding(
@@ -189,9 +188,9 @@ class _MissionSquareCard extends StatelessWidget {
                         child: SizedBox(
                           width: 32,
                           height: 32,
-                          child: showBg
+                          child: bgImage != null
                               ? Image.asset(
-                                  bgImage!,
+                                  bgImage,
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => Container(
                                     color: iconColor.withOpacity(0.12),

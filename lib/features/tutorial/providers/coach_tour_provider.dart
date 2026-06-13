@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../services/analytics/analytics_service.dart';
 import '../../game/domain/models/game_state.dart';
 import '../../powerups/domain/power_up.dart';
-import '../../profile/data/profile_repository.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../data/ftue_preferences.dart';

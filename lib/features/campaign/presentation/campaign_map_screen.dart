@@ -46,7 +46,7 @@ class CampaignMapScreen extends ConsumerWidget {
         actions: [
           if (continueId != null)
             TextButton(
-              onPressed: () => _playLevel(context, ref, continueId!),
+              onPressed: () => _playLevel(context, ref, continueId),
               child: Text(
                 'PLAY',
                 style: t.bodySmall.copyWith(color: v.gold),

@@ -1,6 +1,5 @@
 import 'package:dot_clash/core/theme/dot_clash_visuals.dart';
 import 'package:dot_clash/shared/widgets/equipped_avatar.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

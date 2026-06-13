@@ -3,14 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import 'auth_error_message.dart';
 
 import '../../../core/router/auth_router_refresh.dart';
 import '../../../features/onboarding/providers/onboarding_provider.dart';
 import '../../../core/theme/dot_clash_visuals.dart';
-import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/widgets/auth_provider_leading.dart';
 import '../providers/auth_provider.dart';
 
@@ -314,85 +312,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       ),
     );
   }
-}
-
-// ── Dots-and-boxes grid icon ──────────────────────────────────────────────────
-
-class _DotsBoxIcon extends StatelessWidget {
-  const _DotsBoxIcon({required this.size});
-
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size),
-      painter: _DotsBoxPainter(),
-    );
-  }
-}
-
-class _DotsBoxPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    const lineColor = Color(0xFF90CAF9);
-    const dotColor = Color(0xFFCE93D8);
-
-    final linePaint = Paint()
-      ..color = lineColor
-      ..strokeWidth = 2.2
-      ..style = PaintingStyle.stroke;
-
-    final dotPaint = Paint()
-      ..color = dotColor
-      ..style = PaintingStyle.fill;
-
-    final glowPaint = Paint()
-      ..color = dotColor.withOpacity(0.35)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5)
-      ..style = PaintingStyle.fill;
-
-    final pad = size.width * 0.12;
-    final inner = size.width - pad * 2;
-
-    // Square outline connecting the four corner dots
-    final rect = Rect.fromLTWH(pad, pad, inner, inner);
-    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(4));
-    canvas.drawRRect(rrect, linePaint);
-
-    // Center dot (the game clash point)
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    canvas.drawCircle(Offset(cx, cy), 4.5, glowPaint);
-    canvas.drawCircle(Offset(cx, cy), 3.0, dotPaint);
-
-    // Corner dots
-    final corners = [
-      Offset(pad, pad),
-      Offset(pad + inner, pad),
-      Offset(pad, pad + inner),
-      Offset(pad + inner, pad + inner),
-    ];
-    for (final c in corners) {
-      canvas.drawCircle(c, 4.5, glowPaint);
-      canvas.drawCircle(c, 3.0, dotPaint..color = lineColor);
-    }
-
-    // Mid-edge dots
-    final mids = [
-      Offset(cx, pad),
-      Offset(cx, pad + inner),
-      Offset(pad, cy),
-      Offset(pad + inner, cy),
-    ];
-    for (final m in mids) {
-      canvas.drawCircle(m, 3.5, glowPaint);
-      canvas.drawCircle(m, 2.2, dotPaint..color = lineColor.withOpacity(0.7));
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DotsBoxPainter old) => false;
 }
 
 // ── Bottom action panel ───────────────────────────────────────────────────────

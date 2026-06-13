@@ -12,7 +12,6 @@ import '../../../shared/feedback/app_haptics.dart';
 import '../../../shared/feedback/app_snackbar.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/widgets/neon_tag.dart';
-import '../../challenge/data/challenge_repository.dart';
 import '../../challenge/domain/challenge_exceptions.dart';
 import '../../challenge/providers/challenge_game_provider.dart';
 import '../../challenge/providers/challenge_providers.dart';

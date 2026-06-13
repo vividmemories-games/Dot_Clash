@@ -429,7 +429,3 @@ class GameNotifier extends StateNotifier<GameState> {
     });
   }
 }
-
-extension _ConfigPlayerIds on GameConfig {
-  List<String> get playerIds => ['A', 'B'];
-}

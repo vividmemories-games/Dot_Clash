@@ -857,12 +857,10 @@ class _AboutRow extends StatelessWidget {
   const _AboutRow({
     required this.label,
     required this.value,
-    this.mono = false,
   });
 
   final String label;
   final String value;
-  final bool mono;
 
   @override
   Widget build(BuildContext context) {
@@ -883,10 +881,7 @@ class _AboutRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: (mono ? t.bodySmall : t.body).copyWith(
-                fontFamily: mono ? 'monospace' : null,
-                fontWeight: FontWeight.w600,
-              ),
+              style: t.body.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
         ],

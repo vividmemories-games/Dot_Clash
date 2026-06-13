@@ -48,7 +48,7 @@ class PowerUpInventory {
     if (raw == null || raw.isEmpty) return const PowerUpInventory();
     return PowerUpInventory(
       Map<String, int>.from(
-        raw.map((k, v) => MapEntry(k as String, (v as num).toInt())),
+        raw.map((k, v) => MapEntry(k, (v as num).toInt())),
       ),
     );
   }
