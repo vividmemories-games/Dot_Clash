@@ -21,7 +21,7 @@ flutter run --flavor dev --dart-define=FLAVOR=dev
 
 Use **prod** package name, Firebase, and IAP — but **Google test ads** so real-world beta testers don’t trigger invalid AdMob traffic.
 
-**Before each upload:** bump the build number in [`pubspec.yaml`](pubspec.yaml) (`version: 1.1.0+4` — the number after `+` must increase every store upload).
+**Before each upload:** bump the build number in [`pubspec.yaml`](pubspec.yaml) (current: `1.4.1+19` — the number after `+` must increase every store upload).
 
 Scripts live at the **project root** in `scripts/` (not `android/scripts/`):
 
@@ -103,23 +103,37 @@ Details and AdMob IDs: [`lib/core/env/app_env.dart`](lib/core/env/app_env.dart)
 
 ---
 
-## Release 13 (next upload — `1.3.0+13`)
+## Current closed testing — build 19 (`1.4.1+19`)
 
-Ship after **Release 12** (`1.3.0+12`) is in TestFlight / Play closed testing.
+**Challenge a Friend** — live 1v1 Dots & Boxes online. In closed testing on Play + TestFlight.
 
-### What's in R13
+| Feature | Notes |
+|---------|--------|
+| **Challenge a Friend** | 6×6 live match; create/join via code or HTTPS link |
+| **Challenge hub** | Rematch recent rivals; head-to-head series (W–L–T) |
+| **App Links + FCM** | `vividmemories-games.github.io/join/{CODE}`; invite push for recent rivals |
+| **Turn timer** | 30s per turn; leave confirmation (build 13) still applies in other modes |
+
+Session notes and QA history: **[docs/summary.md](docs/summary.md)**  
+Full build history, checklists, and **store release notes**: **[docs/RELEASES.md](docs/RELEASES.md)**
+
+### Pre-upload smoke (build 19)
+
+- [ ] Challenge: create → join → full match → rematch from Challenge hub
+- [ ] HTTPS link + FCM tap → lobby → play
+- [ ] Campaign Next level + quick match leave dialog (builds 12–13 regression)
+- [ ] Prod backend if changed: `firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-72cc6`
+
+---
+
+## Earlier builds (archive)
+
+<details>
+<summary>Build 13 — leave match confirmation (<code>1.3.0+13</code>)</summary>
 
 | Item | Notes |
 |------|--------|
 | **Leave match confirmation** | Home, MORE → Exit, and system back ask before leaving mid-game |
-| Campaign copy | Clarifies level progress is lost; life is **not** consumed on abandon |
+| Campaign copy | Level progress lost; life **not** consumed on abandon |
 
-### Pre-upload smoke (R13)
-
-- [ ] Start campaign level, make a move → tap **Home** → dialog → **Stay** keeps board
-- [ ] Same → **Leave** exits without consuming a life
-- [ ] Fresh level (no moves) → Home exits with no dialog
-- [ ] Android/iOS **back gesture** shows the same dialog mid-match
-- [ ] Quick match / vs AI: generic “Leave match?” copy
-
-Full release history and checklists: **[docs/RELEASES.md](docs/RELEASES.md)**
+</details>

@@ -65,6 +65,36 @@ Same as build 18, plus:
 | Challenge hub → rival rematch | Creates room; no Profile rivalries section |
 | Reconnect to finished room | Settlement runs; result dialog or history updated |
 
+### Store notes (build 19 — Play / TestFlight)
+
+**Short** (TestFlight “What to Test” / Play release notes)
+
+> **Challenge a Friend** — play live Dots & Boxes online with a friend. Share a link or 6-digit code, battle on a 6×6 board, and keep the rivalry going with rematch and head-to-head stats on the Challenge hub.  
+> Turn timer keeps matches moving. Leave confirmation so you don’t accidentally quit mid-game.  
+> Remember this game from class? Grab a friend and settle the score.
+
+**Bullets**
+
+- **Challenge a Friend** — create or join a live online match (6×6 board, 30s turns)
+- Share an invite **link or code**; open from notification or link to jump straight in
+- **Rematch** recent rivals from the Challenge hub; track your **series (W–L–T)**
+- Smoother match finish and reconnect handling
+- Android: in-app invite snackbar when the app is open
+- Campaign & Quick Match unchanged — please smoke-test those too
+
+**Tester focus** (optional “What to Test” add-on)
+
+- Host **Create** → guest **Join** → full match → **Rematch**
+- Tap a shared HTTPS link (or notification) while logged in
+- Challenge hub → rival row → rematch
+- Mid-match **Home** / back → confirm dialog → **Stay** keeps the board
+
+**Do not promise in store copy**
+
+- No lives/coins/XP in Challenge mode
+- Push invites only for **recent rivals** (first challenge to someone new may not push)
+- No friend list or public matchmaking
+
 ### Backend deploy (required)
 
 ```bash
