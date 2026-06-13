@@ -259,6 +259,30 @@ class AnalyticsService {
     );
   }
 
+  // ── Challenge ─────────────────────────────────────────────────────────────
+
+  Future<void> logChallengeStarted({required String code}) async {
+    await _analytics?.logEvent(
+      name: 'challenge_started',
+      parameters: {'challenge_code': code},
+    );
+  }
+
+  Future<void> logChallengeFinished({
+    required String code,
+    required String result,
+    required int moveCount,
+  }) async {
+    await _analytics?.logEvent(
+      name: 'challenge_finished',
+      parameters: {
+        'challenge_code': code,
+        'result': result,
+        'move_count': moveCount,
+      },
+    );
+  }
+
   // ── Errors ────────────────────────────────────────────────────────────────
 
   Future<void> recordError(Object error, StackTrace? stack) async {

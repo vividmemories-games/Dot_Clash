@@ -23,10 +23,9 @@ abstract final class AppEnv {
   /// Web OAuth client (`oauth_client` with `client_type: 3` in
   /// `google-services.json`). Used as `serverClientId` on Android/iOS so
   /// Firebase Auth receives an ID token.
-  static String get googleSignInServerClientId =>
-      isProd
-          ? '727354434155-11to1o8qau9ndkt3s8chlsdbps2l1p4v.apps.googleusercontent.com'
-          : '218032510167-go3gn9lr2uatb8jv5bveupjdabcpqi03.apps.googleusercontent.com';
+  static String get googleSignInServerClientId => isProd
+      ? '727354434155-11to1o8qau9ndkt3s8chlsdbps2l1p4v.apps.googleusercontent.com'
+      : '218032510167-go3gn9lr2uatb8jv5bveupjdabcpqi03.apps.googleusercontent.com';
 
   // ── AdMob (Google test IDs in dev, your publisher in prod) ────────────────
   // Test IDs: https://developers.google.com/admob/android/test-ads
@@ -80,7 +79,7 @@ abstract final class AppEnv {
   /// True when using Google's sample ad units (dev flavor or [betaAds]).
   static bool get usesTestAdUnits => _useTestAds;
 
-  // ── Privacy / ads policy (must match docs/_data/legal.yml) ───────────────
+  // ── Privacy / ads policy (must match vividmemories-games.github.io _data/legal.yml)
   static const String _legalSiteBase = 'https://vividmemories-games.github.io';
 
   static const String privacyPolicyUrl = '$_legalSiteBase/privacy-policy/';

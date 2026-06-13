@@ -203,7 +203,8 @@ class _SpotlightPainter extends CustomPainter {
       final padded = hole!.inflate(8);
       final holePath = Path()
         ..addRRect(RRect.fromRectAndRadius(padded, const Radius.circular(12)));
-      final combined = Path.combine(PathOperation.difference, overlay, holePath);
+      final combined =
+          Path.combine(PathOperation.difference, overlay, holePath);
       canvas.drawPath(
         combined,
         Paint()..color = Colors.black.withValues(alpha: 0.72),
@@ -217,8 +218,7 @@ class _SpotlightPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_SpotlightPainter oldDelegate) =>
-      oldDelegate.hole != hole;
+  bool shouldRepaint(_SpotlightPainter oldDelegate) => oldDelegate.hole != hole;
 }
 
 class _CalloutCard extends StatelessWidget {

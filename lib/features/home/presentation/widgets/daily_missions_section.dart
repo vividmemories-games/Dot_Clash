@@ -21,7 +21,8 @@ class DailyMissionsSection extends StatelessWidget {
     final t = context.txt;
 
     final resetIn = _formatResetTimer();
-    final completedCount = missions.where((m) => m.claimed || m.completed).length;
+    final completedCount =
+        missions.where((m) => m.claimed || m.completed).length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,7 +53,8 @@ class DailyMissionsSection extends StatelessWidget {
                 '$completedCount/${missions.length}',
                 style: t.bodySmall.copyWith(
                   fontSize: 10,
-                  color: completedCount == missions.length ? v.green : v.playerA,
+                  color:
+                      completedCount == missions.length ? v.green : v.playerA,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -138,9 +140,8 @@ class _MissionSquareCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: AppSpacing.roundedLG,
           border: Border.all(
-            color: mission.readyToClaim
-                ? v.green.withOpacity(0.5)
-                : v.cardBorder,
+            color:
+                mission.readyToClaim ? v.green.withOpacity(0.5) : v.cardBorder,
             width: mission.readyToClaim ? 1.5 : 1.0,
           ),
           boxShadow: v.useGlow && mission.readyToClaim
@@ -152,116 +153,119 @@ class _MissionSquareCard extends StatelessWidget {
           child: Container(
             color: v.surface,
             child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Background art
-              if (showBg)
-                Image.asset(
-                  bgImage!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                ),
-              if (showBg)
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.black.withOpacity(0.6),
-                        Colors.black.withOpacity(0.75),
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
+              fit: StackFit.expand,
+              children: [
+                // Background art
+                if (showBg)
+                  Image.asset(
+                    bgImage!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                if (showBg)
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.black.withOpacity(0.6),
+                          Colors.black.withOpacity(0.75),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
                     ),
                   ),
-                ),
-              if (!showBg) ColoredBox(color: v.surface),
+                if (!showBg) ColoredBox(color: v.surface),
 
-              // Content
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Icon
-                    ClipOval(
-                      child: SizedBox(
-                        width: 32,
-                        height: 32,
-                        child: showBg
-                            ? Image.asset(
-                                bgImage!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
+                // Content
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Icon
+                      ClipOval(
+                        child: SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: showBg
+                              ? Image.asset(
+                                  bgImage!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: iconColor.withOpacity(0.12),
+                                    child: Icon(iconData,
+                                        size: 16, color: iconColor),
+                                  ),
+                                )
+                              : Container(
                                   color: iconColor.withOpacity(0.12),
-                                  child: Icon(iconData, size: 16, color: iconColor),
+                                  child: Icon(iconData,
+                                      size: 16, color: iconColor),
                                 ),
-                              )
-                            : Container(
-                                color: iconColor.withOpacity(0.12),
-                                child: Icon(iconData, size: 16, color: iconColor),
-                              ),
-                      ),
-                    ),
-
-                    // Mission title
-                    Text(
-                      mission.title,
-                      style: t.playerName.copyWith(fontSize: 11),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    // Progress bar
-                    ClipRRect(
-                      borderRadius: AppSpacing.roundedFull,
-                      child: LinearProgressIndicator(
-                        value: mission.fraction,
-                        minHeight: 5,
-                        backgroundColor: v.cardBorder.withOpacity(0.5),
-                        valueColor: AlwaysStoppedAnimation<Color>(barColor),
-                      ),
-                    ),
-
-                    // Progress count + reward
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '${mission.progress}/${mission.target}',
-                          style: t.bodySmall.copyWith(fontSize: 10),
                         ),
-                        if (mission.claimed)
-                          Icon(Icons.check_circle_rounded, size: 13, color: v.green)
-                        else
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.monetization_on_rounded,
-                                  size: 10, color: v.gold),
-                              const SizedBox(width: 2),
-                              Text(
-                                '+${mission.rewardCoins}',
-                                style: t.bodySmall.copyWith(
-                                  color: v.gold,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ],
+                      ),
+
+                      // Mission title
+                      Text(
+                        mission.title,
+                        style: t.playerName.copyWith(fontSize: 11),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                      // Progress bar
+                      ClipRRect(
+                        borderRadius: AppSpacing.roundedFull,
+                        child: LinearProgressIndicator(
+                          value: mission.fraction,
+                          minHeight: 5,
+                          backgroundColor: v.cardBorder.withOpacity(0.5),
+                          valueColor: AlwaysStoppedAnimation<Color>(barColor),
+                        ),
+                      ),
+
+                      // Progress count + reward
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${mission.progress}/${mission.target}',
+                            style: t.bodySmall.copyWith(fontSize: 10),
                           ),
-                      ],
-                    ),
-                  ],
+                          if (mission.claimed)
+                            Icon(Icons.check_circle_rounded,
+                                size: 13, color: v.green)
+                          else
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.monetization_on_rounded,
+                                    size: 10, color: v.gold),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '+${mission.rewardCoins}',
+                                  style: t.bodySmall.copyWith(
+                                    color: v.gold,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   static IconData _iconFor(String id) => switch (id) {

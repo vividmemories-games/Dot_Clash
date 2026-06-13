@@ -148,21 +148,18 @@ void main() {
   group('adjacentBoxes', () {
     test('H edge at top of grid touches only box below', () {
       // In a 3×3 grid, H_0_0 is above box (0,0) only
-      final boxes =
-          GameRules.adjacentBoxes(3, 3, 'H_0_0');
+      final boxes = GameRules.adjacentBoxes(3, 3, 'H_0_0');
       expect(boxes, [(0, 0)]);
     });
 
     test('H edge in the middle touches boxes above and below', () {
       // H_1_0 in a 3×3 grid touches box (0,0) above and (1,0) below
-      final boxes =
-          GameRules.adjacentBoxes(3, 3, 'H_1_0');
+      final boxes = GameRules.adjacentBoxes(3, 3, 'H_1_0');
       expect(boxes, containsAll([(0, 0), (1, 0)]));
     });
 
     test('V edge on the left column touches only box to the right', () {
-      final boxes =
-          GameRules.adjacentBoxes(3, 3, 'V_0_0');
+      final boxes = GameRules.adjacentBoxes(3, 3, 'V_0_0');
       expect(boxes, [(0, 0)]);
     });
   });

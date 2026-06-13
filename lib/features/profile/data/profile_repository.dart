@@ -21,7 +21,8 @@ abstract class ProfileRepository {
   Future<bool> grantLifeFromAd();
   Future<bool> refundLastCampaignLife();
 
-  Future<bool> purchasePowerUp(String powerUpId, int priceCoins, {int quantity = 1});
+  Future<bool> purchasePowerUp(String powerUpId, int priceCoins,
+      {int quantity = 1});
   Future<bool> consumePowerUp(String powerUpId, {int quantity = 1});
   Future<void> grantPowerUp(String powerUpId, int quantity);
 
@@ -71,6 +72,13 @@ abstract class ProfileRepository {
     required String opponentLabel,
   });
 
+  /// Server-authoritative challenge settlement (stats + match history).
+  Future<void> recordChallengeMatch({
+    required String code,
+    required MatchResult result,
+    required String opponentLabel,
+  });
+
   Stream<List<RecentMatchRecord>> watchRecentMatches({int limit = 10});
 }
 
@@ -81,6 +89,8 @@ class RecentMatchRecord {
     required this.modeLabel,
     required this.opponentLabel,
     required this.playedAt,
+    this.challengeCode,
+    this.opponentUid,
   });
 
   final String id;
@@ -88,4 +98,6 @@ class RecentMatchRecord {
   final String modeLabel;
   final String opponentLabel;
   final DateTime playedAt;
+  final String? challengeCode;
+  final String? opponentUid;
 }

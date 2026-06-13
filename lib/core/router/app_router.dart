@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../deep_links/challenge_link_parser.dart';
 import 'auth_router_refresh.dart';
 import 'onboarding_router_refresh.dart';
 import '../../features/auth/presentation/auth_screen.dart';
@@ -11,6 +12,10 @@ import '../../features/campaign/domain/campaign_level.dart';
 import '../../features/campaign/domain/daily_puzzle.dart';
 import '../../features/campaign/domain/turn_budget_calculator.dart';
 import '../../features/campaign/presentation/campaign_map_screen.dart';
+import '../../features/challenge/presentation/challenge_home_screen.dart';
+import '../../features/challenge/presentation/challenge_history_screen.dart';
+import '../../features/challenge/presentation/challenge_lobby_screen.dart';
+import '../../features/challenge/presentation/challenge_play_screen.dart';
 import '../../features/contact/presentation/contact_screen.dart';
 import '../../features/game/domain/models/game_state.dart';
 import '../../features/game/presentation/game_screen.dart';
@@ -36,6 +41,16 @@ abstract final class AppRoutes {
   static const String campaignPlay = '/campaign/play/:levelId';
   static const String dailyPuzzle = '/daily-puzzle';
   static const String profile = '/profile';
+  static const String challengeHistory = '/profile/challenge-history';
+  static const String challengeHome = '/challenge';
+  static const String challengeLobby = '/challenge/lobby/:code';
+  static const String challengePlay = '/challenge/play/:code';
+
+  static String challengeLobbyPath(String code) =>
+      '/challenge/lobby/${code.trim().toUpperCase()}';
+
+  static String challengePlayPath(String code) =>
+      '/challenge/play/${code.trim().toUpperCase()}';
 }
 
 bool _isAuthRoute(GoRouterState state) {
@@ -43,6 +58,19 @@ bool _isAuthRoute(GoRouterState state) {
   if (loc.isEmpty || loc == '/') return true;
   final matched = state.matchedLocation;
   return matched == '/' || matched == AppRoutes.auth;
+}
+
+bool _isChallengeRoute(GoRouterState state) {
+  if (state.uri.path == AppRoutes.challengeHome) return true;
+  if (state.uri.path.startsWith('/challenge/')) return true;
+  return ChallengeLinkParser.parseChallengeCode(state.uri) != null;
+}
+
+/// iOS Universal Links may deliver the full HTTPS URL to GoRouter (not `/challenge/...`).
+String? _challengeLobbyFromIngress(GoRouterState state) {
+  final code = ChallengeLinkParser.parseChallengeCode(state.uri);
+  if (code == null) return null;
+  return AppRoutes.challengeLobbyPath(code);
 }
 
 // ── Provider ──────────────────────────────────────────────────────────────────
@@ -68,8 +96,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: initialLocation,
     debugLogDiagnostics: false,
     refreshListenable: Listenable.merge([authRefresh, onboardingRefresh]),
-
     redirect: (context, state) {
+      // iOS: platform may pass `https://…/join/CODE` — normalize before routing.
+      final lobbyFromLink = _challengeLobbyFromIngress(state);
+      if (lobbyFromLink != null && state.uri.path != lobbyFromLink) {
+        return lobbyFromLink;
+      }
+
       // Read inside redirect so auth/onboarding refresh re-runs this without
       // recreating GoRouter (which would reset to [initialLocation]).
       final currentUser = ref.read(currentUserProvider);
@@ -81,7 +114,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       String? redirectTarget;
       if (isSplash) {
-        if (isLoggedIn) redirectTarget = AppRoutes.home;
+        if (isLoggedIn)
+          redirectTarget = AppRoutes.home;
         else if (onboardingComplete) redirectTarget = AppRoutes.auth;
       } else if (!onboardingComplete && !isLoggedIn) {
         redirectTarget = AppRoutes.splash;
@@ -90,14 +124,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       } else if (!firebaseCoreReady) {
         redirectTarget = null;
       } else if (!isLoggedIn && !isOnAuth) {
-        redirectTarget = AppRoutes.auth;
+        if (_isChallengeRoute(state)) {
+          final nextPath = lobbyFromLink ?? state.uri.path;
+          redirectTarget =
+              '${AppRoutes.auth}?next=${Uri.encodeComponent(nextPath)}';
+        } else {
+          redirectTarget = AppRoutes.auth;
+        }
       } else if (isLoggedIn && isOnAuth) {
-        redirectTarget = AppRoutes.home;
+        final next = state.uri.queryParameters['next'];
+        if (next != null &&
+            next.startsWith('/challenge/') &&
+            next.contains('/')) {
+          redirectTarget = next;
+        } else {
+          redirectTarget = AppRoutes.home;
+        }
       }
 
       return redirectTarget;
     },
-
     routes: [
       // ── Onboarding splash (first launch only) ───────────────────────────
       GoRoute(
@@ -114,7 +160,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.game,
         pageBuilder: (context, state) {
-          final config = state.extra as GameConfig? ?? GameConfig.defaultLocal();
+          final config =
+              state.extra as GameConfig? ?? GameConfig.defaultLocal();
           return _slidePage(state, GameScreen(config: config));
         },
       ),
@@ -122,6 +169,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.settings,
         pageBuilder: (context, state) =>
             _slidePage(state, const SettingsScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.challengeHistory,
+        pageBuilder: (context, state) =>
+            _slidePage(state, const ChallengeHistoryScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.challengeHome,
+        pageBuilder: (context, state) =>
+            _slidePage(state, const ChallengeHomeScreen()),
       ),
       GoRoute(
         path: AppRoutes.contact,
@@ -138,6 +195,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.dailyPuzzle,
         pageBuilder: (context, state) => _dailyPuzzleGamePage(state),
+      ),
+      GoRoute(
+        path: AppRoutes.challengeLobby,
+        pageBuilder: (context, state) {
+          final code = state.pathParameters['code'] ?? '';
+          return _slidePage(
+            state,
+            ChallengeLobbyScreen(code: code),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.challengePlay,
+        pageBuilder: (context, state) {
+          final code = state.pathParameters['code'] ?? '';
+          return CustomTransitionPage<void>(
+            key: ValueKey('challenge-play-$code'),
+            child: ChallengePlayScreen(code: code),
+            transitionDuration: const Duration(milliseconds: 280),
+            transitionsBuilder: (_, animation, __, child) {
+              final tween = Tween(
+                begin: const Offset(0, 0.06),
+                end: Offset.zero,
+              ).chain(CurveTween(curve: Curves.easeOutCubic));
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: FadeTransition(opacity: animation, child: child),
+              );
+            },
+          );
+        },
       ),
 
       // ── Persistent tab shell ─────────────────────────────────────────────

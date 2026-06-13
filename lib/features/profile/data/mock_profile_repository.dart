@@ -12,7 +12,8 @@ class MockProfileRepository implements ProfileRepository {
   MockProfileRepository();
 
   final _controller = StreamController<UserProfile>.broadcast();
-  final _matchesController = StreamController<List<RecentMatchRecord>>.broadcast();
+  final _matchesController =
+      StreamController<List<RecentMatchRecord>>.broadcast();
   final List<RecentMatchRecord> _matches = [];
 
   late UserProfile _profile = _defaultProfile();
@@ -294,9 +295,9 @@ class MockProfileRepository implements ProfileRepository {
       xp: newXp,
       wins: newWins,
       dailyMissions: _profile.dailyMissions.forToday().copyWithBump(
-        win: win,
-        gamePlayed: true,
-      ),
+            win: win,
+            gamePlayed: true,
+          ),
       losses: newLosses,
       ties: newTies,
       gamesPlayed: newGames,
@@ -305,8 +306,8 @@ class MockProfileRepository implements ProfileRepository {
       rating: newRating,
       seasonBestRating: seasonBest,
       seasonWins: _profile.seasonWins + (win ? 1 : 0),
-      seasonLosses: _profile.seasonLosses +
-          (result == MatchResult.loss ? 1 : 0),
+      seasonLosses:
+          _profile.seasonLosses + (result == MatchResult.loss ? 1 : 0),
       seasonTies: _profile.seasonTies + (tie ? 1 : 0),
       lives: lives,
       nextLifeAt: nextLifeAt,
@@ -374,10 +375,10 @@ class MockProfileRepository implements ProfileRepository {
       campaignStars: newStars,
       lastCampaignLevelId: levelId,
       dailyMissions: _profile.dailyMissions.forToday().copyWithBump(
-        win: win,
-        gamePlayed: true,
-        boxesCaptured: boxesCaptured,
-      ),
+            win: win,
+            gamePlayed: true,
+            boxesCaptured: boxesCaptured,
+          ),
       powerUpInventory: inv.toMap(),
     ));
   }
@@ -404,10 +405,10 @@ class MockProfileRepository implements ProfileRepository {
       dailyPuzzleCompleted: true,
       dailyPuzzleStreak: streak,
       dailyMissions: _profile.dailyMissions.forToday().copyWithBump(
-        win: true,
-        gamePlayed: true,
-        boxesCaptured: boxesCaptured,
-      ),
+            win: true,
+            gamePlayed: true,
+            boxesCaptured: boxesCaptured,
+          ),
     ));
   }
 
@@ -443,6 +444,26 @@ class MockProfileRepository implements ProfileRepository {
       modeLabel: modeLabel,
       opponentLabel: opponentLabel,
       playedAt: DateTime.now(),
+    );
+    _matches.insert(0, record);
+    if (_matches.length > 10) _matches.removeLast();
+    _matchesController.add(List.unmodifiable(_matches));
+  }
+
+  @override
+  Future<void> recordChallengeMatch({
+    required String code,
+    required MatchResult result,
+    required String opponentLabel,
+  }) async {
+    await settleMatch(result, consumeLife: false);
+    final record = RecentMatchRecord(
+      id: 'mock_${_matches.length}',
+      outcome: result,
+      modeLabel: 'Challenge',
+      opponentLabel: opponentLabel,
+      playedAt: DateTime.now(),
+      challengeCode: code.trim().toUpperCase(),
     );
     _matches.insert(0, record);
     if (_matches.length > 10) _matches.removeLast();

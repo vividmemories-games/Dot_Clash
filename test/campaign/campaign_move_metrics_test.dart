@@ -67,7 +67,12 @@ void main() {
       // Without chain logic this would incorrectly count as 4.
 
       final state = _replay([
-        'H_0_0', 'H_1_0', 'V_0_0', 'H_2_0', 'V_0_1', 'H_0_1',
+        'H_0_0',
+        'H_1_0',
+        'V_0_0',
+        'H_2_0',
+        'V_0_1',
+        'H_0_1',
       ]);
 
       // 3 control periods for 4 human edges:
@@ -150,10 +155,17 @@ void main() {
       // For simplicity just verify the max via aiMaxChainBoxes >= 2 on the
       // state we built in the previous test.
       final state = _replay([
-        'H_0_0', 'H_1_0', 'H_0_1', 'H_1_1', 'V_0_0', 'V_0_2',
-        'V_1_0', 'V_0_1',
+        'H_0_0',
+        'H_1_0',
+        'H_0_1',
+        'H_1_1',
+        'V_0_0',
+        'V_0_2',
+        'V_1_0',
+        'V_0_1',
       ]);
-      expect(CampaignMoveMetrics.aiMaxChainBoxes(state, _human), greaterThanOrEqualTo(2));
+      expect(CampaignMoveMetrics.aiMaxChainBoxes(state, _human),
+          greaterThanOrEqualTo(2));
     });
   });
 
@@ -171,8 +183,15 @@ void main() {
 
     test('is never greater than aiMaxChainBoxes', () {
       final state = _replay([
-        'H_0_0', 'H_1_0', 'H_0_1', 'H_1_1', 'V_0_0', 'V_0_2',
-        'V_1_0', 'V_0_1', 'H_2_0',
+        'H_0_0',
+        'H_1_0',
+        'H_0_1',
+        'H_1_1',
+        'V_0_0',
+        'V_0_2',
+        'V_1_0',
+        'V_0_1',
+        'H_2_0',
       ]);
       final last = CampaignMoveMetrics.lastAiSegmentBoxCount(state, _human);
       final max = CampaignMoveMetrics.aiMaxChainBoxes(state, _human);
@@ -210,8 +229,14 @@ void main() {
 
     test('rewinding to the index undoes the latest AI run', () {
       final moves = [
-        'H_0_0', 'H_1_0', 'H_0_1', 'H_1_1', 'V_0_0', 'V_0_2',
-        'V_1_0', 'V_0_1',
+        'H_0_0',
+        'H_1_0',
+        'H_0_1',
+        'H_1_1',
+        'V_0_0',
+        'V_0_2',
+        'V_1_0',
+        'V_0_1',
       ];
       final state = _replay(moves);
       final rewindTo =
@@ -240,16 +265,25 @@ void main() {
       required StarObjective star3,
     }) =>
         CampaignLevel(
-          id: 'test', worldId: 1, index: 1, title: 'Test',
-          gridSize: 5, aiDifficulty: AiDifficulty.easy, isBoss: false,
-          star1: star1, star2: star2, star3: star3,
+          id: 'test',
+          worldId: 1,
+          index: 1,
+          title: 'Test',
+          gridSize: 5,
+          aiDifficulty: AiDifficulty.easy,
+          isBoss: false,
+          star1: star1,
+          star2: star2,
+          star3: star3,
         );
 
     test('returns 0 when human loses', () {
       // Play the simplest game: AI wins by closing all boxes.
       // 2×2 box grid — AI wins, human score = 0.
       var state = GameState.initial(
-        rows: 3, cols: 3, playerIds: const [_human, _ai],
+        rows: 3,
+        cols: 3,
+        playerIds: const [_human, _ai],
       );
       // Close all 4 boxes via the AI player (force AI to win by moving the
       // human player's turn away first, then let AI dominate).
@@ -289,17 +323,27 @@ void main() {
       // Just verify the zero-return when not over.
       final payload = MatchPayload(finalState: state, humanPlayerId: _human);
       if (!payload.humanWon) {
-        expect(LevelEvaluator.evaluate(
-          _level(star1: StarObjective.win(), star2: StarObjective.win(), star3: StarObjective.win()),
-          payload,
-        ), 0);
+        expect(
+            LevelEvaluator.evaluate(
+              _level(
+                  star1: StarObjective.win(),
+                  star2: StarObjective.win(),
+                  star3: StarObjective.win()),
+              payload,
+            ),
+            0);
       }
     });
 
     test('maxMoves evaluator uses humanTurnCount not edge count', () {
       // Use the same chain sequence: 4 human edges across 3 control periods.
       final state = _replay([
-        'H_0_0', 'H_1_0', 'V_0_0', 'H_2_0', 'V_0_1', 'H_0_1',
+        'H_0_0',
+        'H_1_0',
+        'V_0_0',
+        'H_2_0',
+        'V_0_1',
+        'H_0_1',
       ]);
 
       final payload = MatchPayload(finalState: state, humanPlayerId: _human);
@@ -323,8 +367,8 @@ void main() {
       // A game where AI gets ≤2 boxes should pass preventChain.
       final state = _replay([
         'H_0_0', 'H_1_0', 'V_0_0', 'V_0_1', // human closes box 0_0; keeps turn
-        'H_0_1', 'H_1_1', 'V_0_2',          // various
-        'V_1_2',                              // closing box 0_1 for human? depends on owner
+        'H_0_1', 'H_1_1', 'V_0_2', // various
+        'V_1_2', // closing box 0_1 for human? depends on owner
       ]);
       final payload = MatchPayload(finalState: state, humanPlayerId: _human);
       // aiMaxChainBoxes in a 4-box game is at most 2 here, so < 3 → passes.

@@ -67,7 +67,9 @@ class _CampaignLevelCompleteScreenState
   final List<Timer> _timers = [];
 
   bool get _isBossWin =>
-      widget.humanWon && widget.level.isBoss && widget.level.parsedPersona != null;
+      widget.humanWon &&
+      widget.level.isBoss &&
+      widget.level.parsedPersona != null;
 
   @override
   void initState() {
@@ -152,8 +154,7 @@ class _CampaignLevelCompleteScreenState
       _timers.add(Timer(Duration(milliseconds: stepMs * i), () {
         if (!mounted) return;
         setState(() {
-          _displayCoins =
-              widget.initialCoins +
+          _displayCoins = widget.initialCoins +
               ((target - widget.initialCoins) * i / steps).round();
         });
       }));
@@ -233,11 +234,13 @@ class _CampaignLevelCompleteScreenState
                         try {
                           await widget.onRetrySave();
                           if (mounted) {
-                            setState(() => _saveStatus = CampaignSaveStatus.saved);
+                            setState(
+                                () => _saveStatus = CampaignSaveStatus.saved);
                           }
                         } catch (_) {
                           if (mounted) {
-                            setState(() => _saveStatus = CampaignSaveStatus.failed);
+                            setState(
+                                () => _saveStatus = CampaignSaveStatus.failed);
                           }
                         }
                       },
@@ -343,8 +346,7 @@ class _CelebrationLayer extends StatelessWidget {
     final t = context.txt;
     final size = MediaQuery.sizeOf(context);
     final persona = level.parsedPersona;
-    final bossTheme =
-        persona != null ? bossPersonaTheme(persona, v) : null;
+    final bossTheme = persona != null ? bossPersonaTheme(persona, v) : null;
 
     return GestureDetector(
       onTap: skipEnabled ? onSkip : null,

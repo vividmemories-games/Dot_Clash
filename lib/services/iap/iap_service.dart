@@ -225,8 +225,7 @@ class IapService {
             ? purchase.verificationData.serverVerificationData
             : null,
         verificationData: purchase.verificationData.serverVerificationData,
-        localVerificationData:
-            purchase.verificationData.localVerificationData,
+        localVerificationData: purchase.verificationData.localVerificationData,
       );
     } on FirebaseFunctionsException catch (e) {
       _lastPurchaseError = e.message ?? e.code;

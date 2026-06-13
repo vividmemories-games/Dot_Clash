@@ -70,8 +70,7 @@ abstract final class AppTheme {
             letterSpacing: 1.5,
             fontSize: 14,
           ),
-          padding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -87,8 +86,7 @@ abstract final class AppTheme {
             letterSpacing: 1.5,
             fontSize: 14,
           ),
-          padding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

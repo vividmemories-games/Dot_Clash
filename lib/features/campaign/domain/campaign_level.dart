@@ -15,8 +15,7 @@ class StarObjective {
   final int? value;
   final int? min;
 
-  factory StarObjective.win() =>
-      const StarObjective(type: ObjectiveType.win);
+  factory StarObjective.win() => const StarObjective(type: ObjectiveType.win);
 
   factory StarObjective.margin(int minMargin) =>
       StarObjective(type: ObjectiveType.margin, min: minMargin);
@@ -143,7 +142,8 @@ class CampaignLevel {
       index: (json['index'] as num).toInt(),
       title: json['title'] as String,
       gridSize: (json['gridSize'] as num).toInt(),
-      aiDifficulty: _parseDifficulty(json['aiDifficulty'] as String? ?? 'medium'),
+      aiDifficulty:
+          _parseDifficulty(json['aiDifficulty'] as String? ?? 'medium'),
       isBoss: json['isBoss'] as bool? ?? false,
       star1: parseObjective(objectives['star1']),
       star2: parseObjective(objectives['star2']),

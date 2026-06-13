@@ -9,6 +9,7 @@ enum GameMode {
   local, // 2 human players on the same device
   ai, // 1 human vs Practice (free) AI
   campaign, // campaign level vs AI
+  challenge, // live 1v1 via Firestore + Cloud Functions
 }
 
 enum AiDifficulty { easy, medium, hard }
@@ -29,6 +30,9 @@ class GameConfig {
     this.disabledCells = const [],
     this.isDailyPuzzle = false,
     this.turnBudget,
+    this.challengeCode,
+    this.myPlayerId,
+    this.opponentDisplayName,
   });
 
   final GameMode mode;
@@ -50,6 +54,15 @@ class GameConfig {
 
   /// Human turn budget for campaign levels. Null = unlimited.
   final int? turnBudget;
+
+  /// Challenge room code (`challenges/{code}`) when [mode] == challenge.
+  final String? challengeCode;
+
+  /// Local user's server player id (`A` = host, `B` = guest).
+  final String? myPlayerId;
+
+  /// Opponent display name for scoreboard / result UI.
+  final String? opponentDisplayName;
 
   factory GameConfig.defaultLocal() => const GameConfig(mode: GameMode.local);
 
@@ -96,6 +109,22 @@ class GameConfig {
         bossPersona: persona,
         disabledCells: disabledCells,
         isDailyPuzzle: true,
+      );
+
+  factory GameConfig.challenge({
+    required String code,
+    required String myPlayerId,
+    required String opponentDisplayName,
+    int rows = 6,
+    int cols = 6,
+  }) =>
+      GameConfig(
+        mode: GameMode.challenge,
+        rows: rows,
+        cols: cols,
+        challengeCode: code.trim().toUpperCase(),
+        myPlayerId: myPlayerId,
+        opponentDisplayName: opponentDisplayName,
       );
 }
 
@@ -160,9 +189,8 @@ class GameState {
   int get totalBoxes => (rows - 1) * (cols - 1) - disabledCells.length;
   int get claimedCount => claimedBoxes.length;
   bool get isTie => isOver && winnerId == null;
-  String get opponentOf => currentPlayerId == playerIds[0]
-      ? playerIds[1]
-      : playerIds[0];
+  String get opponentOf =>
+      currentPlayerId == playerIds[0] ? playerIds[1] : playerIds[0];
   int scoreOf(String playerId) => scores[playerId] ?? 0;
 
   // ── Constructor helpers ────────────────────────────────────────────────────
@@ -227,6 +255,7 @@ class GameState {
   Map<String, dynamic> toJson() => {
         'rows': rows,
         'cols': cols,
+        'disabledCells': disabledCells.toList(),
         'drawnEdges': drawnEdges.toList(),
         'edgeOwners': edgeOwners,
         'claimedBoxes': claimedBoxes,
@@ -243,18 +272,24 @@ class GameState {
     final edgeOwners = rawOwners == null
         ? const <String, String>{}
         : Map<String, String>.from(
-            (rawOwners as Map).map((k, v) => MapEntry(k as String, v as String)),
+            (rawOwners as Map)
+                .map((k, v) => MapEntry(k as String, v as String)),
           );
+    final rawDisabled = json['disabledCells'];
+    final disabledCells = rawDisabled == null
+        ? const <String>{}
+        : Set<String>.from(rawDisabled as List);
     return GameState(
       rows: (json['rows'] as num).toInt(),
       cols: (json['cols'] as num).toInt(),
+      disabledCells: disabledCells,
       drawnEdges: Set<String>.from(json['drawnEdges'] as List),
       edgeOwners: edgeOwners,
-      claimedBoxes: Map<String, String>.from(
-          (json['claimedBoxes'] as Map).map((k, v) => MapEntry(k as String, v as String))),
+      claimedBoxes: Map<String, String>.from((json['claimedBoxes'] as Map)
+          .map((k, v) => MapEntry(k as String, v as String))),
       currentPlayerId: json['currentPlayerId'] as String,
-      scores: Map<String, int>.from(
-          (json['scores'] as Map).map((k, v) => MapEntry(k as String, (v as num).toInt()))),
+      scores: Map<String, int>.from((json['scores'] as Map)
+          .map((k, v) => MapEntry(k as String, (v as num).toInt()))),
       moveHistory: List<String>.from(json['moveHistory'] as List),
       isOver: json['isOver'] as bool,
       winnerId: json['winnerId'] as String?,

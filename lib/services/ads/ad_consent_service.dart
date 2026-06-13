@@ -41,13 +41,12 @@ class AdConsentService {
   }
 
   /// Whether the SDK allows ad requests (after UMP or cached consent).
-  Future<bool> canRequestAds() =>
-      ConsentInformation.instance.canRequestAds();
+  Future<bool> canRequestAds() => ConsentInformation.instance.canRequestAds();
 
   /// True when AdMob requires an in-app privacy options entry point.
   Future<bool> isPrivacyOptionsRequired() async {
-    final status = await ConsentInformation.instance
-        .getPrivacyOptionsRequirementStatus();
+    final status =
+        await ConsentInformation.instance.getPrivacyOptionsRequirementStatus();
     return status == PrivacyOptionsRequirementStatus.required;
   }
 
@@ -82,8 +81,9 @@ class AdConsentService {
     if (debugGeography == null) return null;
 
     const testIds = String.fromEnvironment('UMP_TEST_DEVICE_IDS');
-    final identifiers =
-        testIds.isEmpty ? null : testIds.split(',').map((s) => s.trim()).toList();
+    final identifiers = testIds.isEmpty
+        ? null
+        : testIds.split(',').map((s) => s.trim()).toList();
 
     return ConsentDebugSettings(
       debugGeography: debugGeography,

@@ -5,12 +5,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/dot_clash_visuals.dart';
 import '../../../shared/feedback/app_haptics.dart';
 import '../../../shared/feedback/app_snackbar.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/widgets/neon_tag.dart';
+import '../../challenge/data/challenge_repository.dart';
+import '../../challenge/domain/challenge_exceptions.dart';
+import '../../challenge/providers/challenge_game_provider.dart';
+import '../../challenge/providers/challenge_providers.dart';
 import '../../campaign/data/campaign_content_repository.dart';
 import '../../campaign/domain/campaign_level.dart';
 import '../../campaign/domain/campaign_move_metrics.dart';
@@ -86,6 +91,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
   /// Unique owner for match coach-tour [GlobalKey]s (see [CoachTourGameScope]).
   final Object _gameTourScope = Object();
 
+  bool get _isChallenge => widget.config.mode == GameMode.challenge;
+
+  String? get _challengeCode => widget.config.challengeCode;
+
+  String get _myPlayerId => widget.config.myPlayerId ?? 'A';
+
   @override
   void initState() {
     super.initState();
@@ -99,7 +110,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
     Future(() => _syncGameConfig());
     final campaignLevelId = widget.config.campaignLevelId;
     if (widget.config.mode == GameMode.campaign && campaignLevelId != null) {
-      CampaignContentRepository.instance.levelById(campaignLevelId).then((level) {
+      CampaignContentRepository.instance
+          .levelById(campaignLevelId)
+          .then((level) {
         if (!mounted || level == null) return;
         setState(() {
           _campaignLevel = level;
@@ -147,7 +160,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
             );
       }
       final tourPaused = ref.read(matchCoachTourProvider).matchPaused;
-      if (tourPaused) {
+      if (_isChallenge) {
+        // Server-synced countdown starts when [challengeTurnTimerProvider] sees
+        // `turnStartedAt` on the room snapshot.
+      } else if (tourPaused) {
         ref.read(turnTimerProvider.notifier).stop();
       } else if (ref.read(settingsProvider).showTimer) {
         ref.read(turnTimerProvider.notifier).reset();
@@ -166,9 +182,20 @@ class _GameScreenState extends ConsumerState<GameScreen>
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive ||
         state == AppLifecycleState.detached) {
-      ref.read(gameProvider.notifier).onAppPaused();
+      if (_isChallenge) {
+        final code = _challengeCode;
+        if (code != null) {
+          ref.read(challengeTurnTimerProvider(code).notifier).stop();
+        }
+      } else {
+        ref.read(gameProvider.notifier).onAppPaused();
+      }
     } else if (state == AppLifecycleState.resumed) {
-      ref.read(gameProvider.notifier).onAppResumed();
+      if (_isChallenge) {
+        // [challengeTurnTimerProvider] re-syncs from the next room snapshot.
+      } else {
+        ref.read(gameProvider.notifier).onAppResumed();
+      }
     }
   }
 
@@ -195,14 +222,21 @@ class _GameScreenState extends ConsumerState<GameScreen>
       );
     }
 
-    final state = ref.watch(gameProvider);
-    final session = ref.watch(matchSessionProvider);
-    final secondsLeft = ref.watch(turnTimerProvider);
+    final state = _isChallenge
+        ? ref.watch(challengeGameProvider(_challengeCode!))
+        : ref.watch(gameProvider);
+    final session = _isChallenge
+        ? const MatchSession()
+        : ref.watch(matchSessionProvider);
+    final secondsLeft = _isChallenge
+        ? ref.watch(challengeTurnTimerProvider(_challengeCode!))
+        : ref.watch(turnTimerProvider);
     final settings = ref.watch(settingsProvider);
     final profile = ref.watch(profileProvider).valueOrNull;
     final inventory = profile?.powerUpInventory ?? const {};
-    final showBoosts = widget.config.mode == GameMode.ai ||
-        widget.config.mode == GameMode.campaign;
+    final showBoosts = !_isChallenge &&
+        (widget.config.mode == GameMode.ai ||
+            widget.config.mode == GameMode.campaign);
 
     // When the timer is hidden, disable timed gameplay entirely.
     // - stop the countdown so it doesn't reach 0 in the background
@@ -217,16 +251,22 @@ class _GameScreenState extends ConsumerState<GameScreen>
         ref.read(turnTimerProvider.notifier).stop();
       }
     });
-    if (!settings.showTimer) {
+    if (!_isChallenge && !settings.showTimer) {
       ref.read(turnTimerProvider.notifier).stop();
     }
 
+    final challengeOpponent =
+        widget.config.opponentDisplayName ?? 'Rival';
     final playerAName = _scoreboardLabel(switch (widget.config.mode) {
+      GameMode.challenge =>
+        _myPlayerId == 'A' ? settings.youName : challengeOpponent,
       GameMode.ai || GameMode.campaign => settings.youName,
       GameMode.local => settings.localPlayerAName,
     });
     final bossDisplayName = _campaignLevel?.bossName;
     final playerBName = switch (widget.config.mode) {
+      GameMode.challenge =>
+        _myPlayerId == 'B' ? settings.youName : challengeOpponent,
       GameMode.ai || GameMode.campaign => (_campaignLevel?.isBoss ?? false)
           ? (bossDisplayName ?? settings.aiName)
           : settings.aiName,
@@ -244,18 +284,31 @@ class _GameScreenState extends ConsumerState<GameScreen>
       state.playerIds[1]: initialFor(playerBName, fallback: 'B'),
     };
 
-    // Auto-pass the turn when the timer reaches 0.
-    ref.listen<int>(turnTimerProvider, (prev, next) {
-      if (!mounted) return;
-      if (!ref.read(settingsProvider).showTimer) return;
-      if (ref.read(matchCoachTourProvider).matchPaused) return;
-      final prevVal = prev ?? next;
-      if (prevVal > 0 && next == 0) {
-        // Clear hint on timeout so it doesn't look like a forced move.
-        if (mounted) setState(() => _hintEdge = null);
-        ref.read(gameProvider.notifier).onTurnTimedOut();
-      }
-    });
+    // Turn timer: local/AI uses [turnTimerProvider]; challenge uses
+    // [challengeTurnTimerProvider] with client backup + server scheduler.
+    if (!_isChallenge) {
+      ref.listen<int>(turnTimerProvider, (prev, next) {
+        if (!mounted) return;
+        if (!ref.read(settingsProvider).showTimer) return;
+        if (ref.read(matchCoachTourProvider).matchPaused) return;
+        final prevVal = prev ?? next;
+        if (prevVal > 0 && next == 0) {
+          if (mounted) setState(() => _hintEdge = null);
+          ref.read(gameProvider.notifier).onTurnTimedOut();
+        }
+      });
+    } else if (_challengeCode != null) {
+      final code = _challengeCode!;
+      ref.listen<int>(challengeTurnTimerProvider(code), (prev, next) {
+        if (!mounted) return;
+        if (ref.read(matchCoachTourProvider).matchPaused) return;
+        final prevVal = prev ?? next;
+        if (prevVal > 0 && next == 0) {
+          if (mounted) setState(() => _hintEdge = null);
+          ref.read(challengeGameProvider(code).notifier).onTurnTimedOut();
+        }
+      });
+    }
 
     ref.listen<MatchCoachTourState>(matchCoachTourProvider, (prev, next) {
       if (!mounted) return;
@@ -271,25 +324,28 @@ class _GameScreenState extends ConsumerState<GameScreen>
       }
     });
 
-    ref.listen<MatchSession>(matchSessionProvider, (prev, next) {
-      if (!mounted) return;
-      if (next.outOfTurnsPending && !(prev?.outOfTurnsPending ?? false)) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _showOutOfTurnsSheet(context);
-        });
-      }
-      if (next.pendingRiposteOffer && !(prev?.pendingRiposteOffer ?? false)) {
-        ref.read(matchCoachTourProvider.notifier).onRivalChain();
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _showRiposteOffer(context);
-        });
-      }
-    });
+    if (!_isChallenge) {
+      ref.listen<MatchSession>(matchSessionProvider, (prev, next) {
+        if (!mounted) return;
+        if (next.outOfTurnsPending && !(prev?.outOfTurnsPending ?? false)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _showOutOfTurnsSheet(context);
+          });
+        }
+        if (next.pendingRiposteOffer && !(prev?.pendingRiposteOffer ?? false)) {
+          ref.read(matchCoachTourProvider.notifier).onRivalChain();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _showRiposteOffer(context);
+          });
+        }
+      });
+    }
 
     // Tutorial: react to human moves and box captures.
-    ref.listen<GameState>(gameProvider, (prev, next) {
-      if (!mounted) return;
-      if (prev == null) return;
+    if (!_isChallenge) {
+      ref.listen<GameState>(gameProvider, (prev, next) {
+        if (!mounted) return;
+        if (prev == null) return;
       final coachState = ref.read(matchCoachTourProvider);
       if (!coachState.isActive) return;
 
@@ -310,17 +366,19 @@ class _GameScreenState extends ConsumerState<GameScreen>
           }
         }
       }
-    });
+      });
+    }
 
-    // Show result dialog on game end
-    ref.listen<GameState>(gameProvider, (prev, next) {
-      if (!mounted) return;
-      if (!next.isOver || (prev?.isOver ?? false)) return;
-      setState(() => _hintEdge = null);
+    // Show result dialog on game end (challenge settlement uses room status).
+    if (!_isChallenge) {
+      ref.listen<GameState>(gameProvider, (prev, next) {
+        if (!mounted) return;
+        if (!next.isOver || (prev?.isOver ?? false)) return;
+        setState(() => _hintEdge = null);
 
-      if (widget.config.mode == GameMode.campaign) {
-        _settleCampaign(context, ref, next);
-      } else {
+        if (widget.config.mode == GameMode.campaign) {
+          _settleCampaign(context, ref, next);
+        } else {
         final result = next.isTie
             ? MatchResult.tie
             : (next.winnerId == next.playerIds[0]
@@ -350,23 +408,26 @@ class _GameScreenState extends ConsumerState<GameScreen>
               ));
         }
         _showResultDialog(context, next);
-      }
-    });
+        }
+      });
+    }
 
-    final isVsAi =
-        widget.config.mode == GameMode.ai ||
+    final isVsAi = widget.config.mode == GameMode.ai ||
         widget.config.mode == GameMode.campaign;
-    final isAiTurn =
-        isVsAi && state.currentPlayerId == state.playerIds[1];
-    final humanTurnReady = ref.watch(humanTurnReadyProvider);
-    final opponentHighlightEdge = isVsAi
+    final isAiTurn = isVsAi && state.currentPlayerId == state.playerIds[1];
+    final isOpponentTurn =
+        _isChallenge && state.currentPlayerId != _myPlayerId;
+    final humanTurnReady =
+        _isChallenge ? true : ref.watch(humanTurnReadyProvider);
+    final opponentHighlightEdge = (isVsAi || _isChallenge)
         ? ref.watch(opponentLastEdgeProvider)
         : null;
 
     final coachTourState = ref.watch(matchCoachTourProvider);
     final coachLogic = coachTourState.logic;
     final coachStep = coachTourState.postWinStep ?? coachLogic?.currentStep;
-    final coachTourActive = coachTourState.isActive || coachTourState.showPostWinSpotlight;
+    final coachTourActive =
+        coachTourState.isActive || coachTourState.showPostWinSpotlight;
     final coachBlocksInteraction = coachLogic?.blocksInteraction ?? false;
     final coachAllowedEdges = coachLogic?.allowedEdges(state);
     final coachHintEdge = coachLogic?.highlightEdge(state);
@@ -381,20 +442,19 @@ class _GameScreenState extends ConsumerState<GameScreen>
         coachStep?.advanceOn == CoachAdvanceTrigger.tapTarget &&
         coachStep?.targetId == CoachTourTargetId.gamePowerUpHold;
 
-    final canInteract =
-        !state.isOver &&
+    final canInteract = !state.isOver &&
         !isAiTurn &&
+        !isOpponentTurn &&
         humanTurnReady &&
         !session.outOfTurnsPending &&
         _bossIntroDismissed &&
         !coachBlocksInteraction &&
         (!coachPausesMatch || coachAllowsBoard);
 
-    final boostEnabled = canInteract ||
-        coachAllowsHint ||
-        coachAllowsHold;
+    final boostEnabled = canInteract || coachAllowsHint || coachAllowsHold;
 
-    final humanPlayerId = state.playerIds[0];
+    final humanPlayerId =
+        _isChallenge ? _myPlayerId : state.playerIds[0];
     // Count human TURNS (chains = 1 turn, not every line drawn).
     final humanTurnCount =
         CampaignMoveMetrics.humanTurnCount(state, humanPlayerId);
@@ -405,7 +465,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
     final compactLayout = screenHeight < 700;
     final v = context.dc;
     final isBossFight = _campaignLevel?.isBoss ?? false;
-    final bossPersona = _campaignLevel?.parsedPersona ?? widget.config.bossPersona;
+    final bossPersona =
+        _campaignLevel?.parsedPersona ?? widget.config.bossPersona;
     final bossAccent = bossAccentColor(bossPersona, v);
     final showBossIntro =
         isBossFight && bossPersona != null && !_bossIntroDismissed;
@@ -418,136 +479,139 @@ class _GameScreenState extends ConsumerState<GameScreen>
     final sectionGap = compactLayout ? 2.0 : 4.0;
 
     Widget body = Column(
-          children: [
-            _buildHeader(context),
-            SizedBox(height: sectionGap),
-
-            CoachTourTarget(
-              id: CoachTourTargetId.gameScoreStrip,
-              child: ScoreStrip(
+      children: [
+        _buildHeader(context),
+        SizedBox(height: sectionGap),
+        CoachTourTarget(
+          id: CoachTourTargetId.gameScoreStrip,
+          child: ScoreStrip(
+            state: state,
+            playerALabel: scoreA,
+            playerBLabel: scoreB,
+            playerAInitial: playerInitials[state.playerIds[0]],
+            playerBInitial: playerInitials[state.playerIds[1]],
+            opponentIsBoss: isBossFight,
+            bossAccentColor: bossAccent,
+            showTimer: settings.showTimer || _isChallenge,
+            secondsLeft: secondsLeft,
+            isLocalMode: widget.config.mode == GameMode.local,
+            localPlayerId: _isChallenge ? _myPlayerId : state.playerIds[0],
+          ),
+        ),
+        SizedBox(height: sectionGap),
+        TurnCountdownBar(session: session),
+        if (session.hasTurnBudget) SizedBox(height: sectionGap),
+        if (isCampaign) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            child: CoachTourTarget(
+              id: CoachTourTargetId.gameObjectivesBar,
+              child: CampaignObjectivesBar(
+                level: _campaignLevel!,
+                humanScore: state.scoreOf(humanPlayerId),
+                aiScore: state.scoreOf(state.playerIds[1]),
+                humanTurnsUsed: humanTurnCount,
+                isOver: state.isOver,
+                humanWon: state.winnerId == humanPlayerId,
+              ),
+            ),
+          ),
+          SizedBox(height: sectionGap),
+        ],
+        if (widget.config.mode != GameMode.campaign) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: NeonTag(
+              label: 'Target: ${state.totalBoxes} boxes',
+              icon: Icons.emoji_events_outlined,
+              color: v.gold,
+            ),
+          ),
+          SizedBox(height: sectionGap),
+        ],
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            child: CoachTourTarget(
+              id: CoachTourTargetId.gameBoard,
+              child: BoardWidget(
                 state: state,
-                playerALabel: scoreA,
-                playerBLabel: scoreB,
-                playerAInitial: playerInitials[state.playerIds[0]],
-                playerBInitial: playerInitials[state.playerIds[1]],
-                opponentIsBoss: isBossFight,
-                bossAccentColor: bossAccent,
-                showTimer: settings.showTimer,
-                secondsLeft: secondsLeft,
-                isLocalMode: widget.config.mode == GameMode.local,
+                isInteractive: canInteract,
+                hintEdge: effectiveHintEdge,
+                opponentHighlightEdge: opponentHighlightEdge,
+                playerInitials: playerInitials,
+                onEdgeTap: (edge) {
+                  if (coachAllowedEdges != null &&
+                      !coachAllowedEdges.contains(edge)) {
+                    AppHaptics.lightImpact();
+                    return;
+                  }
+                  AppHaptics.mediumImpact();
+                  if (_hintEdge != null && coachHintEdge == null) {
+                    setState(() => _hintEdge = null);
+                  }
+                  if (_isChallenge) {
+                    unawaited(_submitChallengeMove(edge));
+                  } else {
+                    ref.read(gameProvider.notifier).makeMove(edge);
+                  }
+                },
               ),
             ),
-            SizedBox(height: sectionGap),
-
-            TurnCountdownBar(session: session),
-            if (session.hasTurnBudget) SizedBox(height: sectionGap),
-
-            if (isCampaign) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                child: CoachTourTarget(
-                  id: CoachTourTargetId.gameObjectivesBar,
-                  child: CampaignObjectivesBar(
-                    level: _campaignLevel!,
-                    humanScore: state.scoreOf(humanPlayerId),
-                    aiScore: state.scoreOf(state.playerIds[1]),
-                    humanTurnsUsed: humanTurnCount,
-                    isOver: state.isOver,
-                    humanWon: state.winnerId == humanPlayerId,
-                  ),
-                ),
-              ),
-              SizedBox(height: sectionGap),
-            ],
-
-            if (widget.config.mode != GameMode.campaign) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                child: NeonTag(
-                  label: 'Target: ${state.totalBoxes} boxes',
-                  icon: Icons.emoji_events_outlined,
-                  color: v.gold,
-                ),
-              ),
-              SizedBox(height: sectionGap),
-            ],
-
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                child: CoachTourTarget(
-                  id: CoachTourTargetId.gameBoard,
-                  child: BoardWidget(
-                    state: state,
-                    isInteractive: canInteract,
-                    hintEdge: effectiveHintEdge,
-                    opponentHighlightEdge: opponentHighlightEdge,
-                    playerInitials: playerInitials,
-                    onEdgeTap: (edge) {
-                      if (coachAllowedEdges != null &&
-                          !coachAllowedEdges.contains(edge)) {
-                        AppHaptics.lightImpact();
-                        return;
-                      }
-                      AppHaptics.mediumImpact();
-                      if (_hintEdge != null && coachHintEdge == null) {
-                        setState(() => _hintEdge = null);
-                      }
-                      ref.read(gameProvider.notifier).makeMove(edge);
-                    },
-                  ),
-                ),
-              ),
+          ),
+        ),
+        if (showBoosts) ...[
+          const SizedBox(height: 4),
+          CoachTourTarget(
+            id: CoachTourTargetId.gamePowerUpPanel,
+            child: PowerUpPanel(
+              session: session,
+              inventory: inventory,
+              enabled: boostEnabled && state.currentPlayerId == humanPlayerId,
+              onBoostTap: _onBoostTap,
+              onHint: _onHint,
+              hintsLeft: _hintsLeft,
+              hintEnabled:
+                  boostEnabled && state.currentPlayerId == humanPlayerId,
             ),
-
-            if (showBoosts) ...[
-              const SizedBox(height: 4),
-              CoachTourTarget(
-                id: CoachTourTargetId.gamePowerUpPanel,
-                child: PowerUpPanel(
-                  session: session,
-                  inventory: inventory,
-                  enabled: boostEnabled && state.currentPlayerId == humanPlayerId,
-                  onBoostTap: _onBoostTap,
-                  onHint: _onHint,
-                  hintsLeft: _hintsLeft,
-                  hintEnabled: boostEnabled && state.currentPlayerId == humanPlayerId,
-                ),
-              ),
-            ] else ...[
-              const SizedBox(height: 4),
-              HintGradientButton(
-                hintsLeft: _hintsLeft,
-                enabled: !state.isOver &&
-                    state.currentPlayerId == humanPlayerId &&
-                    _hintsLeft > 0,
-                onTap: _onHint,
-              ),
-            ],
-            MatchMoreDock(
-              canUndo: state.moveHistory.isNotEmpty && !state.isOver,
-              onUndo: _onUndo,
-              onRestart: () => _confirmNewGame(context),
-              onExit: () => _requestLeaveGame(
-                context,
-                navigate: () => context.go('/home'),
-              ),
-              extraTurnsAvailable: showBoosts &&
-                  session.hasTurnBudget &&
-                  !session.extraTurnsUsed &&
-                  (inventory[PowerUpType.extraTurns.id] ?? 0) > 0,
-              onExtraTurns: showBoosts
-                  ? () => _onBoostTap(PowerUpType.extraTurns)
-                  : null,
+          ),
+        ] else ...[
+          const SizedBox(height: 4),
+          HintGradientButton(
+            hintsLeft: _hintsLeft,
+            enabled: !state.isOver &&
+                state.currentPlayerId == humanPlayerId &&
+                _hintsLeft > 0,
+            onTap: _onHint,
+          ),
+        ],
+        MatchMoreDock(
+          canUndo:
+              !_isChallenge && state.moveHistory.isNotEmpty && !state.isOver,
+          onUndo: _onUndo,
+          onRestart: _isChallenge
+              ? () {}
+              : () => _confirmNewGame(context),
+          onExit: () => _requestLeaveGame(
+            context,
+            navigate: () => context.go(
+              _isChallenge ? AppRoutes.home : '/home',
             ),
-          ],
-        );
+          ),
+          extraTurnsAvailable: showBoosts &&
+              session.hasTurnBudget &&
+              !session.extraTurnsUsed &&
+              (inventory[PowerUpType.extraTurns.id] ?? 0) > 0,
+          onExtraTurns:
+              showBoosts ? () => _onBoostTap(PowerUpType.extraTurns) : null,
+        ),
+      ],
+    );
 
     final isHumanTurn = state.currentPlayerId == humanPlayerId;
     final opponentAmbientColor = switch (widget.config.mode) {
-      GameMode.local => v.playerB,
-      GameMode.ai || GameMode.campaign =>
-        isBossFight ? bossAccent : v.playerB,
+      GameMode.challenge || GameMode.local => v.playerB,
+      GameMode.ai || GameMode.campaign => isBossFight ? bossAccent : v.playerB,
     };
 
     body = TurnAmbientBackdrop(
@@ -609,31 +673,58 @@ class _GameScreenState extends ConsumerState<GameScreen>
     );
   }
 
-  bool _shouldConfirmLeave(GameState state) =>
-      state.moveHistory.isNotEmpty && !state.isOver;
+  bool _shouldConfirmLeave(GameState state) {
+    if (state.isOver) return false;
+    if (_isChallenge) {
+      final room = ref.read(challengeRoomProvider(_challengeCode!)).valueOrNull;
+      return room?.isActive == true;
+    }
+    return state.moveHistory.isNotEmpty;
+  }
+
+  Future<void> _submitChallengeMove(String edge) async {
+    final code = _challengeCode;
+    if (code == null) return;
+    try {
+      await ref.read(challengeGameProvider(code).notifier).makeMove(edge);
+    } on ChallengeException catch (e) {
+      if (mounted) AppSnackBar.show(context, e.message);
+    }
+  }
 
   Future<void> _requestLeaveGame(
     BuildContext context, {
     required void Function() navigate,
   }) async {
-    final state = ref.read(gameProvider);
+    final state = _isChallenge
+        ? ref.read(challengeGameProvider(_challengeCode!))
+        : ref.read(gameProvider);
     if (!_shouldConfirmLeave(state)) {
-      _leaveGameRoute(navigate);
+      await _leaveGameRoute(navigate);
       return;
     }
 
     final isCampaign = widget.config.mode == GameMode.campaign;
+    final isChallenge = _isChallenge;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
         final v = ctx.dc;
         return AlertDialog(
-          title: Text(isCampaign ? 'Leave this level?' : 'Leave match?'),
+          title: Text(switch ((isCampaign, isChallenge)) {
+            (true, _) => 'Leave this level?',
+            (_, true) => 'Leave challenge?',
+            _ => 'Leave match?',
+          }),
           content: Text(
-            isCampaign
-                ? 'Your progress on this level will be lost. '
-                    'Your life won\'t be used — you can try again from the map.'
-                : 'Your current game progress will be lost.',
+            switch ((isCampaign, isChallenge)) {
+              (true, _) =>
+                'Your progress on this level will be lost. '
+                    'Your life won\'t be used — you can try again from the map.',
+              (_, true) =>
+                'Leaving forfeits the match. Your opponent may win.',
+              _ => 'Your current game progress will be lost.',
+            },
           ),
           actions: [
             TextButton(
@@ -650,11 +741,23 @@ class _GameScreenState extends ConsumerState<GameScreen>
       },
     );
     if (confirmed == true && context.mounted) {
-      _leaveGameRoute(navigate);
+      await _leaveGameRoute(navigate);
     }
   }
 
-  void _leaveGameRoute(void Function() navigate) {
+  Future<void> _leaveGameRoute(void Function() navigate) async {
+    if (_isChallenge) {
+      final code = _challengeCode!;
+      final room = ref.read(challengeRoomProvider(code)).valueOrNull;
+      if (room?.isActive == true &&
+          !ref.read(challengeGameProvider(code)).isOver) {
+        try {
+          await ref.read(challengeRepositoryProvider).abandonChallenge(code);
+        } catch (e) {
+          debugPrint('[Challenge][abandon] failed=$e');
+        }
+      }
+    }
     CoachTourTargetRegistry.releaseAllGameTargets();
     navigate();
   }
@@ -738,7 +841,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
         );
       }
 
-      final subtitle = switch ((widget.config.mode, widget.config.isDailyPuzzle)) {
+      final subtitle =
+          switch ((widget.config.mode, widget.config.isDailyPuzzle)) {
+        (GameMode.challenge, _) => 'Challenge',
         (GameMode.ai, true) => 'Daily puzzle',
         (GameMode.ai, false) => 'Practice',
         (GameMode.local, _) => 'Local match',
@@ -878,8 +983,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
     final v = context.dc;
     final router = ref.read(adRewardRouterProvider);
     final session = ref.read(matchSessionProvider);
-    final inventory = ref.read(profileProvider).valueOrNull?.powerUpInventory ??
-        const {};
+    final inventory =
+        ref.read(profileProvider).valueOrNull?.powerUpInventory ?? const {};
 
     await showModalBottomSheet<void>(
       context: context,
@@ -892,8 +997,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
       ),
       builder: (_) => OutOfTurnsSheet(
         canWatchAd: router.canOfferRescueAd,
-        hasExtraTurnBoost:
-            !session.extraTurnsUsed && (inventory[PowerUpType.extraTurns.id] ?? 0) > 0,
+        hasExtraTurnBoost: !session.extraTurnsUsed &&
+            (inventory[PowerUpType.extraTurns.id] ?? 0) > 0,
         onWatchAd: () async {
           final ok = await router.showRewardedExtraTurns(grantInventory: false);
           if (ok) {
@@ -909,8 +1014,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
   Future<void> _showRiposteOffer(BuildContext context) async {
     final v = context.dc;
     final router = ref.read(adRewardRouterProvider);
-    final inventory = ref.read(profileProvider).valueOrNull?.powerUpInventory ??
-        const {};
+    final inventory =
+        ref.read(profileProvider).valueOrNull?.powerUpInventory ?? const {};
     final hasRiposte = (inventory[PowerUpType.riposte.id] ?? 0) > 0;
 
     await showModalBottomSheet<void>(
@@ -925,8 +1030,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
         message:
             'The rival captured 3+ boxes in a row. Watch the ad or tap Riposte '
             'below to undo their entire combo.',
-        inventoryAccentColor:
-            PowerUpCatalog.accentFor(PowerUpType.riposte, v),
+        inventoryAccentColor: PowerUpCatalog.accentFor(PowerUpType.riposte, v),
         canWatchAd: router.canOfferRescueAd && !hasRiposte,
         hasInventory: hasRiposte,
         inventoryLabel: 'Use Riposte',
@@ -1029,7 +1133,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
   // ── Campaign settlement ────────────────────────────────────────────────────
 
-  void _settleCampaign(BuildContext context, WidgetRef ref, GameState state) async {
+  void _settleCampaign(
+      BuildContext context, WidgetRef ref, GameState state) async {
     final levelId = widget.config.campaignLevelId;
     if (levelId == null) return;
 
@@ -1048,7 +1153,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
           ? level.powerUpRewards
           : CampaignLevel.defaultBossPowerUpRewards(level);
       if (rewards.isNotEmpty) {
-        ref.read(matchCoachTourProvider.notifier).showMiniBossPostWinSpotlight();
+        ref
+            .read(matchCoachTourProvider.notifier)
+            .showMiniBossPostWinSpotlight();
         setState(() => _pendingSettleState = state);
         return;
       }
@@ -1092,7 +1199,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: Text(humanWon ? 'Daily puzzle complete!' : 'Try again tomorrow'),
+          title:
+              Text(humanWon ? 'Daily puzzle complete!' : 'Try again tomorrow'),
           content: Text(
             humanWon
                 ? '+50 coins · Streak updated'
@@ -1237,7 +1345,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
     if (widget.config.mode == GameMode.local) return 'Player B';
     if (widget.config.mode == GameMode.campaign) {
       final boss = _campaignLevel?.bossName;
-      if ((_campaignLevel?.isBoss ?? false) && boss != null && boss.isNotEmpty) {
+      if ((_campaignLevel?.isBoss ?? false) &&
+          boss != null &&
+          boss.isNotEmpty) {
         return boss;
       }
     }

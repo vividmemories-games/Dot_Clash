@@ -64,6 +64,7 @@ class LevelResultPanel extends ConsumerWidget {
   final bool humanWon;
   final CampaignSaveStatus saveStatus;
   final Future<void> Function()? onRetrySave;
+
   /// When set, parent shows a loading overlay before route swap (victory screen).
   final Future<void> Function(String levelId, {required bool replay})?
       onLeaveToPlayLevel;
@@ -178,15 +179,12 @@ class LevelResultPanel extends ConsumerWidget {
               color: v.gold,
               width: double.infinity,
               onPressed: () async {
-                final ok = await ref
-                    .read(adRewardRouterProvider)
-                    .showRewardedRetry();
+                final ok =
+                    await ref.read(adRewardRouterProvider).showRewardedRetry();
                 if (!context.mounted) return;
                 AppSnackBar.show(
                   context,
-                  ok
-                      ? 'Life refunded — try again!'
-                      : 'Retry ad unavailable.',
+                  ok ? 'Life refunded — try again!' : 'Retry ad unavailable.',
                 );
                 if (ok) {
                   await _leaveToPlayLevel(context, level.id, replay: true);

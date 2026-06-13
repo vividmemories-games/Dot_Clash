@@ -107,8 +107,7 @@ class _ShopOuterSwipeBridgeState extends ConsumerState<ShopOuterSwipeBridge> {
         ? 0
         : DateTime.now().difference(_dragStartTime!).inMilliseconds;
     _dragStartTime = null;
-    final velocity =
-        dragMs > 0 ? (_totalDx / dragMs) * 1000 : 0.0;
+    final velocity = dragMs > 0 ? (_totalDx / dragMs) * 1000 : 0.0;
 
     // Themes (first sub-tab): swipe right → previous main tab (Profile).
     if (shouldOuterSwipeLeaveShop(

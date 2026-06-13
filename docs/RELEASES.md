@@ -1,6 +1,8 @@
-# Dot Clash — Release history & closed-testing tracker
+# Dot Clash — Build history & closed-testing tracker
 
-**Active build target:** `1.3.0+13` in `pubspec.yaml` (bump before each store upload)  
+**Naming:** Features ship by **build number** (`+N` in `pubspec.yaml`), e.g. build 19 — not "Release N". Always read `pubspec.yaml` before stating the current target.
+
+**Active build target:** `1.4.1+19` in `pubspec.yaml` (bump `+N` before each store upload)  
 **Track:** Prod package + Firebase (`dot-clash-72cc6`), `BETA_ADS=true` (test ads)  
 **IAP / ops:** `SETUP.md` §4b · **Mac migration:** `MIGRATION_RUNBOOK.md` · **Security:** `SECURITY_FIX_PLAN.md`
 
@@ -22,19 +24,101 @@ bash scripts/build_closed_testing.sh ios
 | Android | `build/app/outputs/bundle/prodRelease/app-prod-release.aab` |
 | iOS | `build/ios/ipa/*.ipa` |
 
-**Pre-upload checklist (Release 13+)**
+**Pre-upload checklist (build 19 — Challenge a Friend ship candidate)**
 
-- [ ] `pubspec.yaml` build number incremented (`1.3.0+13`)
+- [ ] `pubspec.yaml` build number incremented (`1.4.1+19`)
+- [ ] Challenge: create → join → full 6×6 match → rematch / revenge push
+- [ ] Challenge: HTTPS link + FCM tap → lobby → play
+- [ ] Challenge hub: rivalries list, rematch, view all history (not on Profile)
 - [ ] Mid-match **Home** / **MORE → Exit** / system back → confirm dialog; **Stay** keeps board
 - [ ] Campaign abandon → **Leave** exits without consuming a life; fresh level (no moves) → no dialog
 - [ ] Quick match / vs AI: generic “Leave match?” copy
-- [ ] R12 smoke: campaign Next level, turn budgets, shop UX (see Release 12 checklist below)
-- [ ] Prod functions if backend changed: `firebase deploy --only functions -P dot-clash-72cc6`
+- [ ] Build 12 smoke: campaign Next level, turn budgets, shop UX (see build 12 checklist below)
+- [ ] Prod functions + indexes if backend changed: `firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-72cc6`
 - [ ] Crashlytics: filter current version after rollout
 
 ---
 
-## Release 13 — Leave match confirmation
+## Build 19 — Challenge a Friend (ship candidate)
+
+**Version:** `1.4.1+19`
+
+### Shipped / in this build
+
+| Item | Notes |
+|------|--------|
+| Everything in build 18 | Live Challenge, App Links, FCM, H2H, scheduler hardening |
+| Codex / settlement fixes | Outcome from `room.winnerUid`; reconnect settlement; history-only economy |
+| Challenge hub rivalries | Rivalries moved off Profile → `ChallengeHomeScreen` |
+| Push guardrails | Recent-rival check + 60s throttle on invite push |
+| Client turn-timeout backup | `ChallengeGameNotifier.onTurnTimedOut` |
+| Analytics | `challenge_started`, `challenge_finished` |
+
+**Key modules:** `lib/features/challenge/`, `challenge_game_bindings.dart`, `challenge_home_screen.dart`, `functions/src/challenge.ts`
+
+### Regression checklist
+
+Same as build 18, plus:
+
+| Scenario | Expected |
+|----------|----------|
+| Challenge hub → rival rematch | Creates room; no Profile rivalries section |
+| Reconnect to finished room | Settlement runs; result dialog or history updated |
+
+### Backend deploy (required)
+
+```bash
+firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-72cc6
+firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-dev
+```
+
+---
+
+## Build 18 — Challenge a Friend (QA builds 15–18)
+
+**Version:** `1.4.0+18` (QA also on builds 15–17)
+
+### Shipped
+
+| Item | Notes |
+|------|--------|
+| Live 1v1 Challenge | 6×6 board, server-validated moves, 30s turn timer |
+| Create / Join / Share | Home play grid → Challenge hub; 6-digit code + HTTPS link |
+| App Links + FCM | `vividmemories-games.github.io/join/{CODE}`; invite push for recent rivals |
+| Head-to-head | Series on result, rematch/revenge, rivals on Challenge hub, challenge history |
+| FCM foreground (Android) | In-app snackbar + JOIN when app is open |
+| Client turn-timeout backup | Random legal move via same `submitChallengeMove` callable |
+| Server scheduler | Turn timeouts, waiting-room expiry, 24h stale-match auto-abandon |
+| Analytics | `challenge_started`, `challenge_finished` |
+
+**Key modules:** `lib/features/challenge/`, `functions/src/challenge.ts`, `challenge_scheduler.ts`, `notifications.ts`
+
+### Regression checklist
+
+| Scenario | Expected |
+|----------|----------|
+| Host CREATE → guest JOIN | Both reach active board; turns alternate |
+| Finish match | One result dialog each; series updates; history row |
+| Rematch / REVENGE | Push or foreground snackbar on guest device |
+| Leave mid-match (in-app) | Opponent wins; leaver sees loss |
+| Campaign Next level | Unchanged (build 12) |
+| Quick match leave dialog | Unchanged (build 13) |
+
+### Store notes (draft)
+
+- **Challenge a Friend** — invite rivals with a link or code and play live Dots & Boxes online
+- Rematch, revenge, and head-to-head stats on the Challenge hub
+
+### Backend deploy
+
+```bash
+firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-72cc6
+firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-dev
+```
+
+---
+
+## Build 13 — Leave match confirmation
 
 **Version:** `1.3.0+13`
 
@@ -66,7 +150,7 @@ bash scripts/build_closed_testing.sh ios
 
 ---
 
-## Release 12 — Campaign polish, turn budgets, shop UX
+## Build 12 — Campaign polish, turn budgets, shop UX
 
 **Version:** `1.3.0+12`
 
@@ -92,7 +176,7 @@ bash scripts/build_closed_testing.sh ios
 | Beat w1_l02 → Next level | l03 loads fresh; no finished-board flash |
 | Beat w1_l03 → Next level | FTUE + Hold grant; no overlay stuck |
 | Lose → Try again (has lives) | Fresh board (`?r=` replay key) |
-| Lose → Try again (0 lives) | Lives gate (R9) |
+| Lose → Try again (0 lives) | Lives gate (build 10) |
 | Win → Campaign map | No coach-tour GlobalKey crash |
 | w2_l09 Greedy Counter | Turn budget ~24; 5 turns at 0–0 still fair |
 | Shop → buy boost | Snackbar + coin pulse immediately; button disabled until server ok |
@@ -114,7 +198,7 @@ bash scripts/build_closed_testing.sh ios
 
 ---
 
-## Release 11 — Bootstrap, Hold, tab swipes
+## Build 11 — Bootstrap, Hold, tab swipes
 
 **Version:** `1.2.2+11`
 
@@ -129,7 +213,7 @@ bash scripts/build_closed_testing.sh ios
 
 ---
 
-## Release 9 — Tester hotfixes + About
+## Build 10 — Tester hotfixes + About
 
 **Version:** `1.2.1+10`
 
@@ -146,7 +230,7 @@ Also: About screen, Mac migration runbook (`MIGRATION_RUNBOOK.md`).
 
 ---
 
-## Release 7 — Security + IAP verification
+## Build 7 — Security + IAP verification
 
 **Versions:** `1.1.0+7` / `+8`
 
@@ -172,7 +256,7 @@ See `SETUP.md` §4b for full IAP setup.
 
 ---
 
-## Release 6 — Closed testing baseline
+## Build 6 — Closed testing baseline
 
 **Version:** `1.0.x`
 
@@ -182,4 +266,4 @@ Initial closed-testing builds: campaign worlds 1–2, shop, lives, daily puzzle,
 
 ## Archive note
 
-Individual release files (`RELEASE_9.md`, `RELEASE_12.md`, `docs/archive/RELEASE_*.md`) were merged into this document. Use this file as the single source of truth for release history and upload checklists.
+Individual release files (`RELEASE_9.md`, `RELEASE_12.md`, `docs/archive/RELEASE_*.md`) were merged into this document. Use this file as the single source of truth for **build** history and upload checklists. Section titles use **build N** matching `+N` in `pubspec.yaml`.

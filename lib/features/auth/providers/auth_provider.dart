@@ -204,7 +204,8 @@ class AuthActions {
     if (googleSignInResult == null) return null;
 
     try {
-      final linked = await user.linkWithCredential(googleSignInResult.credential);
+      final linked =
+          await user.linkWithCredential(googleSignInResult.credential);
       final linkedUser = linked.user;
       await _syncNameToSettingsIfAvailable(
         user: linkedUser,
@@ -241,7 +242,8 @@ class AuthActions {
     if (appleSignInResult == null) return null;
 
     try {
-      final linked = await user.linkWithCredential(appleSignInResult.credential);
+      final linked =
+          await user.linkWithCredential(appleSignInResult.credential);
       final linkedUser = linked.user;
       await _ensureFirebaseUserDisplayName(
         user: linkedUser,
@@ -349,7 +351,8 @@ class AuthActions {
   Future<_GoogleSignInResult?> _googleSignInResult() async {
     try {
       GoogleSignInAccount? googleUser;
-      final lightweight = GoogleSignIn.instance.attemptLightweightAuthentication();
+      final lightweight =
+          GoogleSignIn.instance.attemptLightweightAuthentication();
       if (lightweight != null) {
         try {
           googleUser = await lightweight;
@@ -414,7 +417,8 @@ class AuthActions {
     }
   }
 
-  String? _fullNameFromAppleCredential(AuthorizationCredentialAppleID credential) {
+  String? _fullNameFromAppleCredential(
+      AuthorizationCredentialAppleID credential) {
     final givenName = credential.givenName?.trim() ?? '';
     final familyName = credential.familyName?.trim() ?? '';
     final fullName = [givenName, familyName]
@@ -484,7 +488,8 @@ class AuthActions {
     try {
       final doc = FirebaseFirestore.instance.collection('profiles').doc(uid);
       final snap = await doc.get();
-      final existingName = (snap.data()?['displayName'] as String?)?.trim() ?? '';
+      final existingName =
+          (snap.data()?['displayName'] as String?)?.trim() ?? '';
       final shouldApplyDefaultName =
           existingName.isEmpty || existingName == 'Player';
       if (!shouldApplyDefaultName) return;
@@ -531,7 +536,6 @@ class AuthActions {
     final bytes = utf8.encode(value);
     return sha256.convert(bytes).toString();
   }
-
 }
 
 const String _firebaseNotRunningMessage =

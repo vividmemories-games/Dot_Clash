@@ -29,4 +29,3 @@ abstract final class RankSystem {
         RankTier.master => 'Master',
       };
 }
-

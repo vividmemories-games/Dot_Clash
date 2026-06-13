@@ -23,17 +23,16 @@ abstract final class GameRules {
 
   /// All 4 edge keys that surround a box at (row, col).
   static List<String> boxEdges(int row, int col) => [
-        hEdge(row, col),      // top
-        hEdge(row + 1, col),  // bottom
-        vEdge(row, col),      // left
-        vEdge(row, col + 1),  // right
+        hEdge(row, col), // top
+        hEdge(row + 1, col), // bottom
+        vEdge(row, col), // left
+        vEdge(row, col + 1), // right
       ];
 
   /// Which box grid-coordinates does this edge border?
   /// A horizontal edge borders the box above and below it.
   /// A vertical edge borders the box to the left and right of it.
-  static List<(int, int)> adjacentBoxes(
-      int rows, int cols, String edgeKey) {
+  static List<(int, int)> adjacentBoxes(int rows, int cols, String edgeKey) {
     final (:isH, :row, :col) = parseEdge(edgeKey);
     final result = <(int, int)>[];
 
@@ -59,7 +58,8 @@ abstract final class GameRules {
     if (state.disabledCells.isEmpty) return false;
     final adjacent = adjacentBoxes(state.rows, state.cols, edgeKey);
     if (adjacent.isEmpty) return false;
-    return adjacent.every((rc) => state.disabledCells.contains(boxKey(rc.$1, rc.$2)));
+    return adjacent
+        .every((rc) => state.disabledCells.contains(boxKey(rc.$1, rc.$2)));
   }
 
   // ── Validation ──────────────────────────────────────────────────────────────
@@ -71,9 +71,11 @@ abstract final class GameRules {
     final (:isH, :row, :col) = parseEdge(edgeKey);
     bool inBounds;
     if (isH) {
-      inBounds = row >= 0 && row < state.rows && col >= 0 && col < state.cols - 1;
+      inBounds =
+          row >= 0 && row < state.rows && col >= 0 && col < state.cols - 1;
     } else {
-      inBounds = row >= 0 && row < state.rows - 1 && col >= 0 && col < state.cols;
+      inBounds =
+          row >= 0 && row < state.rows - 1 && col >= 0 && col < state.cols;
     }
     if (!inBounds) return false;
     if (_isEdgeInDisabledRegion(state, edgeKey)) return false;
@@ -85,8 +87,7 @@ abstract final class GameRules {
   /// Apply an edge placement to the state, returning the new state.
   /// Handles box detection, scoring, extra-turn rule, and game-end.
   static GameState applyMove(GameState state, String edgeKey) {
-    assert(isLegalMove(state, edgeKey),
-        'Illegal move: $edgeKey on $state');
+    assert(isLegalMove(state, edgeKey), 'Illegal move: $edgeKey on $state');
 
     final newEdges = {...state.drawnEdges, edgeKey};
 
@@ -117,9 +118,8 @@ abstract final class GameRules {
     }
 
     // Scoring a box grants an extra turn; otherwise the turn switches
-    final nextPlayer = newlyClaimed.isNotEmpty
-        ? state.currentPlayerId
-        : state.opponentOf;
+    final nextPlayer =
+        newlyClaimed.isNotEmpty ? state.currentPlayerId : state.opponentOf;
 
     // Check game over (all boxes claimed)
     final isOver = newClaimed.length == state.totalBoxes;
@@ -190,11 +190,8 @@ abstract final class GameRules {
   }
 
   /// How many of the 4 surrounding edges of a box are already drawn?
-  static int edgesDrawnForBox(
-      GameState state, int boxRow, int boxCol) {
-    return boxEdges(boxRow, boxCol)
-        .where(state.drawnEdges.contains)
-        .length;
+  static int edgesDrawnForBox(GameState state, int boxRow, int boxCol) {
+    return boxEdges(boxRow, boxCol).where(state.drawnEdges.contains).length;
   }
 
   /// Returns all box coordinates where exactly 3 edges are drawn

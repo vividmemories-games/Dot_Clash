@@ -16,7 +16,8 @@ void main() {
       expect(progress.continueLevelId, 'w1_l05');
     });
 
-    test('does not replay level with 1–2 stars when next level is unlocked', () {
+    test('does not replay level with 1–2 stars when next level is unlocked',
+        () {
       final progress = CampaignProgress(
         starsByLevelId: {
           for (var i = 1; i <= 7; i++)

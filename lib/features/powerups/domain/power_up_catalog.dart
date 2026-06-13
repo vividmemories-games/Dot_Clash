@@ -44,9 +44,9 @@ abstract final class PowerUpCatalog {
 
   static PowerUpType todayDailyBoost([DateTime? utcNow]) {
     final now = utcNow ?? DateTime.now().toUtc();
-    final days = DateTime.utc(now.year, now.month, now.day)
-        .millisecondsSinceEpoch ~/
-        Duration.millisecondsPerDay;
+    final days =
+        DateTime.utc(now.year, now.month, now.day).millisecondsSinceEpoch ~/
+            Duration.millisecondsPerDay;
     return dailyBoostSchedule[days % dailyBoostSchedule.length];
   }
 

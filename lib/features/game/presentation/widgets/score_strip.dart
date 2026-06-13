@@ -21,6 +21,8 @@ class ScoreStrip extends StatelessWidget {
     this.secondsLeft,
     this.showTimer = false,
     this.isLocalMode = false,
+    /// When set (challenge / online), turn pills are relative to this player id.
+    this.localPlayerId,
   });
 
   final GameState state;
@@ -33,14 +35,15 @@ class ScoreStrip extends StatelessWidget {
   final int? secondsLeft;
   final bool showTimer;
   final bool isLocalMode;
+  final String? localPlayerId;
 
   @override
   Widget build(BuildContext context) {
     final v = context.dc;
     final ids = state.playerIds;
     final isATurn = state.currentPlayerId == ids[0];
-    final bColor =
-        opponentIsBoss ? (bossAccentColor ?? v.red) : v.playerB;
+    final isBTurn = state.currentPlayerId == ids[1];
+    final bColor = opponentIsBoss ? (bossAccentColor ?? v.red) : v.playerB;
     final scoreA = state.scoreOf(ids[0]);
     final scoreB = state.scoreOf(ids[1]);
 
@@ -66,7 +69,12 @@ class ScoreStrip extends StatelessWidget {
                   color: v.playerA,
                   isActive: isATurn,
                   alignEnd: false,
-                  turnPillLabel: _turnPillLabel(isATurn, v, isLeft: true),
+                  turnPillLabel: _turnPillLabel(
+                    isActiveSide: isATurn,
+                    columnPlayerId: ids[0],
+                    v: v,
+                    isLeft: true,
+                  ),
                 ),
               ),
               _ScoreCenter(
@@ -85,7 +93,12 @@ class ScoreStrip extends StatelessWidget {
                   isActive: !isATurn,
                   alignEnd: true,
                   isBoss: opponentIsBoss,
-                  turnPillLabel: _turnPillLabel(!isATurn, v, isLeft: false),
+                  turnPillLabel: _turnPillLabel(
+                    isActiveSide: isBTurn,
+                    columnPlayerId: ids[1],
+                    v: v,
+                    isLeft: false,
+                  ),
                 ),
               ),
             ],
@@ -95,25 +108,29 @@ class ScoreStrip extends StatelessWidget {
     );
   }
 
-  String _turnPillLabel(bool isActiveSide, DotClashVisuals v, {required bool isLeft}) {
+  String _turnPillLabel({
+    required bool isActiveSide,
+    required String columnPlayerId,
+    required DotClashVisuals v,
+    required bool isLeft,
+  }) {
     if (isLocalMode) {
       if (isLeft) {
-        return isActiveSide
-            ? ('YOUR TURN')
-            : ('WAITING');
+        return isActiveSide ? ('YOUR TURN') : ('WAITING');
       }
-      return isActiveSide
-          ? ('P2 TURN')
-          : ('WAITING');
+      return isActiveSide ? ('P2 TURN') : ('WAITING');
+    }
+    if (localPlayerId != null) {
+      final isMe = columnPlayerId == localPlayerId;
+      if (isActiveSide) {
+        return isMe ? 'YOUR TURN' : 'THEIR TURN';
+      }
+      return 'WAITING';
     }
     if (isLeft) {
-      return isActiveSide
-          ? ('YOUR TURN')
-          : ('WAITING');
+      return isActiveSide ? ('YOUR TURN') : ('WAITING');
     }
-    return isActiveSide
-        ? ('THEIR TURN')
-        : ('WAITING');
+    return isActiveSide ? ('THEIR TURN') : ('WAITING');
   }
 }
 
@@ -152,7 +169,11 @@ class _PlayerColumn extends StatelessWidget {
               alignEnd ? MainAxisAlignment.end : MainAxisAlignment.start,
           children: [
             if (!alignEnd) ...[
-              _Avatar(initial: initial, color: color, isActive: isActive, isBoss: isBoss),
+              _Avatar(
+                  initial: initial,
+                  color: color,
+                  isActive: isActive,
+                  isBoss: isBoss),
               AppSpacing.hGapSM,
             ],
             Flexible(
@@ -169,7 +190,11 @@ class _PlayerColumn extends StatelessWidget {
             ),
             if (alignEnd) ...[
               AppSpacing.hGapSM,
-              _Avatar(initial: initial, color: color, isActive: isActive, isBoss: isBoss),
+              _Avatar(
+                  initial: initial,
+                  color: color,
+                  isActive: isActive,
+                  isBoss: isBoss),
             ],
           ],
         ),
@@ -177,8 +202,7 @@ class _PlayerColumn extends StatelessWidget {
         SizedBox(
           height: 22,
           child: Align(
-            alignment:
-                alignEnd ? Alignment.centerRight : Alignment.centerLeft,
+            alignment: alignEnd ? Alignment.centerRight : Alignment.centerLeft,
             child: _TurnPill(
               label: turnPillLabel,
               color: color,
@@ -376,7 +400,8 @@ class _ScoreCenter extends StatelessWidget {
             CoachTourTarget(
               id: CoachTourTargetId.gameTurnTimer,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: v.surfaceElevated,
                   borderRadius: AppSpacing.roundedFull,

@@ -11,7 +11,7 @@ import '../../../features/game/domain/models/game_state.dart';
 import '../../../features/game/providers/game_provider.dart';
 import '../../../features/home/providers/home_data_providers.dart';
 import '../../../features/home/presentation/widgets/campaign_hero_card.dart';
-import '../../../features/home/presentation/widgets/home_action_row.dart';
+import '../../../features/home/presentation/widgets/play_modes_grid.dart';
 import '../../../features/home/presentation/widgets/daily_missions_section.dart';
 import '../../../features/home/presentation/widgets/home_screen_background.dart';
 import '../../../features/home/presentation/widgets/home_top_bar.dart';
@@ -50,8 +50,7 @@ class _HomeScreenBody extends ConsumerWidget {
     final tutorialFreeAttempt = continueId != null &&
         ref.watch(tutorialFreeAttemptProvider(continueId));
 
-    final campaignLocked =
-        !livesSnapshot.canPlayRanked && !tutorialFreeAttempt;
+    final campaignLocked = !livesSnapshot.canPlayRanked && !tutorialFreeAttempt;
     final lockSubtitle = homeLockSubtitle(livesSnapshot);
 
     final content = SafeArea(
@@ -99,8 +98,8 @@ class _HomeScreenBody extends ConsumerWidget {
                     ),
                     AppSpacing.vGapSM,
 
-                    // ── Zone 3: Action row (Quick Match / Daily Puzzle / Local) ─
-                    HomeActionRow(
+                    // ── Zone 3: Play modes grid ────────────────────────────────
+                    PlayModesGrid(
                       onAiTap: () => startVsAiChallenge(context, ref),
                       onLocalTap: () => pickLocalBoardSize(context, ref),
                     ),
@@ -117,7 +116,9 @@ class _HomeScreenBody extends ConsumerWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                ok ? 'Mission reward claimed!' : 'Mission not ready yet.',
+                                ok
+                                    ? 'Mission reward claimed!'
+                                    : 'Mission not ready yet.',
                               ),
                             ),
                           );

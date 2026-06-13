@@ -76,9 +76,8 @@ class CampaignObjectivesBar extends StatelessWidget {
     if (isOver && !humanWon) return _ObjStatus.failed;
 
     return switch (obj.type) {
-      ObjectiveType.win => isOver && humanWon
-          ? _ObjStatus.achieved
-          : _ObjStatus.pending,
+      ObjectiveType.win =>
+        isOver && humanWon ? _ObjStatus.achieved : _ObjStatus.pending,
       ObjectiveType.margin => margin >= (obj.min ?? 1)
           ? _ObjStatus.achieved
           : (isOver ? _ObjStatus.failed : _ObjStatus.pending),
@@ -89,9 +88,8 @@ class CampaignObjectivesBar extends StatelessWidget {
           : (humanTurnsUsed <= (obj.value ?? 999)
               ? _ObjStatus.pending
               : _ObjStatus.warning),
-      ObjectiveType.preventChain => isOver && humanWon
-          ? _ObjStatus.achieved
-          : _ObjStatus.pending,
+      ObjectiveType.preventChain =>
+        isOver && humanWon ? _ObjStatus.achieved : _ObjStatus.pending,
       ObjectiveType.maxAiBoxes => aiScore <= (obj.value ?? 999)
           ? (isOver && humanWon ? _ObjStatus.achieved : _ObjStatus.pending)
           : (isOver ? _ObjStatus.failed : _ObjStatus.warning),
