@@ -74,7 +74,8 @@ service cloud.firestore {
         && d.modeLabel is string
         && d.opponentLabel is string
         && d.playedAt is timestamp
-        && (!('challengeCode' in d) || d.challengeCode is string);
+        && (!('challengeCode' in d) || d.challengeCode is string)
+        && (!('opponentUid' in d) || d.opponentUid is string);
     }
 
     match /users/{uid} {
@@ -125,9 +126,12 @@ service cloud.firestore {
     }
 
     match /challenges/{code} {
+      // Waiting: any signed-in user with the code (invite link) may read to join.
+      // Active/finished: host and guest only.
       allow read: if isSignedIn()
         && (request.auth.uid == resource.data.hostUid
-            || request.auth.uid == resource.data.guestUid);
+            || request.auth.uid == resource.data.guestUid
+            || resource.data.status == 'waiting');
       allow write: if false;
     }
   }

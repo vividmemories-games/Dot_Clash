@@ -90,6 +90,7 @@ class RecentMatchRecord {
     required this.opponentLabel,
     required this.playedAt,
     this.challengeCode,
+    this.opponentUid,
   });
 
   final String id;
@@ -98,4 +99,5 @@ class RecentMatchRecord {
   final String opponentLabel;
   final DateTime playedAt;
   final String? challengeCode;
+  final String? opponentUid;
 }

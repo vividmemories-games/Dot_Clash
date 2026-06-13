@@ -1132,6 +1132,7 @@ class FirestoreProfileRepository implements ProfileRepository {
                 playedAt:
                     playedAt is Timestamp ? playedAt.toDate() : DateTime.now(),
                 challengeCode: data['challengeCode'] as String?,
+                opponentUid: data['opponentUid'] as String?,
               );
             }).toList());
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../deep_links/challenge_link_parser.dart';
 import 'auth_router_refresh.dart';
 import 'onboarding_router_refresh.dart';
 import '../../features/auth/presentation/auth_screen.dart';
@@ -11,6 +12,8 @@ import '../../features/campaign/domain/campaign_level.dart';
 import '../../features/campaign/domain/daily_puzzle.dart';
 import '../../features/campaign/domain/turn_budget_calculator.dart';
 import '../../features/campaign/presentation/campaign_map_screen.dart';
+import '../../features/challenge/presentation/challenge_home_screen.dart';
+import '../../features/challenge/presentation/challenge_history_screen.dart';
 import '../../features/challenge/presentation/challenge_lobby_screen.dart';
 import '../../features/challenge/presentation/challenge_play_screen.dart';
 import '../../features/contact/presentation/contact_screen.dart';
@@ -38,6 +41,8 @@ abstract final class AppRoutes {
   static const String campaignPlay = '/campaign/play/:levelId';
   static const String dailyPuzzle = '/daily-puzzle';
   static const String profile = '/profile';
+  static const String challengeHistory = '/profile/challenge-history';
+  static const String challengeHome = '/challenge';
   static const String challengeLobby = '/challenge/lobby/:code';
   static const String challengePlay = '/challenge/play/:code';
 
@@ -56,7 +61,16 @@ bool _isAuthRoute(GoRouterState state) {
 }
 
 bool _isChallengeRoute(GoRouterState state) {
-  return state.uri.path.startsWith('/challenge/');
+  if (state.uri.path == AppRoutes.challengeHome) return true;
+  if (state.uri.path.startsWith('/challenge/')) return true;
+  return ChallengeLinkParser.parseChallengeCode(state.uri) != null;
+}
+
+/// iOS Universal Links may deliver the full HTTPS URL to GoRouter (not `/challenge/...`).
+String? _challengeLobbyFromIngress(GoRouterState state) {
+  final code = ChallengeLinkParser.parseChallengeCode(state.uri);
+  if (code == null) return null;
+  return AppRoutes.challengeLobbyPath(code);
 }
 
 // ── Provider ──────────────────────────────────────────────────────────────────
@@ -83,6 +97,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     debugLogDiagnostics: false,
     refreshListenable: Listenable.merge([authRefresh, onboardingRefresh]),
     redirect: (context, state) {
+      // iOS: platform may pass `https://…/join/CODE` — normalize before routing.
+      final lobbyFromLink = _challengeLobbyFromIngress(state);
+      if (lobbyFromLink != null && state.uri.path != lobbyFromLink) {
+        return lobbyFromLink;
+      }
+
       // Read inside redirect so auth/onboarding refresh re-runs this without
       // recreating GoRouter (which would reset to [initialLocation]).
       final currentUser = ref.read(currentUserProvider);
@@ -105,8 +125,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         redirectTarget = null;
       } else if (!isLoggedIn && !isOnAuth) {
         if (_isChallengeRoute(state)) {
+          final nextPath = lobbyFromLink ?? state.uri.path;
           redirectTarget =
-              '${AppRoutes.auth}?next=${Uri.encodeComponent(state.uri.path)}';
+              '${AppRoutes.auth}?next=${Uri.encodeComponent(nextPath)}';
         } else {
           redirectTarget = AppRoutes.auth;
         }
@@ -148,6 +169,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.settings,
         pageBuilder: (context, state) =>
             _slidePage(state, const SettingsScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.challengeHistory,
+        pageBuilder: (context, state) =>
+            _slidePage(state, const ChallengeHistoryScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.challengeHome,
+        pageBuilder: (context, state) =>
+            _slidePage(state, const ChallengeHomeScreen()),
       ),
       GoRoute(
         path: AppRoutes.contact,

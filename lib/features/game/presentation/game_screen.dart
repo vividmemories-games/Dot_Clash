@@ -658,8 +658,14 @@ class _GameScreenState extends ConsumerState<GameScreen>
     );
   }
 
-  bool _shouldConfirmLeave(GameState state) =>
-      state.moveHistory.isNotEmpty && !state.isOver;
+  bool _shouldConfirmLeave(GameState state) {
+    if (state.isOver) return false;
+    if (_isChallenge) {
+      final room = ref.read(challengeRoomProvider(_challengeCode!)).valueOrNull;
+      return room?.isActive == true;
+    }
+    return state.moveHistory.isNotEmpty;
+  }
 
   Future<void> _submitChallengeMove(String edge) async {
     final code = _challengeCode;
@@ -726,9 +732,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
   Future<void> _leaveGameRoute(void Function() navigate) async {
     if (_isChallenge) {
-      final code = _challengeCode;
-      final state = ref.read(challengeGameProvider(code!));
-      if (state.moveHistory.isNotEmpty && !state.isOver) {
+      final code = _challengeCode!;
+      final room = ref.read(challengeRoomProvider(code)).valueOrNull;
+      if (room?.isActive == true &&
+          !ref.read(challengeGameProvider(code)).isOver) {
         try {
           await ref.read(challengeRepositoryProvider).abandonChallenge(code);
         } catch (e) {

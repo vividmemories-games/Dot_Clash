@@ -62,6 +62,7 @@ final recentMatchesProvider = StreamProvider<List<RecentMatch>>((ref) {
                 modeLabel: r.modeLabel,
                 opponentLabel: r.opponentLabel,
                 playedAt: r.playedAt,
+                opponentUid: r.opponentUid,
               ),
             )
             .toList(),

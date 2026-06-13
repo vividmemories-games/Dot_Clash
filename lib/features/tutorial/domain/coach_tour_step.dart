@@ -8,6 +8,7 @@ enum CoachTourTargetId {
   homeWelcome,
   homeCampaignHero,
   homeQuickMatch,
+  homeChallenge,
   homeDailyPuzzle,
   homeLocal,
   homeTopBarLives,

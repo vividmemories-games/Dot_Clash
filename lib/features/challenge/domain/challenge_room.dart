@@ -61,6 +61,13 @@ class ChallengeRoom {
     return null;
   }
 
+  /// Opponent Firebase uid for [myUid], when the room has both players.
+  String? opponentUidFor(String myUid) {
+    if (myUid == hostUid) return guestUid;
+    if (myUid == guestUid) return hostUid;
+    return null;
+  }
+
   factory ChallengeRoom.fromFirestore(
     String code,
     DocumentSnapshot<Map<String, dynamic>> snap,

@@ -9,6 +9,7 @@ import 'features/auth/providers/auth_provider.dart';
 import 'features/profile/providers/profile_bootstrap_provider.dart';
 import 'services/ads/ad_service_provider.dart';
 import 'services/analytics/analytics_service.dart';
+import 'services/deep_links/challenge_ingress_listener.dart';
 
 class DotClashApp extends ConsumerStatefulWidget {
   const DotClashApp({super.key});
@@ -46,12 +47,14 @@ class _DotClashAppState extends ConsumerState<DotClashApp> {
     final equippedThemeId = ref.watch(equippedThemeIdProvider);
     final visuals = DotClashVisuals.fromThemeId(equippedThemeId);
 
-    return MaterialApp.router(
-      title: 'Dot Clash',
-      theme: AppTheme.fromVisuals(visuals),
-      themeAnimationDuration: Duration.zero,
-      routerConfig: router,
-      debugShowCheckedModeBanner: false,
+    return ChallengeIngressListener(
+      child: MaterialApp.router(
+        title: 'Dot Clash',
+        theme: AppTheme.fromVisuals(visuals),
+        themeAnimationDuration: Duration.zero,
+        routerConfig: router,
+        debugShowCheckedModeBanner: false,
+      ),
     );
   }
 }

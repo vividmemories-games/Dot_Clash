@@ -43,6 +43,8 @@ void main() {
       expect(room.opponentDisplayNameFor('guest1'), 'Alex');
       expect(room.playerIdForUid('host1'), 'A');
       expect(room.playerIdForUid('guest1'), 'B');
+      expect(room.opponentUidFor('host1'), 'guest1');
+      expect(room.opponentUidFor('guest1'), 'host1');
       expect(room.isActive, isTrue);
       expect(room.hasPlayableBoard, isFalse);
     });

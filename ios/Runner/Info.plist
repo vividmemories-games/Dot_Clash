@@ -35,6 +35,20 @@
 				<string>com.googleusercontent.apps.727354434155-niva1cp8le19gkg82m7m412s7uc7hj6j</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.vividmemories.dotclash.challenge</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>dotclash</string>
+			</array>
+		</dict>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>

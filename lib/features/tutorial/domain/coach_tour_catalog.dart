@@ -33,6 +33,14 @@ abstract final class CoachTourCatalog {
       showSkip: true,
     ),
     CoachTourStep(
+      id: 'home_challenge',
+      title: 'Challenge a Friend',
+      body:
+          'Live 6×6 online against a real friend. Create a room, share a code, or re-challenge recent rivals.',
+      targetId: CoachTourTargetId.homeChallenge,
+      showSkip: true,
+    ),
+    CoachTourStep(
       id: 'home_daily',
       title: 'Daily Puzzle',
       body:

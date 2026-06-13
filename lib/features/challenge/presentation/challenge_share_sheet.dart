@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/deep_links/challenge_link_parser.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/dot_clash_visuals.dart';
 import '../../../shared/layout/app_spacing.dart';
@@ -18,7 +19,7 @@ class ChallengeShareSheet extends StatelessWidget {
   final String hostDisplayName;
 
   static const httpsJoinBase =
-      'https://vividmemories-games.github.io/join';
+      'https://${ChallengeLinkParser.httpsHost}/join';
 
   String get httpsLink => '$httpsJoinBase/$code';
   String get customSchemeLink => 'dotclash://join/$code';

@@ -32,10 +32,12 @@ class RecentMatch {
     required this.modeLabel,
     required this.opponentLabel,
     required this.playedAt,
+    this.opponentUid,
   });
 
   final MatchOutcome outcome;
   final String modeLabel;
   final String opponentLabel;
   final DateTime playedAt;
+  final String? opponentUid;
 }

@@ -439,6 +439,8 @@ export const recordChallengeMatch = onCall(callableOptions, async (request) => {
       uid === data.hostUid
         ? (data.guestDisplayName ?? 'Rival')
         : data.hostDisplayName;
+    const opponentUid =
+      uid === data.hostUid ? data.guestUid : data.hostUid;
 
     const profileSnap = await txn.get(profileRef(uid));
     if (!profileSnap.exists) {
@@ -479,6 +481,7 @@ export const recordChallengeMatch = onCall(callableOptions, async (request) => {
       opponentLabel,
       challengeCode: normalized,
       playedAt: FieldValue.serverTimestamp(),
+      ...(opponentUid ? { opponentUid } : {}),
     });
 
     txn.update(profileRef(uid), {

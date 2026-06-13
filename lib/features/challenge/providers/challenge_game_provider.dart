@@ -11,6 +11,17 @@ import '../domain/challenge_exceptions.dart';
 import '../domain/challenge_room.dart';
 import 'challenge_providers.dart';
 
+typedef ChallengeMoveSubmitter = Future<void> Function({
+  required String code,
+  required String edgeKey,
+});
+
+final challengeMoveSubmitterProvider = Provider<ChallengeMoveSubmitter>((ref) {
+  final repo = ref.read(challengeRepositoryProvider);
+  return ({required String code, required String edgeKey}) =>
+      repo.submitChallengeMove(code: code, edgeKey: edgeKey);
+});
+
 /// Server-synced board state for a live challenge match.
 final challengeGameProvider = StateNotifierProvider.autoDispose
     .family<ChallengeGameNotifier, GameState, String>((ref, code) {
@@ -99,15 +110,20 @@ class ChallengeGameNotifier extends StateNotifier<GameState> {
     if (state.currentPlayerId != _myPlayerId) return;
     if (state.isOver) return;
 
+    final preMoveState = state;
     _moveInFlight = true;
     _ref.read(opponentLastEdgeProvider.notifier).state = null;
+    state = GameRules.applyMove(state, edgeKey);
 
     try {
-      await _ref.read(challengeRepositoryProvider).submitChallengeMove(
+      await _ref.read(challengeMoveSubmitterProvider)(
             code: code,
             edgeKey: edgeKey,
           );
     } on ChallengeException {
+      final serverState =
+          _ref.read(challengeRoomProvider(code)).valueOrNull?.gameState;
+      state = serverState ?? preMoveState;
       _moveInFlight = false;
       rethrow;
     }

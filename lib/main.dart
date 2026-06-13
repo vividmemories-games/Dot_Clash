@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +13,7 @@ import 'core/env/app_env.dart';
 import 'firebase_options.dart';
 import 'services/analytics/analytics_service.dart';
 import 'services/firebase/app_check_service.dart';
+import 'services/push/fcm_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +45,8 @@ Future<void> _initFirebase() async {
     await Firebase.initializeApp(
       options: opts,
     );
+
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
     await AppCheckService.activate();
     await AppCheckService.warmUp();
