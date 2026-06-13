@@ -87,6 +87,7 @@ Run Codex review when:
 - IAP/AdMob/UMP/ATT changed.
 - Build/signing/flavors changed.
 - Game engine/scoring/progression changed.
+- Challenge mode, Cloud Functions, FCM, or deep links changed.
 - Persistence/save-game logic changed.
 - Before TestFlight upload.
 - Before Play Console AAB upload.

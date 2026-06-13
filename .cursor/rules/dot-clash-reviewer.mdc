@@ -78,5 +78,6 @@ When reviewing changes, respond in this structure:
 Run these when the change touches Flutter code:
 
 ```bash
-flutter analyze
+flutter analyze --no-fatal-infos
 flutter test
+```

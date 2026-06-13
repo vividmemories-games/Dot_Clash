@@ -4,7 +4,7 @@
 
 **Active build target:** `1.4.1+19` in `pubspec.yaml` (bump `+N` before each store upload)  
 **Track:** Prod package + Firebase (`dot-clash-72cc6`), `BETA_ADS=true` (test ads)  
-**IAP / ops:** `SETUP.md` §4b · **Mac migration:** `MIGRATION_RUNBOOK.md` · **Security:** `SECURITY_FIX_PLAN.md`
+**IAP / ops:** `SETUP.md` §4b · **Security:** `SETUP.md` App Check + [`firestore.rules`](../firestore.rules)
 
 ---
 
@@ -256,7 +256,7 @@ firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-
 | 5 | Riposte popup repeats | **Fixed** | `lastAiSegmentBoxCount` |
 | — | Duplicate GlobalKey on campaign exit | **Fixed** | Scoped coach-tour keys + release before `router.go` |
 
-Also: About screen, Mac migration runbook (`MIGRATION_RUNBOOK.md`).
+Also: About screen.
 
 ---
 

@@ -1,7 +1,7 @@
 # Challenge a Friend — Session Summary
 
 **Date:** 2026-06-08 through 2026-06-13  
-**Branch:** `one-to-one-challange`  
+**Branch:** merged to `main` (was `one-to-one-challange`)  
 **Firebase projects:** `dot-clash-dev` (dev flavor) · `dot-clash-72cc6` (prod / closed testing)  
 **Current build:** `1.4.1+19` (see `pubspec.yaml`)  
 **Canonical plan:** `.cursor/plans/challenge_a_friend.plan.md`
@@ -502,4 +502,4 @@ flutter emulators --launch <id>
 
 ---
 
-*Updated 2026-06-13 — Build 19 (`1.4.1+19` per pubspec); plan gaps + Codex fixes; rivalries on Challenge hub; analyze clean; 115 tests passing; deploy + device QA pending.*
+*Updated 2026-06-13 — Build 19 (`1.4.1+19` per pubspec); merged to `main`; rivalries on Challenge hub; analyze clean; 115 tests passing; prod deploy + closed testing build 19.*

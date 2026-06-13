@@ -8,6 +8,7 @@ Use Codex only for bigger changes.
 - IAP/AdMob/UMP/ATT changed.
 - Build/signing/flavors changed.
 - Game engine/scoring/progression changed.
+- Challenge mode, Cloud Functions (`challenge.ts`), Firestore rules, FCM, or deep links changed.
 - Persistence/save-game logic changed.
 - Before TestFlight upload.
 - Before Play Console AAB upload.

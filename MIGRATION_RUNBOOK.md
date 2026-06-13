@@ -3,7 +3,7 @@
 One-page checklist for moving development to a new Mac **before** losing access to the old machine.  
 Secrets are **gitignored** — Git alone will not restore them.
 
-**Related:** [SETUP.md](../SETUP.md) (signing, IAP, flavors) · [SECURITY_FIX_PLAN.md](SECURITY_FIX_PLAN.md) (key rotation)
+**Related:** [SETUP.md](SETUP.md) (signing, IAP, flavors, App Check) · Key rotation notes in §3 below
 
 ---
 
@@ -57,7 +57,7 @@ Apple issues **two different** `.p8` key types. Filenames follow `AuthKey_<KEY_I
 
 ## 3 · Security: rotate compromised Developer key (recommended during migration)
 
-`AR2XHZG3V2` was previously committed to Git ([SECURITY_FIX_PLAN.md](SECURITY_FIX_PLAN.md) #4). During migration:
+`AR2XHZG3V2` was previously committed to Git (see §3 key rotation). During migration:
 
 1. Apple Developer → Keys → **Revoke** `AR2XHZG3V2`.
 2. Create a **new** key (Sign in with Apple enabled) → download `.p8` once → save as `ios/Security Key/AuthKey_<NEW_ID>.p8`.
