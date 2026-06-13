@@ -69,13 +69,13 @@ service cloud.firestore {
 
     function validMatchCreate() {
       let d = request.resource.data;
-      return d.keys().hasAll(['outcome', 'modeLabel', 'opponentLabel', 'playedAt'])
+      return d.keys().hasOnly(['outcome', 'modeLabel', 'opponentLabel', 'playedAt', 'opponentUid', 'challengeCode'])
         && d.outcome is string
         && d.modeLabel is string
         && d.opponentLabel is string
         && d.playedAt is timestamp
-        && (!('challengeCode' in d) || d.challengeCode is string)
-        && (!('opponentUid' in d) || d.opponentUid is string);
+        && (!('opponentUid' in d) || d.opponentUid is string)
+        && (!('challengeCode' in d) || d.challengeCode is string);
     }
 
     match /users/{uid} {

@@ -9,6 +9,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/dot_clash_visuals.dart';
 import '../../../services/ads/ad_service_provider.dart';
+import '../../../services/analytics/analytics_service.dart';
 import '../../../shared/feedback/app_snackbar.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -61,7 +62,7 @@ class _ChallengeGameBindingsState extends ConsumerState<ChallengeGameBindings> {
 
   bool _shouldSettle(ChallengeRoom room) {
     return room.status == ChallengeStatus.finished ||
-        (room.status == ChallengeStatus.abandoned && room.winnerUid != null);
+        room.status == ChallengeStatus.abandoned;
   }
 
   Future<void> _settle(ChallengeRoom room) async {
@@ -85,6 +86,19 @@ class _ChallengeGameBindingsState extends ConsumerState<ChallengeGameBindings> {
       debugPrint('[Challenge][recordChallengeMatch] failed=$e $st');
     }
 
+    final outcomeLabel = switch (result) {
+      MatchResult.win => 'win',
+      MatchResult.loss => 'loss',
+      MatchResult.tie => 'tie',
+    };
+    unawaited(
+      AnalyticsService.instance.logChallengeFinished(
+        code: _code,
+        result: outcomeLabel,
+        moveCount: gameState.moveHistory.length,
+      ),
+    );
+
     if (_dialogShown) return;
     _dialogShown = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -100,6 +114,7 @@ class _ChallengeGameBindingsState extends ConsumerState<ChallengeGameBindings> {
     String? myUid,
   ) {
     if (room.status == ChallengeStatus.abandoned) {
+      if (room.winnerUid == null) return MatchResult.tie;
       return room.winnerUid == myUid ? MatchResult.win : MatchResult.loss;
     }
     if (gameState.isTie) return MatchResult.tie;
@@ -153,8 +168,13 @@ class _ChallengeGameBindingsState extends ConsumerState<ChallengeGameBindings> {
     final bool iWon;
     final bool isTie;
     if (room.status == ChallengeStatus.abandoned) {
-      iWon = room.winnerUid == myUid;
-      isTie = false;
+      if (room.winnerUid == null) {
+        iWon = false;
+        isTie = true;
+      } else {
+        iWon = room.winnerUid == myUid;
+        isTie = false;
+      }
     } else {
       isTie = gameState.isTie;
       iWon = !isTie && gameState.winnerId == myPlayerId;
@@ -166,7 +186,9 @@ class _ChallengeGameBindingsState extends ConsumerState<ChallengeGameBindings> {
             ? 'You Win!'
             : '$opponent Wins!';
     final subline = room.status == ChallengeStatus.abandoned
-        ? (iWon ? 'Opponent left the match.' : 'Match abandoned.')
+        ? (isTie
+            ? 'Match expired after inactivity.'
+            : (iWon ? 'Opponent left the match.' : 'Match abandoned.'))
         : (isTie ? 'Perfectly matched.' : (iWon ? 'Nice boxes!' : 'Rematch?'));
     final color = isTie ? v.gold : (iWon ? v.playerA : v.playerB);
 

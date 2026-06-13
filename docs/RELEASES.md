@@ -1,6 +1,6 @@
 # Dot Clash — Release history & closed-testing tracker
 
-**Active build target:** `1.3.0+13` in `pubspec.yaml` (bump before each store upload)  
+**Active build target:** `1.4.0+18` in `pubspec.yaml` (bump before each store upload)  
 **Track:** Prod package + Firebase (`dot-clash-72cc6`), `BETA_ADS=true` (test ads)  
 **IAP / ops:** `SETUP.md` §4b · **Mac migration:** `MIGRATION_RUNBOOK.md` · **Security:** `SECURITY_FIX_PLAN.md`
 
@@ -22,15 +22,62 @@ bash scripts/build_closed_testing.sh ios
 | Android | `build/app/outputs/bundle/prodRelease/app-prod-release.aab` |
 | iOS | `build/ios/ipa/*.ipa` |
 
-**Pre-upload checklist (Release 13+)**
+**Pre-upload checklist (Release 14+)**
 
-- [ ] `pubspec.yaml` build number incremented (`1.3.0+13`)
+- [ ] `pubspec.yaml` build number incremented (`1.4.0+18`)
+- [ ] Challenge: create → join → full 6×6 match → rematch / revenge push
+- [ ] Challenge: HTTPS link + FCM tap → lobby → play
 - [ ] Mid-match **Home** / **MORE → Exit** / system back → confirm dialog; **Stay** keeps board
 - [ ] Campaign abandon → **Leave** exits without consuming a life; fresh level (no moves) → no dialog
 - [ ] Quick match / vs AI: generic “Leave match?” copy
 - [ ] R12 smoke: campaign Next level, turn budgets, shop UX (see Release 12 checklist below)
-- [ ] Prod functions if backend changed: `firebase deploy --only functions -P dot-clash-72cc6`
+- [ ] Prod functions + indexes if backend changed: `firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-72cc6`
 - [ ] Crashlytics: filter current version after rollout
+
+---
+
+## Release 14 — Challenge a Friend
+
+**Version:** `1.4.0+18`
+
+### Shipped
+
+| Item | Notes |
+|------|--------|
+| Live 1v1 Challenge | 6×6 board, server-validated moves, 30s turn timer |
+| Create / Join / Share | Home play grid → Challenge hub; 6-digit code + HTTPS link |
+| App Links + FCM | `vividmemories-games.github.io/join/{CODE}`; invite push for recent rivals |
+| Head-to-head | Series on result, rematch/revenge, rivals on Profile, challenge history |
+| FCM foreground (Android) | In-app snackbar + JOIN when app is open |
+| Client turn-timeout backup | Random legal move via same `submitChallengeMove` callable |
+| Server scheduler | Turn timeouts, waiting-room expiry, 24h stale-match auto-abandon |
+| Analytics | `challenge_started`, `challenge_finished` |
+
+**Key modules:** `lib/features/challenge/`, `functions/src/challenge.ts`, `challenge_scheduler.ts`, `notifications.ts`
+
+### Regression checklist
+
+| Scenario | Expected |
+|----------|----------|
+| Host CREATE → guest JOIN | Both reach active board; turns alternate |
+| Finish match | One result dialog each; series updates; history row |
+| Rematch / REVENGE | Push or foreground snackbar on guest device |
+| Leave mid-match (in-app) | Opponent wins; leaver sees loss |
+| Campaign Next level | Unchanged (R12) |
+| Quick match leave dialog | Unchanged (R13) |
+
+### Store notes (draft)
+
+- **Challenge a Friend** — invite rivals with a link or code and play live Dots & Boxes online
+- Rematch, revenge, and head-to-head stats on your Profile
+- Turn timer keeps matches moving; leave confirmation protects your game
+
+### Backend deploy (required for R14)
+
+```bash
+firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-72cc6
+firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-dev
+```
 
 ---
 

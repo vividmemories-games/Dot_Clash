@@ -125,9 +125,6 @@ class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
 
     final accentColor = isBoss ? v.red : v.green;
     final titleColor = isBoss ? v.red : v.playerA;
-    final levelFraction = world.levelCount > 0
-        ? (level.index / world.levelCount).clamp(0.0, 1.0)
-        : 0.0;
 
     return GestureDetector(
       onTap: () => context.go(AppRoutes.campaign),
@@ -204,7 +201,7 @@ class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
                   ),
 
                 Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(AppSpacing.sm),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -257,26 +254,13 @@ class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'WORLD ${level.worldId}',
-                                  style: t.heroTitle.copyWith(
-                                    fontSize: 26,
-                                    color: v.textPrimary,
-                                    letterSpacing: 3,
-                                  ),
-                                ),
-                                Text(
-                                  world.title.toUpperCase(),
-                                  style: t.playerName.copyWith(
-                                    color: titleColor,
-                                    fontSize: 13,
-                                    letterSpacing: 2,
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              'WORLD ${level.worldId}',
+                              style: t.heroTitle.copyWith(
+                                fontSize: 22,
+                                color: v.textPrimary,
+                                letterSpacing: 3,
+                              ),
                             ),
                           ),
                           if (isBoss) ...[
@@ -328,27 +312,9 @@ class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
                           ],
                         ],
                       ),
-                      AppSpacing.vGapSM,
+                      AppSpacing.vGapXS,
 
-                      // ── World description ─────────────────────────────────────
-                      Text(
-                        world.subtitle,
-                        style: t.bodySmall.copyWith(fontSize: 12),
-                      ),
-                      AppSpacing.vGapMD,
-
-                      // ── Map path nodes ────────────────────────────────────────
-                      _MapPath(
-                        world: world,
-                        currentIndex: level.index,
-                        progress: progress,
-                        accentColor: accentColor,
-                        v: v,
-                        t: t,
-                      ),
-                      AppSpacing.vGapMD,
-
-                      // ── Level progress bar ────────────────────────────────────
+                      // ── Level progress label ──────────────────────────────────
                       Row(
                         children: [
                           Text(
@@ -367,15 +333,15 @@ class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      ClipRRect(
-                        borderRadius: AppSpacing.roundedFull,
-                        child: LinearProgressIndicator(
-                          value: levelFraction,
-                          minHeight: 7,
-                          backgroundColor: v.cardBorder.withOpacity(0.5),
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(accentColor),
-                        ),
+
+                      // ── Map path nodes ────────────────────────────────────────
+                      _MapPath(
+                        world: world,
+                        currentIndex: level.index,
+                        progress: progress,
+                        accentColor: accentColor,
+                        v: v,
+                        t: t,
                       ),
                       AppSpacing.vGapSM,
 
@@ -404,7 +370,7 @@ class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
                           ),
                         ],
                       ),
-                      AppSpacing.vGapMD,
+                      AppSpacing.vGapSM,
 
                       // ── CONTINUE CTA button ───────────────────────────────────
                       AnimatedBuilder(
@@ -431,7 +397,7 @@ class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
                                   backgroundColor: accentColor,
                                   foregroundColor: Colors.black,
                                   padding:
-                                      const EdgeInsets.symmetric(vertical: 14),
+                                      const EdgeInsets.symmetric(vertical: 11),
                                   shape: const RoundedRectangleBorder(
                                     borderRadius: AppSpacing.roundedMD,
                                   ),
@@ -728,7 +694,7 @@ class _SkeletonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 260,
+      height: 210,
       decoration: BoxDecoration(
         color: v.surface,
         borderRadius: AppSpacing.roundedXL,

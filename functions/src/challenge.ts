@@ -22,6 +22,8 @@ export const CHALLENGE_ROWS = 6;
 export const CHALLENGE_COLS = 6;
 export const TURN_TIMEOUT_SECONDS = 30;
 export const WAITING_EXPIRY_MINUTES = 60;
+/** Auto-abandon active matches with no activity for this long. */
+export const ACTIVE_STALE_HOURS = 24;
 
 const CODE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const CODE_LENGTH = 6;
@@ -385,6 +387,7 @@ function profileRef(uid: string): DocumentReference {
 
 function outcomeForUid(data: ChallengeDoc, uid: string): 'win' | 'loss' | 'tie' {
   if (data.status === 'abandoned') {
+    if (!data.winnerUid) return 'tie';
     return data.winnerUid === uid ? 'win' : 'loss';
   }
   if (!data.gameState) {

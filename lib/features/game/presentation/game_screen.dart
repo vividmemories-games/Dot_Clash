@@ -282,8 +282,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
       state.playerIds[1]: initialFor(playerBName, fallback: 'B'),
     };
 
-    // Auto-pass the turn when the timer reaches 0 (local / AI only — server
-    // enforces timeouts for challenge matches).
+    // Turn timer: local/AI uses [turnTimerProvider]; challenge uses
+    // [challengeTurnTimerProvider] with client backup + server scheduler.
     if (!_isChallenge) {
       ref.listen<int>(turnTimerProvider, (prev, next) {
         if (!mounted) return;
@@ -293,6 +293,17 @@ class _GameScreenState extends ConsumerState<GameScreen>
         if (prevVal > 0 && next == 0) {
           if (mounted) setState(() => _hintEdge = null);
           ref.read(gameProvider.notifier).onTurnTimedOut();
+        }
+      });
+    } else if (_challengeCode != null) {
+      final code = _challengeCode!;
+      ref.listen<int>(challengeTurnTimerProvider(code), (prev, next) {
+        if (!mounted) return;
+        if (ref.read(matchCoachTourProvider).matchPaused) return;
+        final prevVal = prev ?? next;
+        if (prevVal > 0 && next == 0) {
+          if (mounted) setState(() => _hintEdge = null);
+          ref.read(challengeGameProvider(code).notifier).onTurnTimedOut();
         }
       });
     }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +8,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/dot_clash_visuals.dart';
 import '../../../features/auth/providers/auth_provider.dart';
+import '../../../services/analytics/analytics_service.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/widgets/neon_button.dart';
 import '../../game/domain/models/game_state.dart';
@@ -28,8 +31,17 @@ class ChallengePlayScreen extends ConsumerStatefulWidget {
 class _ChallengePlayScreenState extends ConsumerState<ChallengePlayScreen> {
   /// Once the board is shown, keep [GameScreen] mounted through `finished`.
   bool _playSessionLocked = false;
+  bool _startedLogged = false;
 
   String get _normalized => widget.code.trim().toUpperCase();
+
+  void _logStartedOnce() {
+    if (_startedLogged) return;
+    _startedLogged = true;
+    unawaited(
+      AnalyticsService.instance.logChallengeStarted(code: _normalized),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +67,7 @@ class _ChallengePlayScreenState extends ConsumerState<ChallengePlayScreen> {
         if (room != null &&
             (_playSessionLocked || room.hasPlayableBoard) &&
             room.gameState != null) {
+          _logStartedOnce();
           final myPlayerId = room.playerIdForUid(myUid ?? '') ?? 'A';
           final config = GameConfig.challenge(
             code: _normalized,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -99,6 +100,7 @@ class ChallengeGameNotifier extends StateNotifier<GameState> {
 
   int _lastVersion = -1;
   bool _moveInFlight = false;
+  static final _rng = Random();
 
   String get _myPlayerId => _ref.read(gameConfigProvider).myPlayerId ?? 'A';
 
@@ -127,6 +129,19 @@ class ChallengeGameNotifier extends StateNotifier<GameState> {
       _moveInFlight = false;
       rethrow;
     }
+  }
+
+  /// Client backup when server scheduler is slow — same callable as a human tap.
+  Future<void> onTurnTimedOut() async {
+    if (_moveInFlight) return;
+    if (state.isOver) return;
+    if (state.currentPlayerId != _myPlayerId) return;
+
+    final legalMoves = GameRules.legalMoves(state);
+    if (legalMoves.isEmpty) return;
+
+    final edgeKey = legalMoves[_rng.nextInt(legalMoves.length)];
+    await makeMove(edgeKey);
   }
 
   void _applyRemoteRoom(ChallengeRoom room) {

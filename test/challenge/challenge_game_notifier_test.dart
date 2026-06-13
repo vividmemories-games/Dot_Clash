@@ -138,4 +138,85 @@ void main() {
       expect(notifier.moveInFlight, isFalse);
     });
   });
+
+  group('ChallengeGameNotifier.onTurnTimedOut', () {
+    test('submits random legal move on local timeout', () async {
+      final board = GameState.initial(rows: 6, cols: 6);
+      String? submittedEdge;
+      final container = ProviderContainer(
+        overrides: [
+          challengeRoomProvider.overrideWith(
+            (ref, code) => Stream<ChallengeRoom?>.value(
+              _activeRoom(gameState: board),
+            ),
+          ),
+          challengeMoveSubmitterProvider.overrideWith(
+            (ref) =>
+                ({required String code, required String edgeKey}) async {
+              submittedEdge = edgeKey;
+            },
+          ),
+          gameConfigProvider.overrideWith(
+            (ref) => GameConfig.challenge(
+              code: _code,
+              myPlayerId: 'A',
+              opponentDisplayName: 'Sam',
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final sub = container.listen(challengeGameProvider(_code), (_, __) {});
+      addTearDown(sub.close);
+
+      final notifier = container.read(challengeGameProvider(_code).notifier);
+      await Future<void>.delayed(Duration.zero);
+
+      await notifier.onTurnTimedOut();
+
+      expect(submittedEdge, isNotNull);
+      expect(notifier.state.moveHistory, [submittedEdge]);
+    });
+
+    test('no-op when not local player turn', () async {
+      final board = GameState.initial(rows: 6, cols: 6).copyWith(
+        currentPlayerId: 'B',
+      );
+      var submitCount = 0;
+      final container = ProviderContainer(
+        overrides: [
+          challengeRoomProvider.overrideWith(
+            (ref, code) => Stream<ChallengeRoom?>.value(
+              _activeRoom(gameState: board),
+            ),
+          ),
+          challengeMoveSubmitterProvider.overrideWith(
+            (ref) =>
+                ({required String code, required String edgeKey}) async {
+              submitCount++;
+            },
+          ),
+          gameConfigProvider.overrideWith(
+            (ref) => GameConfig.challenge(
+              code: _code,
+              myPlayerId: 'A',
+              opponentDisplayName: 'Sam',
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final sub = container.listen(challengeGameProvider(_code), (_, __) {});
+      addTearDown(sub.close);
+
+      final notifier = container.read(challengeGameProvider(_code).notifier);
+      await Future<void>.delayed(Duration.zero);
+
+      await notifier.onTurnTimedOut();
+
+      expect(submitCount, 0);
+    });
+  });
 }
