@@ -6,7 +6,7 @@ import '../../../shared/feedback/app_snackbar.dart';
 import '../domain/challenge_exceptions.dart';
 import '../providers/challenge_providers.dart';
 
-/// Shared create-challenge flow for Profile + History screens.
+/// Shared create-challenge flow for Challenge home + History screens.
 mixin ChallengeRechallengeMixin<T extends ConsumerStatefulWidget>
     on ConsumerState<T> {
   String? challengingUid;

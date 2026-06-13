@@ -9,11 +9,12 @@ import '../../../shared/feedback/app_snackbar.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/widgets/neon_button.dart';
 import '../domain/challenge_exceptions.dart';
-import '../domain/head_to_head_stats.dart';
 import '../providers/challenge_providers.dart';
+import 'challenge_rechallenge_mixin.dart';
 import 'join_challenge_sheet.dart';
+import 'widgets/challenge_history_widgets.dart';
 
-/// Challenge mode hub — Create, Join, and recent rivals.
+/// Challenge mode hub — Create, Join, and rivalries.
 class ChallengeHomeScreen extends ConsumerStatefulWidget {
   const ChallengeHomeScreen({super.key});
 
@@ -22,31 +23,22 @@ class ChallengeHomeScreen extends ConsumerStatefulWidget {
       _ChallengeHomeScreenState();
 }
 
-class _ChallengeHomeScreenState extends ConsumerState<ChallengeHomeScreen> {
+class _ChallengeHomeScreenState extends ConsumerState<ChallengeHomeScreen>
+    with ChallengeRechallengeMixin {
   bool _creating = false;
-  String? _challengingUid;
 
-  Future<void> _createChallenge({String? targetUid}) async {
-    if (_creating) return;
-    setState(() {
-      _creating = true;
-      _challengingUid = targetUid;
-    });
+  Future<void> _createChallenge() async {
+    if (_creating || challengingUid != null) return;
+    setState(() => _creating = true);
     try {
-      final code = await ref.read(challengeRepositoryProvider).createChallenge(
-            targetUid: targetUid,
-          );
+      final code =
+          await ref.read(challengeRepositoryProvider).createChallenge();
       if (!mounted) return;
       context.push(AppRoutes.challengeLobbyPath(code));
     } on ChallengeException catch (e) {
       if (mounted) AppSnackBar.show(context, e.message);
     } finally {
-      if (mounted) {
-        setState(() {
-          _creating = false;
-          _challengingUid = null;
-        });
-      }
+      if (mounted) setState(() => _creating = false);
     }
   }
 
@@ -56,7 +48,7 @@ class _ChallengeHomeScreenState extends ConsumerState<ChallengeHomeScreen> {
     final t = context.txt;
     final size = MediaQuery.sizeOf(context);
     final rivalsAsync = ref.watch(challengeRivalsProvider);
-    final rivals = rivalsAsync.valueOrNull ?? const <ChallengeRival>[];
+    final actionsBusy = _creating || challengingUid != null;
 
     return Scaffold(
       backgroundColor: v.scaffold,
@@ -140,14 +132,12 @@ class _ChallengeHomeScreenState extends ConsumerState<ChallengeHomeScreen> {
                     children: [
                       Expanded(
                         child: NeonButton(
-                          label: _creating && _challengingUid == null
-                              ? 'CREATING…'
-                              : 'CREATE',
+                          label: _creating ? 'CREATING…' : 'CREATE',
                           icon: Icons.add_rounded,
                           color: v.playerA,
                           height: 48,
-                          enabled: !_creating,
-                          onPressed: _creating ? null : _createChallenge,
+                          enabled: !actionsBusy,
+                          onPressed: actionsBusy ? null : _createChallenge,
                         ),
                       ),
                       AppSpacing.hGapSM,
@@ -157,36 +147,45 @@ class _ChallengeHomeScreenState extends ConsumerState<ChallengeHomeScreen> {
                           icon: Icons.login_rounded,
                           color: v.playerB,
                           height: 48,
-                          enabled: !_creating,
-                          onPressed: _creating
+                          enabled: !actionsBusy,
+                          onPressed: actionsBusy
                               ? null
                               : () => showJoinChallengeSheet(context),
                         ),
                       ),
                     ],
                   ),
-                  if (rivals.isNotEmpty) ...[
-                    AppSpacing.vGapLG,
-                    Text(
-                      'RECENT RIVALS',
-                      style: t.scoreLabel.copyWith(
-                        fontSize: 10,
-                        color: v.textSecondary,
+                  AppSpacing.vGapLG,
+                  Text('RIVALRIES', style: t.scoreLabel),
+                  AppSpacing.vGapSM,
+                  rivalsAsync.when(
+                    loading: () => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
-                    AppSpacing.vGapSM,
-                    ...rivals.map(
-                      (rival) => Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        child: _RivalTile(
-                          rival: rival,
-                          busy: _creating && _challengingUid == rival.uid,
-                          enabled: !_creating,
-                          onTap: () => _createChallenge(targetUid: rival.uid),
-                        ),
-                      ),
-                    ),
-                  ],
+                    error: (_, __) => const ChallengeRivalriesEmptyCard(),
+                    data: (rivals) {
+                      if (rivals.isEmpty) {
+                        return const ChallengeRivalriesEmptyCard();
+                      }
+
+                      return Column(
+                        children: [
+                          for (final rival in rivals) ...[
+                            RivalListTile(
+                              rival: rival,
+                              busy: challengingUid == rival.uid,
+                              enabled: challengingUid == null && !_creating,
+                              onRechallenge: () => rechallenge(rival.uid),
+                            ),
+                            AppSpacing.vGapSM,
+                          ],
+                        ],
+                      );
+                    },
+                  ),
                   AppSpacing.vGapMD,
                   SizedBox(
                     width: double.infinity,
@@ -214,78 +213,6 @@ class _ChallengeHomeScreenState extends ConsumerState<ChallengeHomeScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _RivalTile extends StatelessWidget {
-  const _RivalTile({
-    required this.rival,
-    required this.busy,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final ChallengeRival rival;
-  final bool busy;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final v = context.dc;
-    final t = context.txt;
-
-    return Material(
-      color: v.surface.withValues(alpha: 0.72),
-      borderRadius: AppSpacing.roundedMD,
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        borderRadius: AppSpacing.roundedMD,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.sm,
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.sports_esports_rounded, color: v.gold, size: 18),
-              AppSpacing.hGapSM,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      rival.displayName,
-                      style: t.playerName.copyWith(fontSize: 13),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      'Series ${rival.record.display}',
-                      style: t.bodySmall.copyWith(
-                        fontSize: 10,
-                        color: v.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (busy)
-                SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: v.gold,
-                  ),
-                )
-              else
-                Icon(Icons.chevron_right_rounded, color: v.textSecondary),
-            ],
-          ),
-        ),
       ),
     );
   }

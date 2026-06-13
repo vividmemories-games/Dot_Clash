@@ -391,6 +391,41 @@ class MatchHistoryTile extends StatelessWidget {
   }
 }
 
+/// Shown on Challenge home when the player has no head-to-head history yet.
+class ChallengeRivalriesEmptyCard extends StatelessWidget {
+  const ChallengeRivalriesEmptyCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final v = context.dc;
+    final t = context.txt;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: v.surface.withValues(alpha: 0.72),
+        borderRadius: AppSpacing.roundedLG,
+        border: Border.all(color: v.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'No rivalries yet',
+            style: t.playerName.copyWith(fontSize: 15),
+          ),
+          AppSpacing.vGapXS,
+          Text(
+            'Remember this game from class? Tap Create above or join with a code.',
+            style: t.bodySmall.copyWith(color: v.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class ChallengeHistoryEmptyState extends StatelessWidget {
   const ChallengeHistoryEmptyState({super.key, required this.message});
 

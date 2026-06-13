@@ -225,7 +225,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
     final state = _isChallenge
         ? ref.watch(challengeGameProvider(_challengeCode!))
         : ref.watch(gameProvider);
-    final session = ref.watch(matchSessionProvider);
+    final session = _isChallenge
+        ? const MatchSession()
+        : ref.watch(matchSessionProvider);
     final secondsLeft = _isChallenge
         ? ref.watch(challengeTurnTimerProvider(_challengeCode!))
         : ref.watch(turnTimerProvider);
@@ -322,20 +324,22 @@ class _GameScreenState extends ConsumerState<GameScreen>
       }
     });
 
-    ref.listen<MatchSession>(matchSessionProvider, (prev, next) {
-      if (!mounted) return;
-      if (next.outOfTurnsPending && !(prev?.outOfTurnsPending ?? false)) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _showOutOfTurnsSheet(context);
-        });
-      }
-      if (next.pendingRiposteOffer && !(prev?.pendingRiposteOffer ?? false)) {
-        ref.read(matchCoachTourProvider.notifier).onRivalChain();
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _showRiposteOffer(context);
-        });
-      }
-    });
+    if (!_isChallenge) {
+      ref.listen<MatchSession>(matchSessionProvider, (prev, next) {
+        if (!mounted) return;
+        if (next.outOfTurnsPending && !(prev?.outOfTurnsPending ?? false)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _showOutOfTurnsSheet(context);
+          });
+        }
+        if (next.pendingRiposteOffer && !(prev?.pendingRiposteOffer ?? false)) {
+          ref.read(matchCoachTourProvider.notifier).onRivalChain();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _showRiposteOffer(context);
+          });
+        }
+      });
+    }
 
     // Tutorial: react to human moves and box captures.
     if (!_isChallenge) {

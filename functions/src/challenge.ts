@@ -9,13 +9,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import { onCall } from 'firebase-functions/v2/https';
 
 import { GameRules, GameState, type GameStateJson } from './game_rules';
-import { resolveLives } from './lives';
 import { sendChallengeInvitePush } from './notifications';
-import {
-  coinsForMatch,
-  levelForXp,
-  xpForMatch,
-} from './progression';
 import { assertAuth, callableOptions, db } from './shared';
 
 export const CHALLENGE_ROWS = 6;
@@ -28,6 +22,7 @@ export const ACTIVE_STALE_HOURS = 24;
 const CODE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const CODE_LENGTH = 6;
 const TURN_TIMEOUT_MS = TURN_TIMEOUT_SECONDS * 1000;
+const CHALLENGE_PUSH_COOLDOWN_MS = 60_000;
 
 export type ChallengeStatus =
   | 'waiting'
@@ -120,6 +115,57 @@ function pickRandomLegalEdge(state: GameState): string | null {
   const moves = GameRules.legalMoves(state);
   if (moves.length === 0) return null;
   return moves[Math.floor(Math.random() * moves.length)];
+}
+
+async function hostHasChallengeHistoryWith(
+  hostUid: string,
+  targetUid: string,
+): Promise<boolean> {
+  const snap = await profileRef(hostUid)
+    .collection('matches')
+    .orderBy('playedAt', 'desc')
+    .limit(40)
+    .get();
+  return snap.docs.some((doc) => {
+    const data = doc.data();
+    return data.modeLabel === 'Challenge' && data.opponentUid === targetUid;
+  });
+}
+
+async function trySendChallengeInvitePush(
+  hostUid: string,
+  targetUid: string,
+  hostDisplayName: string,
+  code: string,
+): Promise<void> {
+  const isRival = await hostHasChallengeHistoryWith(hostUid, targetUid);
+  if (!isRival) {
+    console.log('FCM challenge invite skipped', {
+      reason: 'not_recent_rival',
+      hostUid,
+      targetUid,
+      code,
+    });
+    return;
+  }
+
+  const throttleRef = db
+    .collection('challenge_push_throttle')
+    .doc(`${hostUid}_${targetUid}`);
+  const throttleSnap = await throttleRef.get();
+  const until = throttleSnap.data()?.until as number | undefined;
+  if (until != null && until > Date.now()) {
+    console.log('FCM challenge invite skipped', {
+      reason: 'throttled',
+      hostUid,
+      targetUid,
+      code,
+    });
+    return;
+  }
+
+  await sendChallengeInvitePush(targetUid, hostDisplayName, code);
+  await throttleRef.set({ until: Date.now() + CHALLENGE_PUSH_COOLDOWN_MS });
 }
 
 /**
@@ -255,7 +301,7 @@ export const createChallenge = onCall(callableOptions, async (request) => {
   }
 
   if (targetUid && typeof targetUid === 'string' && targetUid !== uid) {
-    await sendChallengeInvitePush(targetUid, hostDisplayName, code);
+    await trySendChallengeInvitePush(uid, targetUid, hostDisplayName, code);
   }
 
   return { success: true, code };
@@ -386,7 +432,7 @@ function profileRef(uid: string): DocumentReference {
 }
 
 function outcomeForUid(data: ChallengeDoc, uid: string): 'win' | 'loss' | 'tie' {
-  if (data.status === 'abandoned') {
+  if (data.status === 'finished' || data.status === 'abandoned') {
     if (!data.winnerUid) return 'tie';
     return data.winnerUid === uid ? 'win' : 'loss';
   }
@@ -401,7 +447,7 @@ function outcomeForUid(data: ChallengeDoc, uid: string): 'win' | 'loss' | 'tie' 
 }
 
 /**
- * Idempotent settlement: profile stats + `profiles/{uid}/matches` entry.
+ * Idempotent settlement: challenge match history only (no economy).
  * Client calls once when the room reaches a terminal state.
  */
 export const recordChallengeMatch = onCall(callableOptions, async (request) => {
@@ -413,7 +459,6 @@ export const recordChallengeMatch = onCall(callableOptions, async (request) => {
 
   const normalized = code.trim().toUpperCase();
   const challengeRef = challengesRef(normalized);
-  const nowMs = Date.now();
 
   return db.runTransaction(async (txn) => {
     const challengeSnap = await txn.get(challengeRef);
@@ -436,8 +481,6 @@ export const recordChallengeMatch = onCall(callableOptions, async (request) => {
     }
 
     const outcome = outcomeForUid(data, uid);
-    const win = outcome === 'win';
-    const tie = outcome === 'tie';
     const opponentLabel =
       uid === data.hostUid
         ? (data.guestDisplayName ?? 'Rival')
@@ -449,32 +492,6 @@ export const recordChallengeMatch = onCall(callableOptions, async (request) => {
     if (!profileSnap.exists) {
       throw new HttpsError('not-found', 'Profile not found.');
     }
-    const profile = profileSnap.data()!;
-
-    const deltaCoins = coinsForMatch(win, tie);
-    const deltaXp = xpForMatch(win, tie);
-    const newXp = Number(profile.xp ?? 0) + deltaXp;
-
-    let rating = Number(profile.rating ?? 1000);
-    if (win) rating += 18;
-    else if (tie) rating += 2;
-    else rating -= 18;
-    if (rating < 800) rating = 800;
-
-    const seasonBest = Math.max(Number(profile.seasonBestRating ?? 1000), rating);
-
-    const resolved = resolveLives(
-      Number(profile.lives ?? 5),
-      profile.nextLifeAt as Timestamp | null | undefined,
-      nowMs,
-    );
-
-    const newStreak = win
-      ? Number(profile.winStreak ?? 0) + 1
-      : tie
-        ? Number(profile.winStreak ?? 0)
-        : 0;
-    const bestStreak = Math.max(Number(profile.bestWinStreak ?? 0), newStreak);
 
     const matchesRef = profileRef(uid).collection('matches').doc();
 
@@ -485,26 +502,6 @@ export const recordChallengeMatch = onCall(callableOptions, async (request) => {
       challengeCode: normalized,
       playedAt: FieldValue.serverTimestamp(),
       ...(opponentUid ? { opponentUid } : {}),
-    });
-
-    txn.update(profileRef(uid), {
-      coins: Number(profile.coins ?? 0) + deltaCoins,
-      xp: newXp,
-      level: levelForXp(newXp),
-      wins: Number(profile.wins ?? 0) + (win ? 1 : 0),
-      losses: Number(profile.losses ?? 0) + (outcome === 'loss' ? 1 : 0),
-      ties: Number(profile.ties ?? 0) + (tie ? 1 : 0),
-      gamesPlayed: Number(profile.gamesPlayed ?? 0) + 1,
-      winStreak: newStreak,
-      bestWinStreak: bestStreak,
-      rating,
-      seasonBestRating: seasonBest,
-      seasonWins: Number(profile.seasonWins ?? 0) + (win ? 1 : 0),
-      seasonLosses: Number(profile.seasonLosses ?? 0) + (outcome === 'loss' ? 1 : 0),
-      seasonTies: Number(profile.seasonTies ?? 0) + (tie ? 1 : 0),
-      lives: resolved.lives,
-      nextLifeAt: resolved.nextLifeAt,
-      updatedAt: FieldValue.serverTimestamp(),
     });
 
     txn.update(challengeRef, {

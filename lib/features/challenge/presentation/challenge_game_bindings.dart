@@ -18,6 +18,7 @@ import '../../home/domain/home_ui_models.dart';
 import '../../profile/data/profile_repository.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../../settings/providers/settings_provider.dart';
+import '../domain/challenge_match_result.dart';
 import '../domain/challenge_exceptions.dart';
 import '../domain/challenge_room.dart';
 import '../domain/challenge_status.dart';
@@ -46,16 +47,39 @@ class ChallengeGameBindings extends ConsumerStatefulWidget {
 class _ChallengeGameBindingsState extends ConsumerState<ChallengeGameBindings> {
   bool _settled = false;
   bool _dialogShown = false;
+  bool _checkedInitialTerminal = false;
 
   String get _code => widget.code.trim().toUpperCase();
 
+  GameState _gameStateFor(ChallengeRoom room) {
+    final fromRoom = room.gameState;
+    if (fromRoom != null) return fromRoom;
+    return ref.read(challengeGameProvider(_code));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final roomAsync = ref.watch(challengeRoomProvider(_code));
+    if (!_checkedInitialTerminal) {
+      _checkedInitialTerminal = true;
+      final room = roomAsync.valueOrNull;
+      if (room != null && _shouldSettle(room) && !_settled) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || _settled) return;
+          unawaited(_settle(room, showDialog: false));
+        });
+      }
+    }
+
     ref.listen(challengeRoomProvider(_code), (prev, next) {
       final room = next.valueOrNull;
       if (room == null || _settled) return;
       if (!_shouldSettle(room)) return;
-      unawaited(_settle(room));
+
+      final prevRoom = prev?.valueOrNull;
+      final showDialog =
+          prevRoom != null && !_shouldSettle(prevRoom) && _shouldSettle(room);
+      unawaited(_settle(room, showDialog: showDialog));
     });
     return widget.child;
   }
@@ -65,15 +89,15 @@ class _ChallengeGameBindingsState extends ConsumerState<ChallengeGameBindings> {
         room.status == ChallengeStatus.abandoned;
   }
 
-  Future<void> _settle(ChallengeRoom room) async {
+  Future<void> _settle(ChallengeRoom room, {required bool showDialog}) async {
     if (_settled) return;
     _settled = true;
 
     final myUid = ref.read(currentUserProvider)?.uid;
     final myPlayerId = room.playerIdForUid(myUid ?? '') ?? 'A';
-    final gameState = ref.read(challengeGameProvider(_code));
+    final gameState = _gameStateFor(room);
     final opponent = room.opponentDisplayNameFor(myUid ?? '');
-    final result = _matchResult(room, gameState, myPlayerId, myUid);
+    final result = challengeMatchResult(room, myUid);
 
     final repo = ref.read(profileRepositoryProvider);
     try {
@@ -99,27 +123,12 @@ class _ChallengeGameBindingsState extends ConsumerState<ChallengeGameBindings> {
       ),
     );
 
-    if (_dialogShown) return;
+    if (!showDialog || _dialogShown) return;
     _dialogShown = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _showResultDialog(room, gameState, myPlayerId, result);
     });
-  }
-
-  MatchResult _matchResult(
-    ChallengeRoom room,
-    GameState gameState,
-    String myPlayerId,
-    String? myUid,
-  ) {
-    if (room.status == ChallengeStatus.abandoned) {
-      if (room.winnerUid == null) return MatchResult.tie;
-      return room.winnerUid == myUid ? MatchResult.win : MatchResult.loss;
-    }
-    if (gameState.isTie) return MatchResult.tie;
-    if (gameState.winnerId == myPlayerId) return MatchResult.win;
-    return MatchResult.loss;
   }
 
   MatchOutcome _outcomeFromResult(MatchResult result) {
@@ -165,20 +174,9 @@ class _ChallengeGameBindingsState extends ConsumerState<ChallengeGameBindings> {
     final opponentUid = room.opponentUidFor(myUid);
     final myName = settings.youName.trim().isEmpty ? 'You' : settings.youName;
 
-    final bool iWon;
-    final bool isTie;
-    if (room.status == ChallengeStatus.abandoned) {
-      if (room.winnerUid == null) {
-        iWon = false;
-        isTie = true;
-      } else {
-        iWon = room.winnerUid == myUid;
-        isTie = false;
-      }
-    } else {
-      isTie = gameState.isTie;
-      iWon = !isTie && gameState.winnerId == myPlayerId;
-    }
+    final labels = challengeResultLabels(room, myUid);
+    final iWon = labels.iWon;
+    final isTie = labels.isTie;
 
     final headline = isTie
         ? "It's a Tie!"
