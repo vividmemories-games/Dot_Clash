@@ -1,9 +1,9 @@
-# Challenge a Friend (R14) — Session Summary
+# Challenge a Friend — Session Summary
 
 **Date:** 2026-06-08 through 2026-06-13  
 **Branch:** `one-to-one-challange`  
 **Firebase projects:** `dot-clash-dev` (dev flavor) · `dot-clash-72cc6` (prod / closed testing)  
-**Current build:** `1.3.1+18`  
+**Current build:** `1.4.1+19` (see `pubspec.yaml`)  
 **Canonical plan:** `.cursor/plans/challenge_a_friend.plan.md`
 
 ---
@@ -13,12 +13,13 @@
 - **Phase 1 (backend)** — Cloud Functions, rules, indexes, scheduler
 - **Phase 2 (Flutter module)** — lobby, join, share, entry on Home
 - **Phase 3** — playable live 6×6 board via `GameScreen` + human `submitChallengeMove`
-- **Phase 3.8+** — `recordChallengeMatch`, Profile challenge history, post-game fixes
+- **Phase 3.8+** — `recordChallengeMatch`, settlement dialog, Challenge hub rivalries + history
 - **Phase 4** — App Links + FCM (agent + manual gates on prod)
 - **Post–Phase 4 gameplay fixes** — optimistic moves, zero-move abandon
-- **Phase 5** — H2H UI (Rematch, series, recent rivals, share win, Profile revenge)
+- **Phase 5** — H2H UI (Rematch, series, recent rivals, share win)
 - **FCM latency fixes** — foreground Android snackbar, high-priority push, notification channel
 - **Prod two-device QA** — builds `+15` through `+17` on real iPhone + Android (`dot-clash-72cc6`)
+- **Build prep (2026-06-13)** — plan gap fixes, Codex review fixes, analyze compile fixes, rivalries UX moved to Challenge hub
 
 ---
 
@@ -31,11 +32,11 @@
 | **Dart serialization** | `disabledCells` added to `GameState.toJson` / `fromJson`; test in `test/game/game_state_serialization_test.dart` |
 | **`functions/src/game_rules.ts`** | TypeScript port of `GameRules` + `GameState` (parity with `test/game/rules_test.dart`) |
 | **`functions/src/challenge.ts`** | `createChallenge`, `joinChallenge`, `submitChallengeMove`, `abandonChallenge`, `recordChallengeMatch`; shared `commitChallengeMoveInTransaction` |
-| **`functions/src/challenge_scheduler.ts`** | `processChallengeTimeouts` (every 1 min) — server turn timeout with transactional idempotency |
+| **`functions/src/challenge_scheduler.ts`** | `processChallengeTimeouts` (every 1 min) — turn timeout, waiting-room expiry, 24h stale active abandon |
 | **`functions/src/notifications.ts`** | `registerFcmToken`, FCM invite helper for `createChallenge({ targetUid })` |
 | **`functions/src/index.ts`** | Exports all new callables + scheduler |
 | **`firestore.rules`** | `challenges/{code}` — read for host/guest only; writes denied (functions only); `matches` allows optional `challengeCode` |
-| **`firestore.indexes.json`** | Composite indexes for scheduler queries (`status` + `turnStartedAt`, `status` + `expiresAt`) |
+| **`firestore.indexes.json`** | Composite indexes for scheduler (`status` + `turnStartedAt`, `status` + `expiresAt`, `status` + `lastActivityAt`) |
 | **`functions/.eslintrc.js`** | Added so `npm run lint` works |
 
 ### Deployed
@@ -75,7 +76,7 @@ firebase deploy --only functions,firestore:rules -P dot-clash-dev
 | Domain | `challenge_room.dart`, `challenge_status.dart`, `challenge_exceptions.dart` |
 | Data | `challenge_repository.dart` — callables + Firestore `challenges/{code}` stream |
 | Providers | `challenge_providers.dart` — `challengeRoomProvider`, etc. |
-| UI | `challenge_lobby_screen.dart`, `join_challenge_sheet.dart`, `challenge_share_sheet.dart`, `challenge_entry_section.dart` |
+| UI | `challenge_lobby_screen.dart`, `join_challenge_sheet.dart`, `challenge_share_sheet.dart`, `challenge_home_screen.dart` |
 
 **Router (`app_router.dart`):**
 
@@ -83,7 +84,7 @@ firebase deploy --only functions,firestore:rules -P dot-clash-dev
 - `/challenge/play/:code` — live match (Phase 3 wires `GameScreen`)
 - Auth redirect preserves `?next=/challenge/lobby/CODE` after sign-in
 
-**Home:** `ChallengeEntrySection` below `HomeActionRow` — **Create** / **Join**
+**Home:** Play Modes grid → **Challenge a Friend** tile opens `/challenge` (`ChallengeHomeScreen`)
 
 **Tests:** `test/challenge/challenge_room_test.dart`
 
@@ -109,7 +110,7 @@ firebase deploy --only functions,firestore:rules -P dot-clash-dev
 | 3.6 | ✅ | No client-side timeout moves; server `turnStartedAt` drives timer |
 | 3.7 | ✅ | Abandon on leave; undo/restart disabled in challenge |
 | 3.8 | ✅ | `ScoreStrip` turn pills perspective-aware via `localPlayerId` (host/guest see correct YOUR TURN / WAITING / THEIR TURN) |
-| 3.14 | ✅ | R11–R13 regression — campaign Next level, leave dialog, quick match unchanged |
+| 3.14 | ✅ | Builds 11–13 regression — campaign Next level, leave dialog, quick match unchanged |
 | 3.15 | N/A | Rematch CTA moved to Phase 5.0 |
 
 **Key files:**
@@ -129,16 +130,18 @@ firebase deploy --only functions,firestore:rules -P dot-clash-dev
 
 ---
 
-## Phase 3.8+ — Settlement & Profile ✅ Complete
+## Phase 3.8+ — Settlement & match history ✅ Complete
 
 | Step | Status | Details |
 |------|--------|---------|
-| `recordChallengeMatch` | ✅ | Callable in `functions/src/challenge.ts` — idempotent via `settledUids.{uid}`; stats + `profiles/{uid}/matches` in one transaction |
+| `recordChallengeMatch` | ✅ | Callable in `functions/src/challenge.ts` — idempotent via `settledUids.{uid}`; writes `profiles/{uid}/matches` only (no coins/XP/rating/lives) |
 | Firestore rules | ✅ | `validMatchCreate` allows optional `challengeCode` on match docs |
 | Result dialog | ✅ | `ChallengeGameBindings` — root navigator dialog on terminal room status |
-| Profile UI | ✅ | `ProfileChallengeHistorySection` — **FRIEND CHALLENGES** on Profile tab (`challengeRecentMatchesProvider`) |
+| Match history UI | ✅ | `ChallengeHomeScreen` rivalries + `ChallengeHistoryScreen` (Rivals / History tabs) |
 
-**Client settlement path:** `challenge_game_bindings` → `ProfileRepository.recordChallengeMatch(code)` → callable; local fallback `settleMatch` + `matches` write if callable unavailable.
+**Client settlement path:** `challenge_game_bindings` → `ProfileRepository.recordChallengeMatch(code)` → callable; dev-only local fallback `settleMatch` if callable unavailable (`AppEnv.isDev`).
+
+**Outcome authority:** `challenge_match_result.dart` — win/loss/tie from server `room.winnerUid`, not local board state.
 
 ---
 
@@ -175,7 +178,8 @@ firebase deploy --only functions,firestore:rules -P dot-clash-dev
 | Room created | `createChallenge` |
 | Guest joins | `joinChallenge` |
 | Line drawn | `submitChallengeMove` |
-| Turn timeout (~30s) | `processChallengeTimeouts` (random legal move) |
+| Turn timeout (~30s) | `processChallengeTimeouts` (random legal move); client backup via `ChallengeGameNotifier.onTurnTimedOut` |
+| Stale active match (24h) | `processChallengeTimeouts` → `abandoned` |
 | Match ends (stats) | `recordChallengeMatch` (per player, idempotent) |
 | Leave | `abandonChallenge` |
 
@@ -183,9 +187,11 @@ Host = player `A`, guest = player `B` on server. Each client uses `GameConfig.my
 
 ### Profile / match history
 
-- **Stats** (wins, games played, coins, rating): `recordChallengeMatch` or fallback `settleMatch`
-- **History list**: `profiles/{uid}/matches` with `modeLabel: 'Challenge'`; shown under Profile → **FRIEND CHALLENGES**
-- `recentMatchesProvider` exists on Home data layer; Profile filters `modeLabel == 'Challenge'`
+- **Stats** (wins, games played, coins, rating): campaign / quick match only — Challenge settlement is **history-only** via `recordChallengeMatch`
+- **History list**: `profiles/{uid}/matches` with `modeLabel: 'Challenge'`
+- **UI**: Challenge hub (`ChallengeHomeScreen`) — up to 5 recent rivals + rematch; full list on `ChallengeHistoryScreen` (`/profile/challenge-history`)
+- Profile tab no longer shows rivalries — identity, economy, campaign progress, aggregate stats only
+- `challengeRecentMatchesProvider` / `challengeRivalsProvider` power Challenge hub + history screens
 
 ### Firebase Functions shell vs Postman
 
@@ -228,7 +234,7 @@ Verbose terminal output (MESA, WebView, UMP consent) is **normal** on emulator. 
 | Flutter picker `[1]` vs `[2]` | `[1]` = Android, `[2]` = iOS — use `-d emulator-5554` / `-d <ios-udid>` |
 | “Room not ready” after win | Fixed — hot restart both apps after pulling latest |
 | `recordChallengeMatch` fails | Deploy functions to `dot-clash-dev`; watch for `[Callable] recordChallengeMatch succeeded` |
-| Android revenge push “missing” | Often **foreground** — fixed in `+18` (snackbar + JOIN). Background: check `FCM challenge invite sent` in logs |
+| Android revenge push “missing” | Often **foreground** — fixed in build 18 (snackbar + JOIN). Background: check `FCM challenge invite sent` in logs |
 | `processChallengeTimeouts` scheduler 500 | Separate from FCM — check Cloud Logging for `processchallengetimeouts` errors |
 
 ---
@@ -266,11 +272,11 @@ Register both tokens in [Firebase Console → dot-clash-dev → App Check](https
 | **1 — Backend** | ✅ Done |
 | **2 — Flutter module** (lobby, join, share, home entry) | ✅ Done |
 | **3 — Playable match** (3.1–3.14; 3.15 N/A → Phase 5.0) | ✅ Done |
-| **3.8+ — Settlement & Profile** | ✅ Done |
+| **3.8+ — Settlement & match history** | ✅ Done |
 | **4 — App Links + FCM** | ✅ Done (2026-06-11) |
 | **5 — H2H UI** (agent steps) | ✅ Done (2026-06-11) |
-| **5.4–5.5 manual QA** | ⏳ Retest on build `+18` after FCM fixes |
-| **6 — QA + ship R14** | ⏳ Pending |
+| **5.4–5.5 manual QA** | ⏳ Retest on build 19 after FCM + settlement + Challenge hub UX |
+| **6 — QA + ship build 19** | ⏳ Pending deploy + device matrix |
 
 ## Phase 4 — App Links + FCM ✅ (2026-06-11)
 
@@ -281,7 +287,7 @@ Register both tokens in [Firebase Console → dot-clash-dev → App Check](https
 | 4.3 | ✅ | iOS `CFBundleURLTypes` (`dotclash`), Associated Domains, `UIBackgroundModes` remote-notification |
 | 4.4 | ✅ | `ChallengeIngressListener` → `/challenge/lobby/:code` (HTTPS, custom scheme, cold start) |
 | 4.5 | ✅ | `FcmService` — permission, `registerFcmToken` on login, tap → lobby |
-| 4.6 | ✅ | Home challenge entry (Phase 2) — unchanged |
+| 4.6 | ✅ | Home Play Modes → Challenge tile → `/challenge` |
 | 4.7 | ✅ | Draft GitHub Pages files in `docs/github-pages/` |
 
 **Key files:** `lib/core/deep_links/challenge_link_parser.dart`, `lib/services/deep_links/challenge_ingress_listener.dart`, `lib/services/push/fcm_service.dart`, `lib/app.dart`, `lib/main.dart`
@@ -303,12 +309,12 @@ Register both tokens in [Firebase Console → dot-clash-dev → App Check](https
 | 5.0 | ✅ | Rematch CTA on result dialog → `createChallenge(targetUid)` |
 | 5.1 | ✅ | `head_to_head_stats.dart` — aggregate W–L–T by `opponentUid` |
 | 5.2 | ✅ | Result dialog series line (`Series: 2–1–0`) |
-| 5.3 | ✅ | Home `ChallengeEntrySection` **Recent rivals** → re-challenge |
-| 5.6 | ✅ | Share win card (clipboard); Profile **REVENGE** / **REMATCH** rows |
+| 5.3 | ✅ | `ChallengeHomeScreen` — **Recent rivals** (up to 5) + rematch |
+| 5.6 | ✅ | Share win card (clipboard); rematch from result dialog + Challenge hub rival rows |
 | Backend | ✅ | `recordChallengeMatch` writes `opponentUid`; rules allow optional field |
 | 5.4–5.5 | ⏳ | Manual push/H2H QA — see device matrix below |
 
-**Key files:** `head_to_head_stats.dart`, `challenge_game_bindings.dart`, `challenge_entry_section.dart`, `profile_challenge_history_section.dart`, `challenge_win_share.dart`, `functions/src/notifications.ts`
+**Key files:** `head_to_head_stats.dart`, `challenge_game_bindings.dart`, `challenge_home_screen.dart`, `challenge_history_screen.dart`, `challenge_match_result.dart`, `challenge_win_share.dart`, `functions/src/notifications.ts`, `functions/src/challenge.ts`
 
 **Deploy for H2H on new matches:**
 
@@ -347,7 +353,7 @@ Two physical devices, `dot-clash-72cc6`, Google (Android) + Apple (iPhone).
 | 3 | Finish match / settlement / series | ✅ Works well |
 | 4 | Rematch + push | ⚠️ Android→iPhone ✅; iPhone→Android **delayed** (not broken) |
 | 5 | Home recent rivals + push | ⚠️ Same as 4 |
-| 6 | Profile REVENGE/REMATCH + push | ⚠️ Same as 4 |
+| 6 | Challenge hub rematch + push | ⚠️ Same as 4 (was Profile REVENGE — moved to Challenge hub) |
 | 7 | Share win (clipboard) | ✅ Works well |
 | 8 | Series after 3 matches vs same friend | ✅ Works well |
 
@@ -368,7 +374,7 @@ Initial report looked like missing Android push. Investigation showed:
 
 ---
 
-## FCM invite latency fixes (2026-06-13, build `+18`)
+## FCM invite latency fixes (2026-06-13, build 18)
 
 | Fix | Layer | Details |
 |-----|-------|---------|
@@ -386,9 +392,9 @@ firebase deploy --only functions -P dot-clash-72cc6
 firebase deploy --only functions -P dot-clash-dev
 ```
 
-**Requires new app build `+18`** for foreground snackbar + Android channel. Functions deploy alone improves background priority/logging only.
+**Requires app build 18+** for foreground snackbar + Android channel. Functions deploy alone improves background priority/logging only.
 
-### Retest after `+18`
+### Retest after build 18
 
 | Scenario | Expected |
 |----------|----------|
@@ -399,24 +405,62 @@ firebase deploy --only functions -P dot-clash-dev
 
 ---
 
+## Build prep — plan gaps & hardening (2026-06-13, build 19)
+
+| Area | Status | Details |
+|------|--------|---------|
+| Client turn-timeout backup | ✅ | `ChallengeGameNotifier.onTurnTimedOut` submits random legal move when server scheduler lags; wired in `GameScreen` for challenge mode |
+| 24h stale auto-abandon | ✅ | `processChallengeTimeouts` abandons active rooms with `lastActivityAt` > 24h; composite index `status` + `lastActivityAt` |
+| Analytics | ✅ | `challenge_started`, `challenge_finished` in `AnalyticsService` |
+| Firestore rules | ✅ | `validMatchCreate()` uses `hasOnly(...)` allowlist |
+| Build docs | ✅ | `docs/RELEASES.md` build 19 section; `pubspec.yaml` → `1.4.1+19` |
+| Scheduler robustness | ✅ | Top-level try/catch in `processChallengeTimeouts` (500 mitigation) |
+
+**Tests added:** `challenge_match_result_test.dart`, `challenge_game_notifier_test.dart` (timeout path)
+
+---
+
+## Codex review fixes (2026-06-13)
+
+| Finding | Fix |
+|---------|-----|
+| Wrong winner from local board | `challenge_match_result.dart` — outcome from `room.winnerUid` |
+| Reconnect missed settlement | `ChallengeGameBindings` — post-frame settle if room already terminal on first load (`_checkedInitialTerminal`) |
+| `matchSession` leak in challenge | `GameScreen` — `const MatchSession()` + gated listener (challenge vs campaign) |
+| Unrestricted rematch push | `createChallenge` — recent-rival gate + 60s throttle (`challenge_push_throttle`) |
+| Challenge economy bleed | `recordChallengeMatch` — match history only; no coins/XP/rating/lives |
+
+**Compile fix:** removed invalid `fireImmediately` on `WidgetRef.listen`; `_gameStateFor(room)` returns non-null `GameState` for analytics + result dialog.
+
+---
+
+## Challenge hub UX — rivalries moved from Profile (2026-06-13)
+
+**Before:** Profile tab showed **RIVALRIES** (`ProfileChallengeHistorySection`) — top rival + “View all”.
+
+**After:** Single home for social Challenge context:
+
+| Screen | Content |
+|--------|---------|
+| **`ChallengeHomeScreen`** (`/challenge`) | Create / Join · **RIVALRIES** (up to 5 `RivalListTile` with rematch) · empty-state card · View all |
+| **`ChallengeHistoryScreen`** | Rivals tab + History tab (unchanged) |
+| **Profile** | Avatar, rank, economy, campaign progress, stats — no rivalries |
+
+**Rationale:** One obvious rematch path; Profile stays “who am I”; Challenge hub fills previously empty space below Create/Join.
+
+**Files:** `challenge_home_screen.dart`, `challenge_history_widgets.dart` (`ChallengeRivalriesEmptyCard`); removed `profile_challenge_history_section.dart`.
+
+---
+
 ## Known issue — `processChallengeTimeouts` scheduler (2026-06-13)
 
 Cloud Scheduler job `firebase-schedule-processChallengeTimeouts-us-central1` returned **HTTP 500** when invoking the function URL. **Unrelated to FCM invite push.**
 
-**Impact if unfixed:** server turn timeouts and waiting-room expiry may not run on schedule.
+**Mitigations in build 18+:** top-level try/catch; 24h stale abandon; client-side turn-timeout backup.
+
+**Impact if still failing:** server turn timeouts may lag until client backup fires; waiting-room expiry / stale abandon may not run on schedule.
 
 **Debug:** Cloud Logging → `resource.labels.service_name="processchallengetimeouts"` + `severity>=ERROR`
-
----
-
-## Profile UX — follow-up (not a ship blocker)
-
-Profile **FRIEND CHALLENGES** lists every recent challenge row; will grow into a long scroll as match volume increases.
-
-**Recommended polish (Phase 6 or post-R14):**
-
-- Cap to **3 rows** + “View all” screen, or
-- **Rivals-first** (reuse `challengeRivalsProvider` — W–L–T per opponent), with flat match list secondary
 
 ---
 
@@ -424,14 +468,13 @@ Profile **FRIEND CHALLENGES** lists every recent challenge row; will grow into a
 
 | Priority | Item | Notes |
 |----------|------|-------|
-| **1** | Deploy functions to prod + dev | FCM high-priority + logging |
-| **2** | Build + install **`+18`** on both phones | Required for foreground snackbar + channel |
-| **3** | Retest FCM matrix (4–6) | Foreground + background on Android |
-| **4** | Investigate scheduler 500 | `processChallengeTimeouts` |
-| **5** | Phase 6 | Full challenge matrix + R11–R13 regression → ship R14 |
-| Polish | Profile challenge history layout | Rivals-first or capped list |
-| Backend | `dailyMissions` in `recordChallengeMatch` | Parity with campaign |
-| Backend | Challenge-specific daily mission | e.g. “Win 1 friend challenge” |
+| **1** | Deploy backend to prod + dev | `functions`, `firestore:rules`, `firestore:indexes` — FCM throttle, economy fix, scheduler, 24h abandon |
+| **2** | Build + install **build 19** (`1.4.1+19`) on both phones | Foreground snackbar + channel + settlement + Challenge hub UX |
+| **3** | Retest FCM matrix (4–6) | Foreground + background on Android; rematch from Challenge hub |
+| **4** | Phase 6 manual QA | Full challenge matrix + builds 11–13 regression → ship build 19 |
+| **5** | Verify scheduler after deploy | Confirm `processChallengeTimeouts` no longer 500 |
+| Polish | Route rename | `/profile/challenge-history` → `/challenge/history` (optional) |
+| Backend | `dailyMissions` for Challenge | Parity with campaign; e.g. “Win 1 friend challenge” |
 
 ---
 
@@ -440,7 +483,7 @@ Profile **FRIEND CHALLENGES** lists every recent challenge row; will grow into a
 ```bash
 # Verify
 cd functions && npm run build && npm run lint
-flutter test test/game/game_state_serialization_test.dart test/challenge/challenge_room_test.dart test/challenge/challenge_game_notifier_test.dart test/challenge/head_to_head_stats_test.dart test/challenge/challenge_win_share_test.dart test/deep_links/challenge_link_parser_test.dart
+flutter test test/game/game_state_serialization_test.dart test/challenge/challenge_room_test.dart test/challenge/challenge_game_notifier_test.dart test/challenge/challenge_match_result_test.dart test/challenge/head_to_head_stats_test.dart test/challenge/challenge_win_share_test.dart test/deep_links/challenge_link_parser_test.dart
 
 # Deploy prod backend (functions + rules)
 firebase deploy --only functions,firestore:rules -P dot-clash-72cc6
@@ -459,4 +502,4 @@ flutter emulators --launch <id>
 
 ---
 
-*Updated 2026-06-13 — Phase 5 agent complete; prod QA on +17; FCM latency fixes in +18; retest 5.4–5.5 pending.*
+*Updated 2026-06-13 — Build 19 (`1.4.1+19` per pubspec); plan gaps + Codex fixes; rivalries on Challenge hub; analyze clean; 115 tests passing; deploy + device QA pending.*
