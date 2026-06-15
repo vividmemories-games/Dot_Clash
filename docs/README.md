@@ -13,6 +13,7 @@ Internal engineering documentation for the Dot Clash app repo.
 | [DECISIONS.md](DECISIONS.md) | Immutable architecture and product decisions (short index) |
 | [architecture.md](architecture.md) | System layers, local vs Challenge game paths, Firebase map, navigation |
 | [RELEASES.md](RELEASES.md) | Build history, store notes, regression gates, upload checklists |
+| [LAUNCH.md](LAUNCH.md) | **Public launch runbook** — week plan, gates, QA matrix, rollout |
 | [summary.md](summary.md) | Challenge a Friend implementation log and QA notes |
 | [flutter_firebase_store_release_checklist.md](flutter_firebase_store_release_checklist.md) | Store release checklist |
 | [codex-workflow.md](codex-workflow.md) | Codex one-shot review workflow |

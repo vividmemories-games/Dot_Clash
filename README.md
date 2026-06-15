@@ -5,6 +5,7 @@ Nostalgia-powered Dots and Boxes — Flutter mobile game with Firebase, AdMob, a
 Full setup (Firebase, flavors, signing, store checklist): **[SETUP.md](SETUP.md)**  
 System architecture (local vs Challenge, Firebase map): **[docs/architecture.md](docs/architecture.md)**  
 Active closed-testing release tracker: **[docs/RELEASES.md](docs/RELEASES.md)**  
+**Public launch runbook:** **[docs/LAUNCH.md](docs/LAUNCH.md)**  
 New Mac / laptop migration (keys, keystore, `.p8` map): **[MIGRATION_RUNBOOK.md](MIGRATION_RUNBOOK.md)**
 
 ---

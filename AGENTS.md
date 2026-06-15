@@ -99,7 +99,7 @@ firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-
 | Auth / profile | [`lib/features/auth/`](lib/features/auth/), [`lib/features/profile/`](lib/features/profile/) |
 | Ads / IAP | [`lib/services/ads/`](lib/services/ads/), [`lib/services/iap/`](lib/services/iap/), [`SETUP.md`](SETUP.md) |
 | Push / deep links | [`lib/services/push/`](lib/services/push/), [`lib/services/deep_links/`](lib/services/deep_links/) |
-| Store upload / regression | [`docs/RELEASES.md`](docs/RELEASES.md), [`README.md`](README.md) |
+| Store upload / regression | [`docs/RELEASES.md`](docs/RELEASES.md), [`docs/LAUNCH.md`](docs/LAUNCH.md), [`README.md`](README.md) |
 | Signing / keys / flavors | [`SETUP.md`](SETUP.md) |
 | Security (App Check, rules) | [`SETUP.md`](SETUP.md) § App Check, [`firestore.rules`](firestore.rules), [`docs/architecture.md`](docs/architecture.md) |
 | Why was it built this way? | [`docs/DECISIONS.md`](docs/DECISIONS.md) |
@@ -160,6 +160,7 @@ Documentation is part of every relevant change:
 |-----|------|
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Intended invariants |
 | [`docs/architecture.md`](docs/architecture.md) | Flows, Firebase map |
+| [`docs/LAUNCH.md`](docs/LAUNCH.md) | Public launch runbook (gates, QA, rollout) |
 | [`docs/RELEASES.md`](docs/RELEASES.md) | Build history, upload checklist |
 | [`docs/summary.md`](docs/summary.md) | Challenge implementation log |
 | [`docs/flutter_firebase_store_release_checklist.md`](docs/flutter_firebase_store_release_checklist.md) | Store release checklist |

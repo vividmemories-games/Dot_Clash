@@ -3,7 +3,8 @@
 **Naming:** Features ship by **build number** (`+N` in `pubspec.yaml`), e.g. build 19 — not "Release N". Always read `pubspec.yaml` before stating the current target.
 
 **Active build target:** `1.4.1+19` in `pubspec.yaml` (bump `+N` before each store upload)  
-**Track:** Prod package + Firebase (`dot-clash-72cc6`), `BETA_ADS=true` (test ads)  
+**Public launch:** follow **[LAUNCH.md](LAUNCH.md)** (target week of 2026-06-16; launch build `1.5.0+20+`)  
+**Track:** Prod package + Firebase (`dot-clash-72cc6`), `BETA_ADS=true` (test ads) for closed testing only  
 **IAP / ops:** `SETUP.md` §4b · **Security:** `SETUP.md` App Check + [`firestore.rules`](../firestore.rules)
 
 ---
