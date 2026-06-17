@@ -8,6 +8,7 @@ Connected map of how the Flutter app boots, routes users, runs game logic, and s
 |------|-----------|------|
 | **Campaign, Quick Match, Local, Daily** | Client — `GameRules` on device | None (single device) |
 | **Challenge a Friend** (build 19+) | Server — `functions/src/game_rules.ts` + callables | Firestore snapshot on `challenges/{code}` |
+| **Challenge board presets** (build 20+) | Same server backend; allowlist in `challenge_board_presets.ts` | Host `boardPresetId` on create; guest lobby preview before join |
 
 Campaign economy (coins, XP, lives, missions) flows through settlement callables. **Challenge v1 is history-only** — `recordChallengeMatch` writes match rows, not economy.
 
@@ -104,7 +105,7 @@ flowchart TB
 | Ingress | `lib/services/deep_links/challenge_ingress_listener.dart` | HTTPS / custom scheme / cold start → challenge lobby |
 | Router | `lib/core/router/app_router.dart` | Routes, auth/onboarding redirects, challenge path preservation |
 | Local game | `lib/features/game/` | Client-authoritative rules; `GameNotifier` |
-| Challenge | `lib/features/challenge/` | Server-synced 6×6 PvP; `ChallengeGameNotifier` + bindings |
+| Challenge | `lib/features/challenge/` | Server-synced PvP; allowlisted presets; `ChallengeGameNotifier` + bindings |
 | Profile | `lib/features/profile/` | Repo switch + Firestore/mock |
 | Backend | `functions/src/` | Settlement, economy, **challenge moves**, scheduler, FCM token |
 
@@ -241,10 +242,12 @@ sequenceDiagram
   participant FS as Firestore challenges/code
   participant B as Guest app
 
-  A->>CF: createChallenge optional targetUid
-  CF->>FS: status waiting
-  B->>CF: joinChallenge
-  CF->>FS: status active gameState
+  A->>CF: createChallenge boardPresetId optional targetUid
+  CF->>CF: resolveChallengePreset allowlist
+  CF->>FS: status waiting boardPresetId rows cols
+  B->>FS: read lobby preview no write
+  B->>CF: joinChallenge explicit
+  CF->>FS: status active gameState preset geometry
   A->>FS: snapshot listener
   B->>FS: snapshot listener
   loop Each turn
@@ -277,8 +280,13 @@ flowchart TD
 
 | Step | File |
 |------|------|
-| Room model | `lib/features/challenge/domain/challenge_room.dart` |
+| Room model | `lib/features/challenge/domain/challenge_room.dart` (`boardPresetId`, `boardPresetName`, `rows`, `cols`) |
+| Presets (client UI) | `lib/features/challenge/domain/challenge_board_preset.dart` |
+| Presets (server) | `functions/src/challenge_board_presets.ts` |
 | Repository | `lib/features/challenge/data/challenge_repository.dart` |
+| Create flow | `create_challenge_sheet.dart` — host picks preset → `createChallenge` |
+| Join flow | `join_challenge_sheet.dart` → lobby preview → guest **JOIN CHALLENGE** |
+| Lobby | `challenge_lobby_screen.dart` — `ChallengeBoardPreviewCard`; no auto-join |
 | Live state | `lib/features/challenge/providers/challenge_game_provider.dart` |
 | Turn timer | `challengeTurnTimerProvider` (server `turnStartedAt`) |
 | Settlement UI | `lib/features/challenge/presentation/challenge_game_bindings.dart` |
@@ -295,6 +303,19 @@ flowchart TD
 - `GameScreen` gates local listeners (`matchSession`, campaign settlement, boosts) when `_isChallenge`.
 - Challenge settlement listens to **room status**, not local `gameProvider.isOver`.
 - `recordChallengeMatch` does not grant coins/XP/lives/rating (history + H2H only).
+- **Board geometry:** server allowlist only; invalid `boardPresetId` → `invalid-argument`.
+- **Guest fairness:** lobby preview before explicit join; deep links land on lobby first.
+- **Rematch:** post-match rematch passes source room `boardPresetId`; hub rivalry re-challenge defaults Classic.
+
+### Launch presets (build 20)
+
+| ID | Name | Grid | Playable boxes |
+|----|------|------|----------------|
+| `challenge_classic` | Classic | 6×6 dots | 25 |
+| `challenge_blitz` | Blitz | 4×4 dots | 9 |
+| `challenge_fortress` | Fortress | 5×5 dots, center void | 7 |
+
+Fortress disabled cells match AI preset `fortress` box keys (`1_1`…`3_3` on 4×4 box grid).
 
 ---
 
@@ -493,7 +514,7 @@ flowchart TB
 | Where are moves validated (challenge)? | `game_rules.ts` inside `submitChallengeMove` transaction |
 | When does Firebase run? | Auth, profile stream, challenge room stream, settlement, shop/IAP, FCM, analytics |
 | Guest vs signed-in? | `MockProfileRepository` vs `FirestoreProfileRepository` |
-| Live multiplayer? | **Challenge a Friend** — 1v1, 6×6, not matchmaking |
+| Live multiplayer? | **Challenge a Friend** — 1v1, allowlisted presets (Classic/Blitz/Fortress), not matchmaking |
 | Match history? | `profiles/{uid}/matches`; Challenge uses `modeLabel: 'Challenge'` + optional `opponentUid` |
 | Rivals / rematch UI? | `ChallengeHomeScreen` + `ChallengeHistoryScreen` (not Profile tab) |
 | Build / release naming? | **Build N** (`+N` in `pubspec.yaml`) — see [RELEASES.md](RELEASES.md) |
@@ -527,6 +548,8 @@ flowchart TB
 | `lib/features/challenge/providers/challenge_game_provider.dart` | `ChallengeGameNotifier` |
 | `lib/features/challenge/presentation/challenge_game_bindings.dart` | Terminal room settlement + result dialog |
 | `lib/features/challenge/presentation/challenge_home_screen.dart` | Create/join hub + rivalries |
+| `lib/features/challenge/presentation/create_challenge_sheet.dart` | Host preset picker |
+| `lib/features/challenge/presentation/widgets/challenge_board_preview_card.dart` | Lobby + picker board preview |
 | `lib/features/profile/data/firestore_profile_repository.dart` | Firestore + callables + match history |
 | `lib/services/push/fcm_service.dart` | FCM lifecycle + foreground invite UI |
 | `lib/services/backend/callable_backend.dart` | HTTPS callable wrapper |
@@ -540,4 +563,4 @@ flowchart TB
 
 ---
 
-*Last updated: 2026-06-13 — build 19 (`1.4.1+19`); ~145 Dart files under `lib/`; Challenge a Friend on `main`.*
+*Last updated: 2026-06-16 — build 20 (`1.4.2+20`); Challenge board presets (Classic/Blitz/Fortress); guest lobby preview + explicit join.*

@@ -4,6 +4,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import '../../../services/backend/callable_backend.dart';
 import '../domain/challenge_exceptions.dart';
 import '../domain/challenge_room.dart';
+import '../domain/create_challenge_result.dart';
 
 class ChallengeRepository {
   ChallengeRepository({
@@ -28,18 +29,20 @@ class ChallengeRepository {
     });
   }
 
-  Future<String> createChallenge({String? targetUid}) async {
+  Future<CreateChallengeResult> createChallenge({
+    String? targetUid,
+    String? boardPresetId,
+  }) async {
     final data = <String, dynamic>{};
     if (targetUid != null && targetUid.isNotEmpty) {
       data['targetUid'] = targetUid;
     }
+    if (boardPresetId != null && boardPresetId.isNotEmpty) {
+      data['boardPresetId'] = boardPresetId;
+    }
     try {
       final result = await _backend.call('createChallenge', data);
-      final code = result['code'] as String?;
-      if (code == null || code.isEmpty) {
-        throw const ChallengeException('Could not create challenge.');
-      }
-      return _normalizeCode(code);
+      return CreateChallengeResult.fromCallable(result);
     } on FirebaseFunctionsException catch (e) {
       throw ChallengeException.fromFirebase(e);
     }

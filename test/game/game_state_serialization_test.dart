@@ -1,3 +1,4 @@
+import 'package:dot_clash/features/game/domain/models/ai_preset.dart';
 import 'package:dot_clash/features/game/domain/models/game_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -28,6 +29,26 @@ void main() {
         ..remove('disabledCells');
       final restored = GameState.fromJson(json);
       expect(restored.disabledCells, isEmpty);
+    });
+
+    test('round-trips Blitz 4x4 preset', () {
+      final original = GameState.initial(rows: 4, cols: 4);
+      final restored = GameState.fromJson(original.toJson());
+      expect(restored.rows, 4);
+      expect(restored.cols, 4);
+      expect(restored.totalBoxes, 9);
+    });
+
+    test('round-trips Fortress 5x5 preset with center void', () {
+      final fortress = AiPreset.byId('fortress')!;
+      final original = GameState.initial(
+        rows: fortress.rows,
+        cols: fortress.cols,
+        disabledCells: fortress.disabledCells.toSet(),
+      );
+      final restored = GameState.fromJson(original.toJson());
+      expect(restored.totalBoxes, 7);
+      expect(restored.disabledCells.length, 9);
     });
   });
 }

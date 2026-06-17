@@ -8,6 +8,7 @@ import '../../../shared/feedback/app_haptics.dart';
 import '../../game/domain/models/game_state.dart';
 import '../../game/domain/rules/game_rules.dart';
 import '../../game/providers/game_provider.dart';
+import '../domain/challenge_board_preset.dart';
 import '../domain/challenge_exceptions.dart';
 import '../domain/challenge_room.dart';
 import 'challenge_providers.dart';
@@ -81,7 +82,7 @@ class ChallengeTurnTimerNotifier extends StateNotifier<int> {
 
 class ChallengeGameNotifier extends StateNotifier<GameState> {
   ChallengeGameNotifier(this._ref, {required this.code})
-      : super(GameState.initial(rows: 6, cols: 6)) {
+      : super(_seedState(_ref, code)) {
     _roomSub = _ref.listen<AsyncValue<ChallengeRoom?>>(
       challengeRoomProvider(code),
       (_, next) {
@@ -91,6 +92,17 @@ class ChallengeGameNotifier extends StateNotifier<GameState> {
         }
       },
       fireImmediately: true,
+    );
+  }
+
+  static GameState _seedState(Ref ref, String code) {
+    final room = ref.read(challengeRoomProvider(code)).valueOrNull;
+    if (room?.gameState != null) return room!.gameState!;
+    final preset = room?.boardPreset ?? ChallengeBoardPreset.defaultPreset;
+    return GameState.initial(
+      rows: room?.rows ?? preset.rows,
+      cols: room?.cols ?? preset.cols,
+      disabledCells: preset.disabledCells.toSet(),
     );
   }
 

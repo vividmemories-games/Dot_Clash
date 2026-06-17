@@ -4,7 +4,7 @@ Internal engineering documentation for the Dot Clash app repo.
 
 **Agents:** start at [`../AGENTS.md`](../AGENTS.md) — routes tasks to the docs below.
 
-**Current closed-testing target:** build **19** · `1.4.1+19` in [`pubspec.yaml`](../pubspec.yaml)
+**Current closed-testing target:** build **20** · `1.4.2+20` in [`pubspec.yaml`](../pubspec.yaml)
 
 ## Files here
 

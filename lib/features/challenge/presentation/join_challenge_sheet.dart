@@ -9,8 +9,6 @@ import '../../../core/theme/dot_clash_visuals.dart';
 import '../../../shared/feedback/app_snackbar.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/widgets/neon_button.dart';
-import '../domain/challenge_exceptions.dart';
-import '../providers/challenge_providers.dart';
 
 class JoinChallengeSheet extends ConsumerStatefulWidget {
   const JoinChallengeSheet({super.key});
@@ -38,13 +36,10 @@ class _JoinChallengeSheetState extends ConsumerState<JoinChallengeSheet> {
 
     setState(() => _loading = true);
     try {
-      final code =
-          await ref.read(challengeRepositoryProvider).joinChallenge(raw);
+      final code = raw.trim().toUpperCase();
       if (!mounted) return;
       Navigator.pop(context);
       context.push(AppRoutes.challengeLobbyPath(code));
-    } on ChallengeException catch (e) {
-      if (mounted) AppSnackBar.show(context, e.message);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -55,12 +50,11 @@ class _JoinChallengeSheetState extends ConsumerState<JoinChallengeSheet> {
     final v = context.dc;
     final t = context.txt;
 
-    return Padding(
+    return SingleChildScrollView(
       padding: AppSpacing.pagePadding,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppSpacing.vGapSM,
           Container(
             width: 36,
             height: 4,
@@ -73,13 +67,14 @@ class _JoinChallengeSheetState extends ConsumerState<JoinChallengeSheet> {
           Text('JOIN CHALLENGE', style: t.scoreLabel),
           AppSpacing.vGapSM,
           Text(
-            'Enter the 6-character code from your friend',
+            'Enter the 6-character code — you\'ll preview the board before joining',
             style: t.bodySmall.copyWith(color: v.textSecondary),
             textAlign: TextAlign.center,
           ),
           AppSpacing.vGapMD,
           TextField(
             controller: _controller,
+            autofocus: true,
             enabled: !_loading,
             textCapitalization: TextCapitalization.characters,
             inputFormatters: [
@@ -115,7 +110,7 @@ class _JoinChallengeSheetState extends ConsumerState<JoinChallengeSheet> {
           SizedBox(
             width: double.infinity,
             child: NeonButton(
-              label: _loading ? 'JOINING…' : 'JOIN',
+              label: _loading ? 'OPENING…' : 'CONTINUE',
               icon: Icons.login_rounded,
               color: v.playerB,
               enabled: !_loading,
@@ -134,11 +129,18 @@ Future<void> showJoinChallengeSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: v.surface,
     shape: RoundedRectangleBorder(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       side: BorderSide(color: v.cardBorder),
     ),
-    builder: (_) => const JoinChallengeSheet(),
+    builder: (sheetContext) {
+      final bottomInset = MediaQuery.viewInsetsOf(sheetContext).bottom;
+      return Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: const JoinChallengeSheet(),
+      );
+    },
   );
 }

@@ -17,8 +17,10 @@ Immutable decisions agents and contributors should not reverse without an explic
 | **G-5** | **`GameScreen` disables local listeners when in Challenge mode** (`_isChallenge`): no campaign settlement, boosts, or local `gameProvider.isOver` handling. | Challenge outcome comes from the room, not local state. |
 | **G-6** | **Challenge settlement listens to Firestore room status** (`finished` / `abandoned`), not local `gameProvider.isOver`. | Server is authority; clients can desync briefly. |
 | **G-7** | **Dart and TypeScript game rules stay in parity.** Change `game_rules.dart` and `game_rules.ts` together; run `test/game/rules_test.dart`. | Server and client must agree on legal moves and scoring. |
-| **G-8** | **Challenge boards are 6×6** with server-enforced rules in transactions (`commitChallengeMoveInTransaction`). | Fixed scope for v1 ship; grid size is not client-configurable in Challenge. |
+| **G-8** | **Challenge board geometry is server allowlist-only.** Host sends `boardPresetId` on `createChallenge`; clients never send raw `rows`/`cols`/`disabledCells`. Presets live in `functions/src/challenge_board_presets.ts` (mirrored in Dart for picker UI only). Launch presets: **Classic** 6×6, **Blitz** 4×4, **Fortress** 5×5 (center void). Missing `boardPresetId` → `challenge_classic` (build 19 compat). `joinChallenge` seeds `gameState` from the room preset, not hardcoded 6×6. Moves still validated in `commitChallengeMoveInTransaction`. | Prevents client-side board cheating; enables host-chosen layouts without free-form grids. |
 | **G-9** | **Host = player A, guest = player B** on the server. Each client maps “you” via `GameConfig.myPlayerId`. | Consistent turn order and score labels across devices. |
+| **G-10** | **Guest preview before join.** Join-by-code opens lobby read-only; guest taps **JOIN CHALLENGE** to call `joinChallenge`. No auto-join when the lobby loads. Host picks board via CREATE → preset sheet. | Guest sees host layout before committing; avoids surprise unfair boards. |
+| **G-11** | **Rematch inherits source preset.** Post-match rematch/re-challenge passes the finished room's `boardPresetId`. Rivalry-row re-challenge from the hub defaults Classic unless launched from post-match rematch. | Same layout for revenge; hub re-challenge stays simple until history stores preset. |
 
 ---
 

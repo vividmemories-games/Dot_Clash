@@ -5,12 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/dot_clash_visuals.dart';
-import '../../../shared/feedback/app_snackbar.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/widgets/neon_button.dart';
-import '../domain/challenge_exceptions.dart';
 import '../providers/challenge_providers.dart';
 import 'challenge_rechallenge_mixin.dart';
+import 'create_challenge_sheet.dart';
 import 'join_challenge_sheet.dart';
 import 'widgets/challenge_history_widgets.dart';
 
@@ -25,30 +24,13 @@ class ChallengeHomeScreen extends ConsumerStatefulWidget {
 
 class _ChallengeHomeScreenState extends ConsumerState<ChallengeHomeScreen>
     with ChallengeRechallengeMixin {
-  bool _creating = false;
-
-  Future<void> _createChallenge() async {
-    if (_creating || challengingUid != null) return;
-    setState(() => _creating = true);
-    try {
-      final code =
-          await ref.read(challengeRepositoryProvider).createChallenge();
-      if (!mounted) return;
-      context.push(AppRoutes.challengeLobbyPath(code));
-    } on ChallengeException catch (e) {
-      if (mounted) AppSnackBar.show(context, e.message);
-    } finally {
-      if (mounted) setState(() => _creating = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final v = context.dc;
     final t = context.txt;
     final size = MediaQuery.sizeOf(context);
     final rivalsAsync = ref.watch(challengeRivalsProvider);
-    final actionsBusy = _creating || challengingUid != null;
+    final actionsBusy = challengingUid != null;
 
     return Scaffold(
       backgroundColor: v.scaffold,
@@ -121,7 +103,7 @@ class _ChallengeHomeScreenState extends ConsumerState<ChallengeHomeScreen>
                       AppSpacing.hGapMD,
                       Expanded(
                         child: Text(
-                          'Live 6×6 online — no lives or coins',
+                          'Challenge a friend with a private code — no lives or coins',
                           style: t.bodySmall.copyWith(color: v.textSecondary),
                         ),
                       ),
@@ -132,12 +114,14 @@ class _ChallengeHomeScreenState extends ConsumerState<ChallengeHomeScreen>
                     children: [
                       Expanded(
                         child: NeonButton(
-                          label: _creating ? 'CREATING…' : 'CREATE',
+                          label: 'CREATE',
                           icon: Icons.add_rounded,
                           color: v.playerA,
                           height: 48,
                           enabled: !actionsBusy,
-                          onPressed: actionsBusy ? null : _createChallenge,
+                          onPressed: actionsBusy
+                              ? null
+                              : () => showCreateChallengeSheet(context),
                         ),
                       ),
                       AppSpacing.hGapSM,
@@ -177,7 +161,7 @@ class _ChallengeHomeScreenState extends ConsumerState<ChallengeHomeScreen>
                             RivalListTile(
                               rival: rival,
                               busy: challengingUid == rival.uid,
-                              enabled: challengingUid == null && !_creating,
+                              enabled: challengingUid == null,
                               onRechallenge: () => rechallenge(rival.uid),
                             ),
                             AppSpacing.vGapSM,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../data/challenge_repository.dart';
 import '../domain/challenge_room.dart';
+import '../domain/create_challenge_result.dart';
 import '../domain/head_to_head_stats.dart';
 
 final challengeRepositoryProvider = Provider<ChallengeRepository>((ref) {
@@ -15,12 +16,13 @@ final challengeRoomProvider = StreamProvider.autoDispose
   return ref.watch(challengeRepositoryProvider).watchRoom(code);
 });
 
-/// Create a waiting room; returns normalized 6-char code.
-final createChallengeProvider =
-    FutureProvider.autoDispose.family<String, String?>(
-  (ref, targetUid) async {
+/// Create a waiting room; returns server-resolved preset + code.
+final createChallengeProvider = FutureProvider.autoDispose
+    .family<CreateChallengeResult, CreateChallengeRequest>(
+  (ref, request) async {
     return ref.read(challengeRepositoryProvider).createChallenge(
-          targetUid: targetUid,
+          targetUid: request.targetUid,
+          boardPresetId: request.boardPresetId,
         );
   },
 );

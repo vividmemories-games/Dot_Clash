@@ -8,10 +8,18 @@ import {
 import { HttpsError } from 'firebase-functions/v2/https';
 import { onCall } from 'firebase-functions/v2/https';
 
+import {
+  DEFAULT_CHALLENGE_PRESET_ID,
+  initialGameStateForPreset,
+  InvalidChallengePresetError,
+  resolveChallengePreset,
+  type ChallengeBoardPreset,
+} from './challenge_board_presets';
 import { GameRules, GameState, type GameStateJson } from './game_rules';
 import { sendChallengeInvitePush } from './notifications';
 import { assertAuth, callableOptions, db } from './shared';
 
+/** Legacy default grid size (Classic preset). */
 export const CHALLENGE_ROWS = 6;
 export const CHALLENGE_COLS = 6;
 export const TURN_TIMEOUT_SECONDS = 30;
@@ -38,6 +46,8 @@ export interface ChallengeDoc {
   guestUid: string | null;
   guestDisplayName: string | null;
   status: ChallengeStatus;
+  boardPresetId?: string;
+  boardPresetName?: string;
   rows: number;
   cols: number;
   hostPlayerId: 'A';
@@ -81,13 +91,8 @@ async function loadDisplayName(uid: string): Promise<string> {
   return name?.trim() || 'Player';
 }
 
-function initialChallengeGameState(): GameState {
-  return GameState.initial({
-    rows: CHALLENGE_ROWS,
-    cols: CHALLENGE_COLS,
-    playerIds: ['A', 'B'],
-    disabledCells: new Set(),
-  });
+function presetForRoom(data: ChallengeDoc): ChallengeBoardPreset {
+  return resolveChallengePreset(data.boardPresetId ?? DEFAULT_CHALLENGE_PRESET_ID);
 }
 
 function parseChallengeDoc(snap: DocumentSnapshot): ChallengeDoc {
@@ -251,7 +256,20 @@ export async function commitChallengeMoveInTransaction(
 
 export const createChallenge = onCall(callableOptions, async (request) => {
   const uid = assertAuth(request);
-  const { targetUid } = (request.data ?? {}) as { targetUid?: string };
+  const { targetUid, boardPresetId } = (request.data ?? {}) as {
+    targetUid?: string;
+    boardPresetId?: string;
+  };
+
+  let preset: ChallengeBoardPreset;
+  try {
+    preset = resolveChallengePreset(boardPresetId);
+  } catch (err) {
+    if (err instanceof InvalidChallengePresetError) {
+      throw new HttpsError('invalid-argument', err.message);
+    }
+    throw err;
+  }
 
   const hostDisplayName = await loadDisplayName(uid);
   const now = Timestamp.now();
@@ -278,8 +296,10 @@ export const createChallenge = onCall(callableOptions, async (request) => {
       guestUid: null,
       guestDisplayName: null,
       status: 'waiting',
-      rows: CHALLENGE_ROWS,
-      cols: CHALLENGE_COLS,
+      boardPresetId: preset.id,
+      boardPresetName: preset.name,
+      rows: preset.rows,
+      cols: preset.cols,
       hostPlayerId: 'A',
       guestPlayerId: 'B',
       gameState: null,
@@ -304,7 +324,14 @@ export const createChallenge = onCall(callableOptions, async (request) => {
     await trySendChallengeInvitePush(uid, targetUid, hostDisplayName, code);
   }
 
-  return { success: true, code };
+  return {
+    success: true,
+    code,
+    boardPresetId: preset.id,
+    boardPresetName: preset.name,
+    rows: preset.rows,
+    cols: preset.cols,
+  };
 });
 
 export const joinChallenge = onCall(callableOptions, async (request) => {
@@ -343,12 +370,13 @@ export const joinChallenge = onCall(callableOptions, async (request) => {
       throw new HttpsError('failed-precondition', 'Challenge expired.');
     }
 
+    const preset = presetForRoom(data);
     const now = Timestamp.now();
     txn.update(ref, {
       guestUid: uid,
       guestDisplayName,
       status: 'active',
-      gameState: initialChallengeGameState().toJson(),
+      gameState: initialGameStateForPreset(preset).toJson(),
       version: 0,
       turnStartedAt: now,
       lastActivityAt: now,

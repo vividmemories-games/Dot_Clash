@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dot_clash/features/challenge/domain/challenge_board_preset.dart';
 import 'package:dot_clash/features/challenge/domain/challenge_room.dart';
 import 'package:dot_clash/features/challenge/domain/challenge_status.dart';
 import 'package:dot_clash/features/game/domain/models/game_state.dart';
@@ -87,6 +89,46 @@ void main() {
       );
       expect(withBoard.hasPlayableBoard, isTrue);
     });
+
+    test('fromFirestore reads board preset fields', () {
+      final room = ChallengeRoom.fromFirestore(
+        'ABC123',
+        _FakeDocSnapshot({
+          'hostUid': 'host1',
+          'hostDisplayName': 'Alex',
+          'guestUid': null,
+          'status': 'waiting',
+          'boardPresetId': 'challenge_blitz',
+          'boardPresetName': 'Blitz',
+          'rows': 4,
+          'cols': 4,
+          'version': 0,
+        }),
+      );
+
+      expect(room.boardPresetId, 'challenge_blitz');
+      expect(room.boardPresetName, 'Blitz');
+      expect(room.rows, 4);
+      expect(room.cols, 4);
+      expect(room.boardPreset.name, 'Blitz');
+    });
+
+    test('fromFirestore defaults missing preset to Classic', () {
+      final room = ChallengeRoom.fromFirestore(
+        'ABC123',
+        _FakeDocSnapshot({
+          'hostUid': 'host1',
+          'hostDisplayName': 'Alex',
+          'status': 'waiting',
+          'rows': 6,
+          'cols': 6,
+          'version': 0,
+        }),
+      );
+
+      expect(room.boardPresetId, ChallengeBoardPreset.defaultPresetId);
+      expect(room.boardPresetName, 'Classic');
+    });
   });
 
   group('GameConfig.challenge', () {
@@ -103,4 +145,19 @@ void main() {
       expect(config.cols, 6);
     });
   });
+}
+
+class _FakeDocSnapshot implements DocumentSnapshot<Map<String, dynamic>> {
+  _FakeDocSnapshot(this._data);
+
+  final Map<String, dynamic> _data;
+
+  @override
+  Map<String, dynamic>? data() => _data;
+
+  @override
+  bool get exists => true;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

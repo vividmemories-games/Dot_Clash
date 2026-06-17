@@ -421,6 +421,59 @@ This overwrites `lib/firebase_options_dev.dart` with real values.  The prod file
 
 ### 7d — Running the app
 
+#### iOS Simulator
+
+Start the simulator (pick one):
+
+```bash
+# Recommended — Flutter launches the default iOS Simulator
+flutter emulators --launch apple_ios_simulator
+
+# Alternative — open Simulator.app directly (macOS)
+open -a Simulator
+```
+
+If Simulator is already open but no device is booted, or you want a specific model:
+
+```bash
+# List available simulators (name + UDID)
+xcrun simctl list devices available
+
+# Boot one, then show the Simulator window
+xcrun simctl boot "iPhone 16 Pro"
+open -a Simulator
+```
+
+Confirm Flutter sees it, then run dev:
+
+```bash
+flutter devices
+
+flutter run --flavor dev --dart-define=FLAVOR=dev
+```
+
+Pin a specific simulator with `-d` (use the id from `flutter devices`):
+
+```bash
+flutter run -d <simulator-id> --flavor dev --dart-define=FLAVOR=dev
+```
+
+**App Check on Simulator:** Device Check does not work on simulators — pass a registered debug token (see [§2f](#2f--app-check-required-for-cloud-functions)):
+
+```bash
+flutter run --flavor dev --dart-define=FLAVOR=dev \
+  --dart-define=APP_CHECK_DEBUG_TOKEN=PASTE-UUID-HERE
+```
+
+**Two-device Challenge QA:** boot iOS + Android emulators, then run `flutter run -d <id> ...` in two terminals (see [docs/summary.md](docs/summary.md) § Run dev on two devices).
+
+```bash
+# Android emulator (optional counterpart)
+flutter emulators --launch Pixel_10_Pro_XL
+```
+
+#### All platforms
+
 ```bash
 # Android — dev (`com.vividmemories.dotclash.dev`, Firebase dot-clash-dev)
 flutter run --flavor dev --dart-define=FLAVOR=dev

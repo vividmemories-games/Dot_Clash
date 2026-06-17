@@ -15,11 +15,11 @@ mixin ChallengeRechallengeMixin<T extends ConsumerStatefulWidget>
     if (challengingUid != null) return;
     setState(() => challengingUid = targetUid);
     try {
-      final code = await ref
+      final result = await ref
           .read(challengeRepositoryProvider)
           .createChallenge(targetUid: targetUid);
       if (!mounted) return;
-      context.push(AppRoutes.challengeLobbyPath(code));
+      context.push(AppRoutes.challengeLobbyPath(result.code));
     } on ChallengeException catch (e) {
       if (mounted) AppSnackBar.show(context, e.message);
     } finally {

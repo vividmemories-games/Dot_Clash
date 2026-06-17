@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../game/domain/models/game_state.dart';
+import 'challenge_board_preset.dart';
 import 'challenge_status.dart';
 
 /// Live challenge room mirrored from `challenges/{code}`.
@@ -12,6 +13,8 @@ class ChallengeRoom {
     required this.guestUid,
     required this.guestDisplayName,
     required this.status,
+    this.boardPresetId = ChallengeBoardPreset.defaultPresetId,
+    this.boardPresetName = 'Classic',
     required this.rows,
     required this.cols,
     required this.version,
@@ -28,6 +31,8 @@ class ChallengeRoom {
   final String? guestUid;
   final String? guestDisplayName;
   final ChallengeStatus status;
+  final String boardPresetId;
+  final String boardPresetName;
   final int rows;
   final int cols;
   final int version;
@@ -36,6 +41,11 @@ class ChallengeRoom {
   final DateTime? lastActivityAt;
   final GameState? gameState;
   final DateTime? turnStartedAt;
+
+  /// Resolved preset metadata for lobby / share (falls back to Classic).
+  ChallengeBoardPreset get boardPreset =>
+      ChallengeBoardPreset.byId(boardPresetId) ??
+      ChallengeBoardPreset.defaultPreset;
 
   bool get isWaiting => status == ChallengeStatus.waiting;
   bool get isActive => status == ChallengeStatus.active;
@@ -80,6 +90,10 @@ class ChallengeRoom {
       guestUid: data['guestUid'] as String?,
       guestDisplayName: data['guestDisplayName'] as String?,
       status: ChallengeStatus.parse(data['status'] as String? ?? 'expired'),
+      boardPresetId: data['boardPresetId'] as String? ??
+          ChallengeBoardPreset.defaultPresetId,
+      boardPresetName: data['boardPresetName'] as String? ??
+          ChallengeBoardPreset.defaultPreset.name,
       rows: (data['rows'] as num?)?.toInt() ?? 6,
       cols: (data['cols'] as num?)?.toInt() ?? 6,
       version: (data['version'] as num?)?.toInt() ?? 0,

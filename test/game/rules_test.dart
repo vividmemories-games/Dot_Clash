@@ -1,5 +1,6 @@
 import 'package:dot_clash/features/game/domain/models/game_state.dart';
 import 'package:dot_clash/features/game/domain/rules/game_rules.dart';
+import 'package:dot_clash/features/game/domain/models/ai_preset.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -249,6 +250,23 @@ void main() {
         s = GameRules.applyMove(s, m);
       }
       expect(GameRules.legalMoves(s), isEmpty);
+    });
+
+    test('Blitz 4x4 has 24 initial legal moves', () {
+      final s = GameState.initial(rows: 4, cols: 4);
+      expect(GameRules.legalMoves(s).length, 24);
+      expect(s.totalBoxes, 9);
+    });
+
+    test('Fortress 5x5 center void has 22 initial legal moves', () {
+      final fortress = AiPreset.byId('fortress')!;
+      final s = GameState.initial(
+        rows: fortress.rows,
+        cols: fortress.cols,
+        disabledCells: fortress.disabledCells.toSet(),
+      );
+      expect(GameRules.legalMoves(s).length, 22);
+      expect(s.totalBoxes, 7);
     });
   });
 }

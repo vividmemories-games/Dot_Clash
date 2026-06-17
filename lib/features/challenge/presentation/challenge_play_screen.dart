@@ -75,6 +75,7 @@ class _ChallengePlayScreenState extends ConsumerState<ChallengePlayScreen> {
             opponentDisplayName: room.opponentDisplayNameFor(myUid ?? ''),
             rows: room.rows,
             cols: room.cols,
+            disabledCells: room.gameState!.disabledCells.toList(),
           );
 
           return ChallengeGameBindings(

@@ -144,11 +144,11 @@ class _ChallengeGameBindingsState extends ConsumerState<ChallengeGameBindings> {
     required String opponentUid,
   }) async {
     try {
-      final code = await ref
+      final result = await ref
           .read(challengeRepositoryProvider)
           .createChallenge(targetUid: opponentUid);
       if (!dialogContext.mounted) return;
-      dialogContext.push(AppRoutes.challengeLobbyPath(code));
+      dialogContext.push(AppRoutes.challengeLobbyPath(result.code));
     } on ChallengeException catch (e) {
       if (dialogContext.mounted) {
         AppSnackBar.show(dialogContext, e.message);

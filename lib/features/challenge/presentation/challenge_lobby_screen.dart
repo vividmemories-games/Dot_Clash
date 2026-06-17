@@ -9,11 +9,13 @@ import '../../../features/auth/providers/auth_provider.dart';
 import '../../../shared/feedback/app_snackbar.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/widgets/neon_button.dart';
+import '../domain/challenge_board_preset.dart';
 import '../domain/challenge_exceptions.dart';
 import '../domain/challenge_room.dart';
 import '../domain/challenge_status.dart';
 import '../providers/challenge_providers.dart';
 import 'challenge_share_sheet.dart';
+import 'widgets/challenge_board_preview_card.dart';
 
 /// Waiting room — listens to `challenges/{code}` and routes to play when active.
 class ChallengeLobbyScreen extends ConsumerStatefulWidget {
@@ -27,18 +29,13 @@ class ChallengeLobbyScreen extends ConsumerStatefulWidget {
 }
 
 class _ChallengeLobbyScreenState extends ConsumerState<ChallengeLobbyScreen> {
-  bool _joinAttempted = false;
   bool _joining = false;
   bool _navigatedToPlay = false;
 
   String get _code => widget.code.trim().toUpperCase();
 
-  Future<void> _tryAutoJoin(ChallengeRoom? room, String? myUid) async {
-    if (_joinAttempted || _joining || room == null || myUid == null) return;
-    if (!room.isWaiting || room.guestUid != null) return;
-    if (room.hostUid == myUid) return;
-
-    _joinAttempted = true;
+  Future<void> _joinChallenge() async {
+    if (_joining) return;
     setState(() => _joining = true);
     try {
       await ref.read(challengeRepositoryProvider).joinChallenge(_code);
@@ -58,6 +55,8 @@ class _ChallengeLobbyScreenState extends ConsumerState<ChallengeLobbyScreen> {
     });
   }
 
+  ChallengeBoardPreset _presetFor(ChallengeRoom room) => room.boardPreset;
+
   @override
   Widget build(BuildContext context) {
     final v = context.dc;
@@ -66,9 +65,7 @@ class _ChallengeLobbyScreenState extends ConsumerState<ChallengeLobbyScreen> {
     final roomAsync = ref.watch(challengeRoomProvider(_code));
 
     ref.listen(challengeRoomProvider(_code), (prev, next) {
-      final room = next.valueOrNull;
-      _tryAutoJoin(room, myUid);
-      _maybeNavigateToPlay(room);
+      _maybeNavigateToPlay(next.valueOrNull);
     });
 
     return Scaffold(
@@ -103,7 +100,10 @@ class _ChallengeLobbyScreenState extends ConsumerState<ChallengeLobbyScreen> {
           }
 
           final isHost = myUid == room.hostUid;
-          final opponent = room.opponentDisplayNameFor(myUid ?? '');
+          final isGuest = myUid == room.guestUid;
+          final isProspectiveGuest =
+              !isHost && room.isWaiting && room.guestUid == null;
+          final preset = _presetFor(room);
 
           return Padding(
             padding: AppSpacing.pagePadding,
@@ -120,34 +120,65 @@ class _ChallengeLobbyScreenState extends ConsumerState<ChallengeLobbyScreen> {
                 ),
                 AppSpacing.vGapSM,
                 Text(
-                  room.isWaiting ? 'Waiting for opponent…' : 'Starting match…',
+                  _statusLine(room, isHost, isProspectiveGuest),
                   style: t.body.copyWith(color: v.textSecondary),
+                  textAlign: TextAlign.center,
                 ),
                 AppSpacing.vGapLG,
-                _PlayerCard(
-                  label: 'YOU',
-                  name: isHost ? room.hostDisplayName : (room.guestDisplayName ?? 'You'),
-                  color: v.playerA,
-                  v: v,
-                  t: t,
+                ChallengeBoardPreviewCard(
+                  preset: preset,
+                  eyebrow: isProspectiveGuest ? 'THEIR BOARD' : 'YOUR BOARD',
+                  showFairnessLine: isProspectiveGuest,
+                  showThumbnail: true,
                 ),
-                AppSpacing.vGapSM,
-                Icon(Icons.close_rounded, color: v.textSecondary, size: 20),
-                AppSpacing.vGapSM,
-                _PlayerCard(
-                  label: isHost ? 'OPPONENT' : 'HOST',
-                  name: opponent,
-                  color: v.playerB,
-                  v: v,
-                  t: t,
-                ),
+                if (!isProspectiveGuest) ...[
+                  AppSpacing.vGapLG,
+                  _PlayerCard(
+                    label: 'YOU',
+                    name: isHost
+                        ? room.hostDisplayName
+                        : (room.guestDisplayName ?? 'You'),
+                    color: v.playerA,
+                    v: v,
+                    t: t,
+                  ),
+                  AppSpacing.vGapSM,
+                  Icon(Icons.close_rounded, color: v.textSecondary, size: 20),
+                  AppSpacing.vGapSM,
+                  _PlayerCard(
+                    label: isHost ? 'OPPONENT' : 'HOST',
+                    name: room.opponentDisplayNameFor(myUid ?? ''),
+                    color: v.playerB,
+                    v: v,
+                    t: t,
+                  ),
+                ],
                 const Spacer(),
                 if (_joining)
                   const Padding(
                     padding: EdgeInsets.only(bottom: AppSpacing.md),
                     child: CircularProgressIndicator(),
                   ),
-                if (isHost && room.isWaiting) ...[
+                if (isProspectiveGuest && room.isWaiting) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: NeonButton(
+                      label: _joining ? 'JOINING…' : 'JOIN CHALLENGE',
+                      icon: Icons.login_rounded,
+                      color: v.playerB,
+                      enabled: !_joining,
+                      onPressed: _joining ? null : _joinChallenge,
+                    ),
+                  ),
+                  AppSpacing.vGapSM,
+                  TextButton(
+                    onPressed: () => context.go(AppRoutes.home),
+                    child: Text(
+                      'NOT NOW',
+                      style: t.bodySmall.copyWith(color: v.textSecondary),
+                    ),
+                  ),
+                ] else if (isHost && room.isWaiting) ...[
                   SizedBox(
                     width: double.infinity,
                     child: NeonButton(
@@ -162,8 +193,14 @@ class _ChallengeLobbyScreenState extends ConsumerState<ChallengeLobbyScreen> {
                     ),
                   ),
                   AppSpacing.vGapSM,
-                ],
-                if (room.isActive) ...[
+                  TextButton(
+                    onPressed: () => context.go(AppRoutes.home),
+                    child: Text(
+                      'CANCEL',
+                      style: t.bodySmall.copyWith(color: v.textSecondary),
+                    ),
+                  ),
+                ] else if (room.isActive && (isHost || isGuest)) ...[
                   SizedBox(
                     width: double.infinity,
                     child: NeonButton(
@@ -176,13 +213,6 @@ class _ChallengeLobbyScreenState extends ConsumerState<ChallengeLobbyScreen> {
                   ),
                   AppSpacing.vGapSM,
                 ],
-                TextButton(
-                  onPressed: () => context.go(AppRoutes.home),
-                  child: Text(
-                    'CANCEL',
-                    style: t.bodySmall.copyWith(color: v.textSecondary),
-                  ),
-                ),
                 AppSpacing.vGapMD,
               ],
             ),
@@ -190,6 +220,18 @@ class _ChallengeLobbyScreenState extends ConsumerState<ChallengeLobbyScreen> {
         },
       ),
     );
+  }
+
+  String _statusLine(
+    ChallengeRoom room,
+    bool isHost,
+    bool isProspectiveGuest,
+  ) {
+    if (isProspectiveGuest) {
+      return '${room.hostDisplayName} challenged you';
+    }
+    if (room.isWaiting) return 'Waiting for opponent…';
+    return 'Starting match…';
   }
 
   String _terminalTitle(ChallengeStatus status) {

@@ -117,6 +117,7 @@ class GameConfig {
     required String opponentDisplayName,
     int rows = 6,
     int cols = 6,
+    List<String> disabledCells = const [],
   }) =>
       GameConfig(
         mode: GameMode.challenge,
@@ -125,6 +126,7 @@ class GameConfig {
         challengeCode: code.trim().toUpperCase(),
         myPlayerId: myPlayerId,
         opponentDisplayName: opponentDisplayName,
+        disabledCells: disabledCells,
       );
 }
 
