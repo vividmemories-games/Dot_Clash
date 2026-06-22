@@ -4,8 +4,8 @@
 
 | Tool | Min version |
 |---|---|
-| Flutter | 3.24+ |
-| Dart | 3.4+ |
+| Flutter | **3.44.2** (pinned via [FVM](https://fvm.app) — see `.fvmrc`) |
+| Dart | 3.12+ (bundled with Flutter 3.44.2) |
 | Firebase CLI | 13+ |
 | FlutterFire CLI | 1.0+ |
 | Node.js | 22+ (Cloud Functions runtime) |
@@ -122,7 +122,26 @@ The app activates App Check after Firebase init (`lib/services/firebase/app_chec
 5. **Cloud Functions** are **gen-2** callables in `us-central1` with `invoker: 'public'` (required for mobile clients). App Check is enforced in code on **prod** only (`enforceAppCheck` when `GCLOUD_PROJECT=dot-clash-72cc6`). There is no separate console toggle for Functions on the APIs tab.
 6. **Prod release:** no debug token — use Play Integrity / App Attest; register those providers instead of Debug.
 
-**Recommended dev flow (fixed token — easiest on iOS Simulator):**
+**Team dev debug tokens (`dot-clash-dev`)** — register each in [Firebase Console → App Check → Manage debug tokens](https://console.firebase.google.com/project/dot-clash-dev/appcheck/apps) for the matching app (iOS and Android use **different** tokens). Keep the real token values in a local password manager or private team notes — do **not** commit them here.
+
+| Platform | App | Firebase app ID | Debug token |
+|----------|-----|-----------------|-------------|
+| **iOS Simulator** | `com.vividmemories.dotclash.dev` | `1:218032510167:ios:fb46cd859a0b04fc41cc92` | `PASTE-IOS-DEBUG-TOKEN-HERE` |
+| **Android Emulator** | `com.vividmemories.dotclash.dev` | `1:218032510167:android:940568c54d577cc441cc92` | `PASTE-ANDROID-DEBUG-TOKEN-HERE` |
+
+**Run dev with App Check (simulator / emulator):**
+
+```bash
+# iOS Simulator
+flutter run --flavor dev --dart-define=FLAVOR=dev \
+  --dart-define=APP_CHECK_DEBUG_TOKEN=PASTE-IOS-DEBUG-TOKEN-HERE
+
+# Android Emulator
+flutter run --flavor dev --dart-define=FLAVOR=dev \
+  --dart-define=APP_CHECK_DEBUG_TOKEN=PASTE-ANDROID-DEBUG-TOKEN-HERE
+```
+
+**Recommended dev flow (fixed token — easiest on iOS Simulator):** use the private team tokens referenced above. For a **new machine** without those tokens registered yet, generate fresh UUIDs instead:
 
 ```bash
 uuidgen   # copy the UUID
@@ -461,8 +480,13 @@ flutter run -d <simulator-id> --flavor dev --dart-define=FLAVOR=dev
 **App Check on Simulator:** Device Check does not work on simulators — pass a registered debug token (see [§2f](#2f--app-check-required-for-cloud-functions)):
 
 ```bash
+# iOS Simulator
 flutter run --flavor dev --dart-define=FLAVOR=dev \
-  --dart-define=APP_CHECK_DEBUG_TOKEN=PASTE-UUID-HERE
+  --dart-define=APP_CHECK_DEBUG_TOKEN=PASTE-IOS-DEBUG-TOKEN-HERE
+
+# Android Emulator
+flutter run --flavor dev --dart-define=FLAVOR=dev \
+  --dart-define=APP_CHECK_DEBUG_TOKEN=PASTE-ANDROID-DEBUG-TOKEN-HERE
 ```
 
 **Two-device Challenge QA:** boot iOS + Android emulators, then run `flutter run -d <id> ...` in two terminals (see [docs/summary.md](docs/summary.md) § Run dev on two devices).

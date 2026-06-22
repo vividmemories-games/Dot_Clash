@@ -13,17 +13,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: subosito/flutter-action@v2
+      - uses: dart-lang/setup-dart@v1
         with:
-          channel: stable
-          flutter-version: '3.41.9'
-          cache: true
+          sdk: stable
+
+      - name: Install FVM
+        run: dart pub global activate fvm
+
+      - name: Install pinned Flutter SDK
+        run: |
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          fvm install
+          fvm flutter --version
 
       - name: Install dependencies
-        run: flutter pub get
+        run: |
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          fvm flutter pub get
 
       - name: Analyze project source
-        run: flutter analyze --no-fatal-infos
+        run: |
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          fvm flutter analyze --no-fatal-infos
 
       - name: Run tests
-        run: flutter test
+        run: |
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          fvm flutter test

@@ -24,6 +24,7 @@ plugins {
     id("com.google.gms.google-services") version("4.3.15") apply false
     id("com.google.firebase.crashlytics") version("2.8.1") apply false
     // END: FlutterFire Configuration
+    // Plugin subprojects still apply KGP; app module uses built-in Kotlin.
     id("org.jetbrains.kotlin.android") version "2.2.20" apply false
 }
 

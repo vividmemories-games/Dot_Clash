@@ -12,12 +12,17 @@ Read this first. It routes you to code and docs — it does not replace them.
 
 ## Quick start
 
-```bash
-flutter run --flavor dev --dart-define=FLAVOR=dev
+Install [FVM](https://fvm.app), then use the pinned SDK (`.fvmrc` → **3.44.2**):
 
-flutter pub get
-flutter analyze --no-fatal-infos
-flutter test
+```bash
+dart pub global activate fvm
+fvm install
+fvm flutter pub get
+
+fvm flutter run --flavor dev --dart-define=FLAVOR=dev
+
+fvm flutter analyze --no-fatal-infos
+fvm flutter test
 ```
 
 Closed-testing builds: [`README.md`](README.md), [`docs/RELEASES.md`](docs/RELEASES.md). CI: `.github/workflows/dart.yml`.

@@ -31,9 +31,13 @@ migrate_working_dir/
 **/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins-dependencies
+.fvm/flutter_sdk
+.fvm/versions
 .pub-cache/
 .pub/
 /build/
+.pnpm-store/
+rules.zip
 
 # iOS AdMob override for closed-testing prod builds (scripts/set_beta_ads_native.sh)
 /ios/Flutter/BetaAdsOverride.xcconfig
@@ -69,3 +73,7 @@ firebase-debug.*.log
 *.pem
 ios/Security Key/
 *firebase-adminsdk*.json
+prod_firebase_private_key/
+
+# FVM Version Cache
+.fvm/

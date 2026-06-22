@@ -12,9 +12,13 @@ New Mac / laptop migration (keys, keystore, `.p8` map): **[MIGRATION_RUNBOOK.md]
 
 ## Quick run
 
+Requires [FVM](https://fvm.app) — pinned SDK **3.44.2** in `.fvmrc`:
+
 ```bash
+dart pub global activate fvm && fvm install
+
 # Daily development (Google test ads, dev Firebase)
-flutter run --flavor dev --dart-define=FLAVOR=dev
+fvm flutter run --flavor dev --dart-define=FLAVOR=dev
 ```
 
 ---
@@ -23,7 +27,7 @@ flutter run --flavor dev --dart-define=FLAVOR=dev
 
 Use **prod** package name, Firebase, and IAP — but **Google test ads** so real-world beta testers don’t trigger invalid AdMob traffic.
 
-**Before each upload:** bump the build number in [`pubspec.yaml`](pubspec.yaml) (current: `1.4.1+19` — the number after `+` must increase every store upload).
+**Before each upload:** bump the build number in [`pubspec.yaml`](pubspec.yaml) (current: `1.4.2+20` — the number after `+` must increase every store upload).
 
 Scripts live at the **project root** in `scripts/` (not `android/scripts/`):
 
@@ -105,24 +109,26 @@ Details and AdMob IDs: [`lib/core/env/app_env.dart`](lib/core/env/app_env.dart)
 
 ---
 
-## Current closed testing — build 19 (`1.4.1+19`)
+## Current closed testing — build 20 (`1.4.2+20`)
 
-**Challenge a Friend** — live 1v1 Dots & Boxes online. In closed testing on Play + TestFlight.
+**Challenge a Friend board presets** — live 1v1 Dots & Boxes online with host-selected layouts. In closed testing on Play + TestFlight.
 
 | Feature | Notes |
 |---------|--------|
-| **Challenge a Friend** | 6×6 live match; create/join via code or HTTPS link |
-| **Challenge hub** | Rematch recent rivals; head-to-head series (W–L–T) |
-| **App Links + FCM** | `vividmemories-games.github.io/join/{CODE}`; invite push for recent rivals |
+| **Challenge presets** | Classic 6×6, Blitz 4×4, Fortress 5×5 center void |
+| **Guest preview** | Guests see the board and tap **JOIN CHALLENGE** explicitly |
+| **Challenge hub** | Rematch recent rivals; rematch keeps the source preset |
+| **App Links + FCM** | `vividmemories-games.github.io/join/{CODE}`; invite push includes preset name |
 | **Turn timer** | 30s per turn; leave confirmation (build 13) still applies in other modes |
 
 Session notes and QA history: **[docs/summary.md](docs/summary.md)**  
 Full build history, checklists, and **store release notes**: **[docs/RELEASES.md](docs/RELEASES.md)**
 
-### Pre-upload smoke (build 19)
+### Pre-upload smoke (build 20)
 
-- [ ] Challenge: create → join → full match → rematch from Challenge hub
-- [ ] HTTPS link + FCM tap → lobby → play
+- [ ] Challenge: create Classic / Blitz / Fortress → guest preview → join → full match
+- [ ] Rematch after Blitz / Fortress keeps the same preset
+- [ ] HTTPS link + FCM tap → lobby preview → join → play
 - [ ] Campaign Next level + quick match leave dialog (builds 12–13 regression)
 - [ ] Prod backend if changed: `firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-72cc6`
 
