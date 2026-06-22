@@ -40,18 +40,50 @@ class MatchPayload {
       CampaignMoveMetrics.aiBoxCount(finalState, humanPlayerId);
 }
 
+/// Per-objective campaign star outcome (★, ★★, ★★★ evaluated independently).
+class LevelEvaluation {
+  const LevelEvaluation({
+    required this.starsEarned,
+    required this.objectivesMet,
+  });
+
+  static const empty = LevelEvaluation(
+    starsEarned: 0,
+    objectivesMet: [false, false, false],
+  );
+
+  /// Total stars (0–3): count of met objectives.
+  final int starsEarned;
+
+  /// Index 0 = ★, 1 = ★★, 2 = ★★★.
+  final List<bool> objectivesMet;
+
+  bool metForStar(int starNumber) =>
+      starNumber >= 1 &&
+      starNumber <= objectivesMet.length &&
+      objectivesMet[starNumber - 1];
+}
+
 /// Evaluates the 3-star conditions for a campaign level.
 abstract final class LevelEvaluator {
   /// Returns stars earned (0–3) for this match.
-  static int evaluate(CampaignLevel level, MatchPayload payload) {
-    if (!payload.humanWon) return 0;
+  static int evaluate(CampaignLevel level, MatchPayload payload) =>
+      evaluateDetailed(level, payload).starsEarned;
 
-    final s1 = _check(level.star1, payload);
-    if (!s1) return 1;
-    final s2 = _check(level.star2, payload);
-    if (!s2) return 1;
-    final s3 = _check(level.star3, payload);
-    return s3 ? 3 : 2;
+  /// Returns per-objective results; each star tier is scored independently.
+  static LevelEvaluation evaluateDetailed(
+    CampaignLevel level,
+    MatchPayload payload,
+  ) {
+    if (!payload.humanWon) return LevelEvaluation.empty;
+
+    final met = [
+      _check(level.star1, payload),
+      _check(level.star2, payload),
+      _check(level.star3, payload),
+    ];
+    final count = met.where((m) => m).length;
+    return LevelEvaluation(starsEarned: count, objectivesMet: met);
   }
 
   static bool _check(StarObjective obj, MatchPayload payload) =>

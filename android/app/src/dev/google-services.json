@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "218032510167-603v9gj3fld9us6k0pf3l2gfc8ruhgqa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vividmemories.dotclash.dev",
+            "certificate_hash": "00beea04a2331262b36c55ea653af4aa2909eb6f"
+          }
+        },
+        {
           "client_id": "218032510167-ifir1qfqdrdl000341qf7c5759fdju0p.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

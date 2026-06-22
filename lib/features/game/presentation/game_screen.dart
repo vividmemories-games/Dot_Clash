@@ -1218,7 +1218,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
     }
 
     final payload = MatchPayload(finalState: state, humanPlayerId: humanId);
-    final stars = humanWon ? LevelEvaluator.evaluate(level, payload) : 0;
+    final evaluation = humanWon
+        ? LevelEvaluator.evaluateDetailed(level, payload)
+        : LevelEvaluation.empty;
+    final stars = evaluation.starsEarned;
     final powerUpRewards = humanWon
         ? (level.powerUpRewards.isNotEmpty
             ? level.powerUpRewards
@@ -1267,6 +1270,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
         builder: (_) => CampaignLevelCompleteScreen(
           level: level,
           starsEarned: stars,
+          objectivesMet: evaluation.objectivesMet,
           humanWon: humanWon,
           powerUpRewards: powerUpRewards,
           initialCoins: initialCoins,

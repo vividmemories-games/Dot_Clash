@@ -4,7 +4,7 @@
 
 **Active build target:** `1.4.2+20` in `pubspec.yaml` (bump `+N` before each store upload)  
 **Previous closed testing:** build 19 (`1.4.1+19`) — Challenge a Friend v1  
-**Public launch:** follow **[LAUNCH.md](LAUNCH.md)** (target week of 2026-06-16; launch build `1.5.0+20+`)  
+**Public launch:** follow **[LAUNCH.md](LAUNCH.md)** (target week of 2026-06-16; launch build `1.5.0+21+`)  
 **Track:** Prod package + Firebase (`dot-clash-72cc6`), `BETA_ADS=true` (test ads) for closed testing only  
 **IAP / ops:** `SETUP.md` §4b · **Security:** `SETUP.md` App Check + [`firestore.rules`](../firestore.rules)
 

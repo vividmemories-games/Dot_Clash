@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dot_clash/features/challenge/domain/challenge_board_preset.dart';
 import 'package:dot_clash/features/challenge/domain/challenge_room.dart';
 import 'package:dot_clash/features/challenge/domain/challenge_status.dart';
@@ -91,9 +90,9 @@ void main() {
     });
 
     test('fromFirestore reads board preset fields', () {
-      final room = ChallengeRoom.fromFirestore(
+      final room = ChallengeRoom.fromData(
         'ABC123',
-        _FakeDocSnapshot({
+        {
           'hostUid': 'host1',
           'hostDisplayName': 'Alex',
           'guestUid': null,
@@ -103,7 +102,7 @@ void main() {
           'rows': 4,
           'cols': 4,
           'version': 0,
-        }),
+        },
       );
 
       expect(room.boardPresetId, 'challenge_blitz');
@@ -114,16 +113,16 @@ void main() {
     });
 
     test('fromFirestore defaults missing preset to Classic', () {
-      final room = ChallengeRoom.fromFirestore(
+      final room = ChallengeRoom.fromData(
         'ABC123',
-        _FakeDocSnapshot({
+        {
           'hostUid': 'host1',
           'hostDisplayName': 'Alex',
           'status': 'waiting',
           'rows': 6,
           'cols': 6,
           'version': 0,
-        }),
+        },
       );
 
       expect(room.boardPresetId, ChallengeBoardPreset.defaultPresetId);
@@ -145,19 +144,4 @@ void main() {
       expect(config.cols, 6);
     });
   });
-}
-
-class _FakeDocSnapshot implements DocumentSnapshot<Map<String, dynamic>> {
-  _FakeDocSnapshot(this._data);
-
-  final Map<String, dynamic> _data;
-
-  @override
-  Map<String, dynamic>? data() => _data;
-
-  @override
-  bool get exists => true;
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

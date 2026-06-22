@@ -1,8 +1,8 @@
 # Dot Clash — Public launch runbook
 
 **Target:** go live **week of 2026-06-16** (adjust dates as needed)  
-**Current baseline:** build **19** (`1.4.1+19`) in closed testing  
-**Launch build:** bump to **`1.5.0+20`** (or higher `+N`) — marketing version bump for Challenge a Friend; **never reuse a build number** already uploaded to a store.
+**Current baseline:** build **20** (`1.4.2+20`) in closed testing  
+**Launch build:** bump to **`1.5.0+21`** (or higher `+N`) — marketing version bump for Challenge a Friend; **never reuse a build number** already uploaded to a store (closed testing uses **`1.4.2+20`**).
 
 **Related docs:** [RELEASES.md](RELEASES.md) · [SETUP.md](../SETUP.md) · [DECISIONS.md](DECISIONS.md) · [architecture.md](architecture.md) · [flutter_firebase_store_release_checklist.md](flutter_firebase_store_release_checklist.md)
 
@@ -12,8 +12,8 @@
 
 | Track | Firebase | Ads | When |
 |-------|----------|-----|------|
-| **Closed testing** (done / ongoing) | `dot-clash-72cc6` | `BETA_ADS=true` (test units) | Builds 15–19 |
-| **Public launch** (this runbook) | `dot-clash-72cc6` | **No `BETA_ADS`** — production AdMob | Build 20+ |
+| **Closed testing** (done / ongoing) | `dot-clash-72cc6` | `BETA_ADS=true` (test units) | Builds 15–20 |
+| **Public launch** (this runbook) | `dot-clash-72cc6` | **No `BETA_ADS`** — production AdMob | Build 21+ |
 
 **Do not publish public production with `BETA_ADS`.** See [DECISIONS.md](DECISIONS.md) R-2, R-3.
 
@@ -40,9 +40,9 @@ Use this as a default schedule; shift days if review times differ.
 
 | Day | Focus | Owner action |
 |-----|--------|--------------|
-| **Mon** | Sign off build 19 closed testing + fix P0/P1 only | Complete QA matrix below; check Crashlytics for 19 |
+| **Mon** | Sign off build 20 closed testing + fix P0/P1 only | Complete QA matrix below; check Crashlytics for 20 |
 | **Tue** | Backend + scheduler verification | Deploy prod if any backend delta; confirm scheduler logs clean |
-| **Wed** | Launch build (`1.5.0+20`) + real-ad device QA | Build without `BETA_ADS`; full smoke on 2 phones |
+| **Wed** | Launch build (`1.5.0+21`) + real-ad device QA | Build without `BETA_ADS`; full smoke on 2 phones |
 | **Thu** | Store submission | Upload AAB + IPA; submit for review; staged rollout config |
 | **Fri** | Publish (if approved) + monitor | Start 5–20% Android; iOS release; watch Crashlytics 24h |
 | **Sat–Sun** | Soak + ramp | Increase rollout if crash-free ≥ 99%; respond to reviews |
@@ -69,14 +69,14 @@ dart format --set-exit-if-changed .
 
 - [ ] All commands exit 0
 - [ ] No uncommitted hotfixes needed for launch (or cherry-pick only P0/P1)
-- [ ] `pubspec.yaml` version bumped for launch (`1.5.0+20` minimum)
+- [ ] `pubspec.yaml` version bumped for launch (`1.5.0+21` minimum; must exceed closed-testing `+20`)
 - [ ] GitHub Actions green on latest `main` commit
 
 ---
 
 ## Gate 1 — Closed testing sign-off (Mon–Tue)
 
-Complete on **build 19** (or latest closed-testing build). Mark each **Pass / Fail / N/A** with date + tester initials.
+Complete on **build 20** (or latest closed-testing build). Mark each **Pass / Fail / N/A** with date + tester initials.
 
 ### Challenge a Friend (two devices, prod Firebase)
 
@@ -166,11 +166,11 @@ severity>=ERROR
 In `pubspec.yaml`:
 
 ```yaml
-version: 1.5.0+20   # increment +N for every store upload
+version: 1.5.0+21   # increment +N for every store upload
 ```
 
 - [ ] Version name reflects user-visible release (1.5.0 recommended for Challenge launch)
-- [ ] Build number (`+20`) higher than any build already in App Store Connect / Play Console
+- [ ] Build number (`+21`) higher than closed-testing build 20 and any build already in App Store Connect / Play Console
 
 ### Build commands — **public launch (real ads)**
 
@@ -287,7 +287,7 @@ Watch daily:
 | Ad fill / policy | AdMob console |
 
 - [ ] Crashlytics alert email configured
-- [ ] Version filter set to launch build (`1.5.0+20`)
+- [ ] Version filter set to launch build (`1.5.0+21`)
 - [ ] Rollback decision owner assigned (you)
 
 ---
@@ -311,7 +311,7 @@ Prepare before launch:
 
 ## Store release notes (launch)
 
-Use or adapt from [RELEASES.md](RELEASES.md) build 19 section.
+Use or adapt from [RELEASES.md](RELEASES.md) build 20 section.
 
 **Short (What’s New)**
 
@@ -408,4 +408,4 @@ flutter test test/challenge/ test/deep_links/challenge_link_parser_test.dart tes
 
 ---
 
-*Created 2026-06-13 for public launch week. Baseline: build 19 closed testing. Adjust dates and build numbers as the ship date moves.*
+*Created 2026-06-13 for public launch week. Current baseline: build 20 closed testing. Adjust dates and build numbers as the ship date moves.*

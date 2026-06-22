@@ -5,6 +5,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+if command -v fvm >/dev/null 2>&1 && [ -f "$ROOT/.fvmrc" ]; then
+  FLUTTER=(fvm flutter)
+else
+  FLUTTER=(flutter)
+fi
+
 DART_DEFINES=(--dart-define=FLAVOR=prod --dart-define=BETA_ADS=true)
 GRADLE_BETA=(--android-project-arg=betaAds=true)
 
@@ -18,7 +24,7 @@ trap cleanup EXIT
 TARGET="${1:-all}"
 
 build_android() {
-  flutter build appbundle \
+  "${FLUTTER[@]}" build appbundle \
     --flavor prod \
     "${DART_DEFINES[@]}" \
     --release \
@@ -27,7 +33,7 @@ build_android() {
 }
 
 build_ios() {
-  flutter build ipa --flavor prod "${DART_DEFINES[@]}" --release
+  "${FLUTTER[@]}" build ipa --flavor prod "${DART_DEFINES[@]}" --release
   echo "iOS IPA: build/ios/ipa/*.ipa"
 }
 

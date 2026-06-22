@@ -81,8 +81,10 @@ class ChallengeRoom {
   factory ChallengeRoom.fromFirestore(
     String code,
     DocumentSnapshot<Map<String, dynamic>> snap,
-  ) {
-    final data = snap.data()!;
+  ) =>
+      ChallengeRoom.fromData(code, snap.data()!);
+
+  factory ChallengeRoom.fromData(String code, Map<String, dynamic> data) {
     return ChallengeRoom(
       code: code,
       hostUid: data['hostUid'] as String,

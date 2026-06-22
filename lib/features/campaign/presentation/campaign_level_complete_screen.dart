@@ -24,6 +24,7 @@ class CampaignLevelCompleteScreen extends ConsumerStatefulWidget {
     super.key,
     required this.level,
     required this.starsEarned,
+    required this.objectivesMet,
     required this.humanWon,
     required this.powerUpRewards,
     required this.saveFuture,
@@ -33,6 +34,7 @@ class CampaignLevelCompleteScreen extends ConsumerStatefulWidget {
 
   final CampaignLevel level;
   final int starsEarned;
+  final List<bool> objectivesMet;
   final bool humanWon;
   final Map<String, int> powerUpRewards;
   final Future<void> saveFuture;
@@ -115,10 +117,10 @@ class _CampaignLevelCompleteScreenState
         if (!mounted || _showResults) return;
         setState(() {
           _visibleStars = starIndex;
-          if (starIndex <= widget.starsEarned) {
+          if (widget.objectivesMet[starIndex - 1]) {
             AppHaptics.selectionClick();
           }
-          if (starIndex >= 2 && widget.starsEarned >= 2) {
+          if (widget.starsEarned >= 2) {
             _confettiActive = true;
           }
         });
@@ -226,6 +228,7 @@ class _CampaignLevelCompleteScreenState
                       key: const ValueKey('results'),
                       level: widget.level,
                       starsEarned: widget.starsEarned,
+                      objectivesMet: widget.objectivesMet,
                       humanWon: widget.humanWon,
                       saveStatus: _saveStatus,
                       onLeaveToPlayLevel: _leaveToPlayLevel,
@@ -249,6 +252,7 @@ class _CampaignLevelCompleteScreenState
                       key: const ValueKey('celebration'),
                       level: widget.level,
                       starsEarned: widget.starsEarned,
+                      objectivesMet: widget.objectivesMet,
                       humanWon: widget.humanWon,
                       visibleStars: _visibleStars,
                       confettiActive: _confettiActive,
@@ -311,6 +315,7 @@ class _CelebrationLayer extends StatelessWidget {
     super.key,
     required this.level,
     required this.starsEarned,
+    required this.objectivesMet,
     required this.humanWon,
     required this.visibleStars,
     required this.confettiActive,
@@ -327,6 +332,7 @@ class _CelebrationLayer extends StatelessWidget {
 
   final CampaignLevel level;
   final int starsEarned;
+  final List<bool> objectivesMet;
   final bool humanWon;
   final int visibleStars;
   final bool confettiActive;
@@ -378,7 +384,7 @@ class _CelebrationLayer extends StatelessWidget {
                 AppSpacing.vGapLG,
                 _AnimatedStarRow(
                   visibleStars: visibleStars,
-                  earnedStars: starsEarned,
+                  objectivesMet: objectivesMet,
                   v: v,
                 ),
                 AppSpacing.vGapLG,
@@ -482,12 +488,12 @@ class _CelebrationLayer extends StatelessWidget {
 class _AnimatedStarRow extends StatelessWidget {
   const _AnimatedStarRow({
     required this.visibleStars,
-    required this.earnedStars,
+    required this.objectivesMet,
     required this.v,
   });
 
   final int visibleStars;
-  final int earnedStars;
+  final List<bool> objectivesMet;
   final DotClashVisuals v;
 
   @override
@@ -496,7 +502,7 @@ class _AnimatedStarRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(3, (i) {
         final revealed = i < visibleStars;
-        final lit = revealed && i < earnedStars;
+        final lit = revealed && i < objectivesMet.length && objectivesMet[i];
         return AnimatedScale(
           scale: revealed ? 1.0 : 0.2,
           duration: const Duration(milliseconds: 280),

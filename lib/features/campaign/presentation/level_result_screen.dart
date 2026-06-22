@@ -19,6 +19,7 @@ class LevelResultScreen extends ConsumerWidget {
     super.key,
     required this.level,
     required this.starsEarned,
+    required this.objectivesMet,
     required this.humanWon,
     this.saveStatus = CampaignSaveStatus.saved,
     this.onRetrySave,
@@ -26,6 +27,7 @@ class LevelResultScreen extends ConsumerWidget {
 
   final CampaignLevel level;
   final int starsEarned;
+  final List<bool> objectivesMet;
   final bool humanWon;
   final CampaignSaveStatus saveStatus;
   final Future<void> Function()? onRetrySave;
@@ -38,6 +40,7 @@ class LevelResultScreen extends ConsumerWidget {
         child: LevelResultPanel(
           level: level,
           starsEarned: starsEarned,
+          objectivesMet: objectivesMet,
           humanWon: humanWon,
           saveStatus: saveStatus,
           onRetrySave: onRetrySave,
@@ -53,6 +56,7 @@ class LevelResultPanel extends ConsumerWidget {
     super.key,
     required this.level,
     required this.starsEarned,
+    required this.objectivesMet,
     required this.humanWon,
     this.saveStatus = CampaignSaveStatus.saved,
     this.onRetrySave,
@@ -61,6 +65,7 @@ class LevelResultPanel extends ConsumerWidget {
 
   final CampaignLevel level;
   final int starsEarned;
+  final List<bool> objectivesMet;
   final bool humanWon;
   final CampaignSaveStatus saveStatus;
   final Future<void> Function()? onRetrySave;
@@ -96,7 +101,7 @@ class LevelResultPanel extends ConsumerWidget {
             textAlign: TextAlign.center,
           ),
           AppSpacing.vGapLG,
-          _StarRow(starsEarned: starsEarned, v: v),
+          _StarRow(objectivesMet: objectivesMet, v: v),
           AppSpacing.vGapLG,
           if (humanWon) ...[
             NeonCard(
@@ -106,21 +111,21 @@ class LevelResultPanel extends ConsumerWidget {
                 children: [
                   _ObjectiveLine(
                     obj: level.star1,
-                    achieved: starsEarned >= 1,
+                    achieved: objectivesMet[0],
                     v: v,
                     t: t,
                   ),
                   AppSpacing.vGapXS,
                   _ObjectiveLine(
                     obj: level.star2,
-                    achieved: starsEarned >= 2,
+                    achieved: objectivesMet[1],
                     v: v,
                     t: t,
                   ),
                   AppSpacing.vGapXS,
                   _ObjectiveLine(
                     obj: level.star3,
-                    achieved: starsEarned >= 3,
+                    achieved: objectivesMet[2],
                     v: v,
                     t: t,
                   ),
@@ -249,8 +254,8 @@ class LevelResultPanel extends ConsumerWidget {
 }
 
 class _StarRow extends StatelessWidget {
-  const _StarRow({required this.starsEarned, required this.v});
-  final int starsEarned;
+  const _StarRow({required this.objectivesMet, required this.v});
+  final List<bool> objectivesMet;
   final DotClashVisuals v;
 
   @override
@@ -258,7 +263,7 @@ class _StarRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(3, (i) {
-        final lit = i < starsEarned;
+        final lit = i < objectivesMet.length && objectivesMet[i];
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Icon(
