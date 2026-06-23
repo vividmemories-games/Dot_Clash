@@ -5,6 +5,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../features/profile/providers/lives_provider.dart';
 import '../../../features/tutorial/providers/coach_tour_provider.dart';
 import '../../../services/ads/ad_reward_router.dart';
+import '../../../services/ads/rewarded_ad_messages.dart';
 import '../../../shared/feedback/app_snackbar.dart';
 import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/widgets/neon_button.dart';
@@ -184,12 +185,17 @@ class LevelResultPanel extends ConsumerWidget {
               color: v.gold,
               width: double.infinity,
               onPressed: () async {
-                final ok =
-                    await ref.read(adRewardRouterProvider).showRewardedRetry();
+                final router = ref.read(adRewardRouterProvider);
+                final ok = await router.showRewardedRetry();
                 if (!context.mounted) return;
                 AppSnackBar.show(
                   context,
-                  ok ? 'Life refunded — try again!' : 'Retry ad unavailable.',
+                  ok
+                      ? 'Life refunded — try again!'
+                      : RewardedAdMessages.retryLifeFailure(
+                          dailyRescueCapReached:
+                              router.isRescueAdDailyCapReached,
+                        ),
                 );
                 if (ok) {
                   await _leaveToPlayLevel(context, level.id, replay: true);

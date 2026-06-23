@@ -1,8 +1,9 @@
 # Dot Clash — Public launch runbook
 
 **Target:** go live **week of 2026-06-16** (adjust dates as needed)  
-**Current baseline:** build **20** (`1.4.2+20`) in closed testing  
-**Launch build:** bump to **`1.5.0+21`** (or higher `+N`) — marketing version bump for Challenge a Friend; **never reuse a build number** already uploaded to a store (closed testing uses **`1.4.2+20`**).
+**Current closed-testing upload:** build **23** (`1.5.0+23`) — `BETA_ADS=true`, Gate 3 ad-flow QA on real devices  
+**Public launch (prod ads):** build **`1.5.0+24`** or higher `+N` — **after** public Play / App Store listing + AdMob store link + app review  
+**Never reuse a build number** already uploaded to a store (Gate 0/1 QA **build 21** `1.4.3+21`; prior closed testing **build 20** `1.4.2+20`).
 
 **Related docs:** [RELEASES.md](RELEASES.md) · [SETUP.md](../SETUP.md) · [DECISIONS.md](DECISIONS.md) · [architecture.md](architecture.md) · [flutter_firebase_store_release_checklist.md](flutter_firebase_store_release_checklist.md)
 
@@ -12,8 +13,8 @@
 
 | Track | Firebase | Ads | When |
 |-------|----------|-----|------|
-| **Closed testing** (done / ongoing) | `dot-clash-72cc6` | `BETA_ADS=true` (test units) | Builds 15–20 |
-| **Public launch** (this runbook) | `dot-clash-72cc6` | **No `BETA_ADS`** — production AdMob | Build 21+ |
+| **Closed testing** (done / ongoing) | `dot-clash-72cc6` | `BETA_ADS=true` (test units) | Builds 15–20; **23** = Gate 3 ad-flow QA |
+| **Public launch** (this runbook) | `dot-clash-72cc6` | **No `BETA_ADS`** — production AdMob | Build **24+** (after AdMob app review) |
 
 **Do not publish public production with `BETA_ADS`.** See [DECISIONS.md](DECISIONS.md) R-2, R-3.
 
@@ -26,7 +27,8 @@
 - [ ] Prod backend deployed: functions + rules + indexes on `dot-clash-72cc6`
 - [ ] `processChallengeTimeouts` scheduler runs without recurring HTTP 500 (Cloud Logging)
 - [ ] Two-device Challenge matrix passed on **launch build** (iOS + Android)
-- [ ] Real-ad prod build verified on both platforms (interstitial, rewarded, UMP consent)
+- [ ] Gate 3a: rewarded/interstitial **flow** verified on real devices (`BETA_ADS=true`, “Test Ad” label)
+- [ ] Gate 3b: **prod** ad units verified on both platforms (after public store listing + AdMob review)
 - [ ] Crashlytics forced-crash test on launch build (symbols uploaded)
 - [ ] Store listings live: privacy URL, delete-data URL, contact URL, screenshots, age rating
 - [ ] Account deletion tested on throwaway account (Settings → Delete my account)
@@ -42,14 +44,17 @@ Use this as a default schedule; shift days if review times differ.
 |-----|--------|--------------|
 | **Mon** | Sign off build 20 closed testing + fix P0/P1 only | Complete QA matrix below; check Crashlytics for 20 |
 | **Tue** | Backend + scheduler verification | Deploy prod if any backend delta; confirm scheduler logs clean |
-| **Wed** | Launch build (`1.5.0+21`) + real-ad device QA | Build without `BETA_ADS`; full smoke on 2 phones |
+| **Wed** | Gate 3a closed testing (`1.5.0+23`) + ad-flow QA on real devices | `BETA_ADS=true`; rewarded polish + grant matrix on 2 phones |
+| **Post-listing** | Gate 3b prod ads + launch build (`1.5.0+24+`) | No `BETA_ADS`; after AdMob “Add store” + app review |
 | **Thu** | Store submission | Upload AAB + IPA; submit for review; staged rollout config |
 | **Fri** | Publish (if approved) + monitor | Start 5–20% Android; iOS release; watch Crashlytics 24h |
 | **Sat–Sun** | Soak + ramp | Increase rollout if crash-free ≥ 99%; respond to reviews |
 
 ---
 
-## Gate 0 — Code & CI (Mon morning)
+## Gate 0 — Code & CI (Mon morning) ✅
+
+Signed off **2026-06-23**.
 
 Run from repo root:
 
@@ -67,59 +72,61 @@ dart run tool/validate_levels.dart
 dart format --set-exit-if-changed .
 ```
 
-- [ ] All commands exit 0
-- [ ] No uncommitted hotfixes needed for launch (or cherry-pick only P0/P1)
-- [ ] `pubspec.yaml` version bumped for launch (`1.5.0+21` minimum; must exceed closed-testing `+20`)
-- [ ] GitHub Actions green on latest `main` commit
+- [x] All commands exit 0
+- [x] No uncommitted hotfixes needed for launch (or cherry-pick only P0/P1)
+- [x] `pubspec.yaml` version bumped for launch (`1.4.3+21`; build `+21` exceeds closed-testing `+20`)
+- [x] GitHub Actions green on latest `main` commit
 
 ---
 
-## Gate 1 — Closed testing sign-off (Mon–Tue)
+## Gate 1 — Closed testing sign-off (Mon–Tue) ✅
 
-Complete on **build 20** (or latest closed-testing build). Mark each **Pass / Fail / N/A** with date + tester initials.
+Complete on **build 21** (`1.4.3+21`). Manual QA signed off **2026-06-23**.
 
 ### Challenge a Friend (two devices, prod Firebase)
 
 | # | Scenario | Expected | Pass |
 |---|----------|----------|------|
-| C1 | Host **Create** → guest **Join** by code | Both reach active 6×6 board; turns alternate | [ ] |
-| C2 | Play full match to completion | One result dialog each; `challenge_finished` analytics | [ ] |
-| C3 | **Rematch** from result or Challenge hub rival row | New room; both enter play | [ ] |
-| C4 | Share **HTTPS link** (`vividmemories-games.github.io/join/{CODE}`) | Guest opens lobby while signed in | [ ] |
-| C5 | **FCM tap** (background) | Opens lobby → play when room active | [ ] |
-| C6 | **FCM / snackbar** (Android foreground) | In-app invite → JOIN works | [ ] |
-| C7 | Reconnect after match **finished** | `recordChallengeMatch` idempotent; history updated | [ ] |
-| C8 | Leave mid-match (Home / back / MORE → Exit) | Confirm dialog; **Stay** keeps board; leave → opponent wins | [ ] |
-| C9 | Turn timer (~30s) | Turn advances (server or client backup) | [ ] |
-| C10 | Challenge hub **Rivalries** + **View all history** | On Challenge hub, not Profile | [ ] |
+| C1 | Host **Create** → guest **Join** by code | Both reach active 6×6 board; turns alternate | [x] |
+| C2 | Play full match to completion | One result dialog each; `challenge_finished` analytics | [x] |
+| C3 | **Rematch** from result or Challenge hub rival row | New room; both enter play | [x] |
+| C4 | Share **HTTPS link** (`vividmemories-games.github.io/join/{CODE}`) | Guest opens lobby while signed in | [x] |
+| C5 | **FCM tap** (background) | Opens lobby → play when room active | [x] |
+| C6 | **FCM / snackbar** (Android foreground) | In-app invite → JOIN works | [x] |
+| C7 | Reconnect after match **finished** | `recordChallengeMatch` idempotent; history updated | [x] |
+| C8 | Leave mid-match (Home / back / MORE → Exit) | Confirm dialog; **Stay** keeps board; leave → opponent wins | [x] |
+| C9 | Turn timer (~30s) | Turn advances (server or client backup) | [x] |
+| C10 | Challenge hub **Rivalries** + **View all history** | On Challenge hub, not Profile | [x] |
 
 ### Campaign & Quick Match (single device each platform)
 
 | # | Scenario | Expected | Pass |
 |---|----------|----------|------|
-| R1 | Campaign beat level → **Next level** | Fresh board; no flash of finished level | [ ] |
-| R2 | Campaign mid-match → Leave | Life **not** consumed | [ ] |
-| R3 | Fresh level (0 moves) → Home | No leave dialog | [ ] |
-| R4 | Quick match mid-game leave | Generic “Leave match?” copy | [ ] |
-| R5 | Shop buy boost | Optimistic coins; button disabled in-flight | [ ] |
-| R6 | Daily claim | Feedback + cooldown state | [ ] |
+| R1 | Campaign beat level → **Next level** | Fresh board; no flash of finished level | [x] |
+| R2 | Campaign mid-match → Leave | Life **not** consumed | [x] |
+| R3 | Fresh level (0 moves) → Home | No leave dialog | [x] |
+| R4 | Quick match mid-game leave | Generic “Leave match?” copy | [x] |
+| R5 | Shop buy boost | Optimistic coins; button disabled in-flight | [x] |
+| R6 | Daily claim | Feedback + cooldown state | [x] |
 
 ### Auth, compliance, monetization
 
 | # | Scenario | Expected | Pass |
 |---|----------|----------|------|
-| A1 | Google Sign-In (Android) | Profile loads | [ ] |
-| A2 | Apple Sign-In (iOS) | Profile loads | [ ] |
-| A3 | Guest → later link account | No data loss on expected paths | [ ] |
-| A4 | Settings → **Contact us** | Mail app opens (`vividmemoriesgames@gmail.com`) | [ ] |
-| A5 | Settings → **Delete my account** (throwaway) | Auth + profile removed | [ ] |
-| A6 | Remove Ads IAP (sandbox/TestFlight) | Receipt verified; ads suppressed | [ ] |
+| A1 | Google Sign-In (Android) | Profile loads | [x] |
+| A2 | Apple Sign-In (iOS) | Profile loads | [x] |
+| A3 | Guest → later link account | No data loss on expected paths | [x] |
+| A4 | Settings → **Contact us** | Mail app opens (`vividmemoriesgames@gmail.com`) | [x] |
+| A5 | Settings → **Delete my account** (throwaway) | Auth + profile removed | [x] |
+| A6 | Remove Ads IAP (sandbox/TestFlight) | Receipt verified; ads suppressed | [x] |
 
-**Exit Gate 1:** zero **Fail** on C1–C8 and R1–R4. C9/C10 and A-items strongly recommended.
+**Exit Gate 1:** zero **Fail** on C1–C8 and R1–R4. C9/C10 and A-items strongly recommended. **Passed 2026-06-23** — all C/R/A scenarios pass.
 
 ---
 
-## Gate 2 — Backend & Firebase (Tue)
+## Gate 2 — Backend & Firebase (Tue) ✅
+
+Signed off **2026-06-23**.
 
 ### Deploy (only if backend changed since last prod deploy)
 
@@ -129,8 +136,8 @@ firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-
 firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-dev
 ```
 
-- [ ] Deploy succeeded with no errors
-- [ ] `dot-clash-dev` kept in sync (R-4)
+- [x] Deploy succeeded with no errors
+- [x] `dot-clash-dev` kept in sync (R-4)
 
 ### Scheduler health (critical for Challenge)
 
@@ -141,78 +148,169 @@ resource.labels.service_name="processchallengetimeouts"
 severity>=ERROR
 ```
 
-- [ ] No recurring HTTP 500 in last 24h after deploy
-- [ ] At least one successful scheduled run logged in last 2h
+- [x] No recurring HTTP 500 in last 24h after deploy
+- [x] At least one successful scheduled run logged in last 2h
 
 **If scheduler still fails:** client turn-timeout backup limits user impact, but waiting-room expiry and 24h stale abandon may lag — treat as **release blocker** until fixed or explicitly accepted with monitoring.
 
 ### App Check (prod)
 
-- [ ] [App Check → Apps](https://console.firebase.google.com/project/dot-clash-72cc6/appcheck/apps) — iOS + Android registered (Play Integrity, App Attest)
-- [ ] TestFlight / Play **release** build completes campaign level (callable succeeds — not `UNAUTHENTICATED`)
-- [ ] No spike in callable `UNAUTHENTICATED` after launch build upload
+- [x] [App Check → Apps](https://console.firebase.google.com/project/dot-clash-72cc6/appcheck/apps) — iOS + Android registered (Play Integrity, App Attest)
+- [x] TestFlight / Play **release** build completes campaign level (callable succeeds — not `UNAUTHENTICATED`)
+- [x] No spike in callable `UNAUTHENTICATED` after launch build upload
 
 ### Firestore rules sanity
 
-- [ ] Clients **cannot write** `challenges/{code}` (reads only for host/guest)
-- [ ] Economy fields on `profiles/{uid}` not client-writable
+- [x] Clients **cannot write** `challenges/{code}` (reads only for host/guest)
+- [x] Economy fields on `profiles/{uid}` not client-writable
 
 ---
 
-## Gate 3 — Launch build (Wed)
+## Gate 3 — Ads & launch build
 
-### Version bump
+AdMob **account** may be approved while each app still shows **Requires review** until it is linked to a **public** store listing. Prod units on real devices can return `No ad to show` until then — that is expected. Use **Gate 3a** (beta ads) for integration QA now; **Gate 3b** (prod ads) after public listing + AdMob app review.
+
+---
+
+### Gate 3a — Closed testing ad-flow QA (build 23) — **in progress**
+
+**Target:** **`1.5.0+23`** (build **23** — exceeds Gate 0/1 QA **+21** and closed-testing **+20**).
+
+**Track:** prod Firebase + IAP, **`BETA_ADS=true`** (Google test units). Ads must show **“Test Ad”** label.
+
+#### Version bump
 
 In `pubspec.yaml`:
 
 ```yaml
-version: 1.5.0+21   # increment +N for every store upload
+version: 1.5.0+23   # increment +N for every store upload
 ```
 
-- [ ] Version name reflects user-visible release (1.5.0 recommended for Challenge launch)
-- [ ] Build number (`+21`) higher than closed-testing build 20 and any build already in App Store Connect / Play Console
+- [x] Version name `1.5.0` (Challenge launch marketing version)
+- [x] Build number `+23` higher than QA build 21 and prior closed-testing uploads
 
-### Build commands — **public launch (real ads)**
-
-**No `BETA_ADS`.** Do not run `scripts/build_closed_testing.sh` for production.
+#### Build commands — closed testing (test ads)
 
 ```bash
 cd "/path/to/Dot_Clash"
 flutter clean && flutter pub get
 
-# Ensure iOS native AdMob ID is production (not beta script)
-bash scripts/set_beta_ads_native.sh off
+bash scripts/build_closed_testing.sh          # both platforms
+bash scripts/build_closed_testing.sh android
+bash scripts/build_closed_testing.sh ios
+```
 
-flutter build appbundle --flavor prod --dart-define=FLAVOR=prod --release
-flutter build ipa --flavor prod --dart-define=FLAVOR=prod --release
+Script runs `set_beta_ads_native.sh on` for iOS, passes `--dart-define=BETA_ADS=true`, and cleans up on exit.
+
+**Local real-device debug (same ad config):**
+
+```bash
+bash scripts/set_beta_ads_native.sh on
+fvm flutter run --flavor prod \
+  --dart-define=FLAVOR=prod \
+  --dart-define=BETA_ADS=true \
+  --android-project-arg=betaAds=true
+bash scripts/set_beta_ads_native.sh off
 ```
 
 | Platform | Artifact |
 |----------|----------|
 | Android | `build/app/outputs/bundle/prodRelease/app-prod-release.aab` |
-| iOS | `build/ios/ipa/*.ipa` (or Xcode Organizer archive) |
+| iOS | `build/ios/ipa/*.ipa` |
 
-### Real-ad verification (both platforms)
+Upload to Play **closed testing** / **TestFlight**; install on **≥2 real devices** (1 iOS + 1 Android).
+
+#### Log sanity (device console)
+
+Filter for:
+
+```text
+[AdConsent] canRequestAds=true
+testUnits=true
+[AdMobAdService] onUserEarnedReward
+[AdReward]
+[Callable] claimRewardedAd
+```
+
+Must **not** see prod-only `No ad to show` on test units. If `testUnits=false`, the build was not compiled with `BETA_ADS=true` (or iOS native override missing).
+
+#### Ad-flow verification matrix (real devices, test ads)
+
+| # | Scenario | Expected | Pass |
+|---|----------|----------|------|
+| G3a-1 | Shop → **Watch ad for coins** (first watch) | “Test Ad” opens; +35 coins; `[Callable] claimRewardedAd succeeded` | [ ] |
+| G3a-2 | Shop → coin ad again within **30 min** | Button disabled / cooldown copy; or watch → grant rejected (`cooldown`) | [ ] |
+| G3a-3 | Shop / lives sheet → **life ad** at &lt;5 lives | “Test Ad” opens; life granted; daily counter only on success | [ ] |
+| G3a-4 | Life ad at **5 lives** | Button disabled (“Lives full” / greyed) | [ ] |
+| G3a-5 | **3 life ads** in one UTC day | 4th disabled; cap message | [ ] |
+| G3a-6 | Campaign loss → **Watch ad · retry** | Ad opens; life refunded; replay works | [ ] |
+| G3a-7 | Dismiss ad early (no full watch) | No grant; clear snackbar; daily counters unchanged | [ ] |
+| G3a-8 | Post-match **interstitial** | **Not** on w1_l01–w1_l04; shows on later matches | [ ] |
+| G3a-9 | **UMP** consent | `canRequestAds=true` after flow (EEA test if possible) | [ ] |
+| G3a-10 | **Remove Ads** IAP (sandbox) | Purchase succeeds; interstitials suppressed | [ ] |
+
+**Exit Gate 3a:** zero **Fail** on G3a-1, G3a-3, G3a-6, G3a-8. G3a-2/4/5/7/9/10 strongly recommended.
+
+Re-run abbreviated Challenge smoke on build 23: **C1, C4, R1, A4, A5**.
+
+#### Crashlytics (build 23)
+
+- [ ] Normal sessions appear in Crashlytics with version filter `1.5.0+23`
+- [ ] dSYM / mapping uploaded with TestFlight / Play upload
+
+**Prerequisites done (AdMob publisher):**
+
+- [x] Payment profile complete
+- [x] Account approved
+- [x] app-ads.txt verified (`vividmemories-games.github.io`)
+
+**Still blocking prod ads (Gate 3b):**
+
+- [ ] Public Google Play listing (internal/closed-only is **not** searchable in AdMob “Add store”)
+- [ ] AdMob **Add store** linked per platform
+- [ ] App **Requires review** badge cleared
+
+---
+
+### Gate 3b — Prod ads launch build — **blocked until store listing**
+
+**Target:** **`1.5.0+24`** (or next unused `+N`) — **no `BETA_ADS`**.
+
+Run only after:
+
+1. Production track on **Google Play** (staged rollout OK)
+2. **App Store** listing path for iOS
+3. AdMob **Add store** succeeds (allow **24–48h** after going public)
+4. AdMob app review passes (no **Requires review**)
+
+#### Build commands — public launch (real ads)
+
+```bash
+cd "/path/to/Dot_Clash"
+flutter clean && flutter pub get
+
+bash scripts/set_beta_ads_native.sh off   # ensure iOS prod AdMob app ID
+
+flutter build appbundle --flavor prod --dart-define=FLAVOR=prod --release
+flutter build ipa --flavor prod --dart-define=FLAVOR=prod --release
+```
+
+**Do not** run `scripts/build_closed_testing.sh` for public launch.
+
+#### Prod-ad verification (both platforms)
 
 - [ ] Ads show **without** “Test Ad” label
+- [ ] No sustained `No ad to show` on rewarded load (check `[AdMobAdService] Rewarded failed`)
 - [ ] UMP consent flow works (EEA test if possible)
 - [ ] Interstitial does not show on FTUE levels w1_l01–w1_l04
-- [ ] Rewarded ad grants expected reward (life / coins path)
-- [ ] Remove Ads IAP still works with production ad units disabled
+- [ ] Rewarded grants (life / coins / retry) after full watch
+- [ ] Remove Ads IAP still works with production ad units
 
-### Crashlytics
-
-On a **debug/dev** build only (never ship this):
+On a **debug/dev** build only (never ship forced crash):
 
 ```dart
 // FirebaseCrashlytics.instance.crash();
 ```
-
-On launch build: confirm normal sessions appear in Crashlytics with correct version filter.
-
-- [ ] dSYM / mapping files uploaded (iOS automatic via Xcode; Android via Play)
-
-Re-run **abbreviated** smoke on launch build: C1, C4, R1, A4, A5.
 
 ---
 
@@ -287,7 +385,7 @@ Watch daily:
 | Ad fill / policy | AdMob console |
 
 - [ ] Crashlytics alert email configured
-- [ ] Version filter set to launch build (`1.5.0+21`)
+- [ ] Version filter set to launch build (`1.5.0+24` or current prod-ad build)
 - [ ] Rollback decision owner assigned (you)
 
 ---
@@ -401,11 +499,11 @@ flutter test test/challenge/ test/deep_links/challenge_link_parser_test.dart tes
 
 ## After launch
 
-- [ ] Add **build 20** (or launch `+N`) section to [RELEASES.md](RELEASES.md) with store notes and any hotfixes
-- [ ] Update [README.md](../README.md) “Current closed testing” → public launch version
+- [ ] Add launch `+N` section to [RELEASES.md](RELEASES.md) with store notes and any hotfixes
+- [ ] Update [README.md](../README.md) “Current closed testing” → public launch version when Gate 3b ships
 - [ ] Archive closed-testing checklist items that are now signed off
 - [ ] Optional polish backlog: `/profile/challenge-history` → `/challenge/history`; Challenge daily missions
 
 ---
 
-*Created 2026-06-13 for public launch week. Current baseline: build 20 closed testing. Adjust dates and build numbers as the ship date moves.*
+*Created 2026-06-13 for public launch week. Updated 2026-06-23: Gate 3 split (3a build 23 beta ads / 3b prod ads post-listing). Adjust dates and build numbers as the ship date moves.*

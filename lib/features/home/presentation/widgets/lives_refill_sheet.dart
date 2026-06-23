@@ -6,6 +6,8 @@ import '../../../../core/theme/dot_clash_visuals.dart';
 import '../../../../features/profile/domain/progression.dart';
 import '../../../../features/profile/providers/lives_provider.dart';
 import '../../../../features/profile/providers/profile_providers.dart';
+import '../../../../services/ads/ad_reward_router.dart';
+import '../../../../services/ads/rewarded_ad_messages.dart';
 import '../../../../shared/feedback/app_snackbar.dart';
 import '../../../../shared/layout/app_spacing.dart';
 import '../../../../shared/widgets/neon_button.dart';
@@ -26,8 +28,11 @@ class LivesRefillSheet extends ConsumerWidget {
     final t = context.txt;
     final snapshot = ref.watch(livesSnapshotProvider);
     final coins = ref.watch(profileProvider).valueOrNull?.coins ?? 0;
+    final router = ref.read(adRewardRouterProvider);
     final canBuy =
         !snapshot.isFull && coins >= Progression.lifeRefillPriceCoins;
+    final canWatchAd =
+        onWatchAd != null && router.canShowRewardedLifeAd(snapshot);
 
     return Padding(
       padding: AppSpacing.pagePadding,
@@ -85,20 +90,32 @@ class LivesRefillSheet extends ConsumerWidget {
           if (!snapshot.isFull && onWatchAd != null) ...[
             AppSpacing.vGapSM,
             NeonButton(
-              label: 'Watch ad · +1 life',
+              label: router.isLifeAdDailyCapReached
+                  ? 'Daily life ads used'
+                  : 'Watch ad · +1 life',
               icon: Icons.play_circle_outline_rounded,
               color: v.gold,
-              onPressed: () async {
-                final ok = await onWatchAd!();
-                if (!context.mounted) return;
-                AppSnackBar.show(
-                  context,
-                  ok
-                      ? 'Life restored!'
-                      : 'Ad unavailable or daily cap reached.',
-                );
-              },
+              onPressed: canWatchAd
+                  ? () async {
+                      final ok = await onWatchAd!();
+                      if (!context.mounted) return;
+                      AppSnackBar.show(
+                        context,
+                        ok
+                            ? 'Life restored!'
+                            : RewardedAdMessages.shopLifeFailure(
+                                livesFull: snapshot.isFull,
+                                dailyCapReached:
+                                    router.isLifeAdDailyCapReached,
+                              ),
+                      );
+                    }
+                  : null,
             ),
+            if (router.isLifeAdDailyCapReached) ...[
+              AppSpacing.vGapXS,
+              Text('3 life ads per day.', style: t.bodySmall),
+            ],
           ],
           if (!snapshot.isFull && !canBuy) ...[
             AppSpacing.vGapXS,

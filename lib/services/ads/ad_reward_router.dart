@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/powerups/domain/power_up.dart';
 import '../../features/profile/data/profile_repository.dart';
+import '../../features/profile/domain/lives_logic.dart';
+import '../../features/profile/domain/rewarded_ad_rules.dart';
+import '../../features/profile/providers/lives_provider.dart';
 import '../../features/profile/providers/profile_providers.dart';
 import '../analytics/analytics_service.dart';
 import 'ad_placement.dart';
@@ -53,11 +56,27 @@ class AdRewardRouter {
     return _rescueAdsToday;
   }
 
-  /// AdMob earn signal → optional analytics → profile grant.
+  bool get isLifeAdDailyCapReached {
+    _rollDailyCounters();
+    return _lifeAdsToday >= maxLifeAdsPerDay;
+  }
+
+  bool get isRescueAdDailyCapReached {
+    _rollDailyCounters();
+    return _rescueAdsToday >= maxRescueAdsPerDay;
+  }
+
+  bool canShowRewardedShopCoins(DateTime? lastRewardedAdAt) =>
+      RewardedAdRules.canClaimRewardedCoins(lastRewardedAdAt);
+
+  bool canShowRewardedLifeAd(LivesSnapshot lives) =>
+      !lives.isFull && !isLifeAdDailyCapReached;
+
+  /// AdMob earn signal → analytics → profile grant.
   Future<bool> _showRewardedAndGrant({
     required AdPlacement placement,
     required Future<bool> Function() grant,
-    void Function()? onAdEarned,
+    void Function()? onGrantSuccess,
   }) async {
     final result = await _ads.showRewarded(placement);
     if (result != AdShowResult.completed) {
@@ -67,11 +86,12 @@ class AdRewardRouter {
       return false;
     }
 
-    onAdEarned?.call();
     AnalyticsService.instance.logAdImpression(placement.analyticsName);
 
     final granted = await grant();
-    if (!granted) {
+    if (granted) {
+      onGrantSuccess?.call();
+    } else {
       debugPrint('[AdReward] ${placement.name}: in-game grant returned false');
     }
     return granted;
@@ -79,17 +99,23 @@ class AdRewardRouter {
 
   Future<bool> showRewardedLifeAd() async {
     _rollDailyCounters();
-    if (_lifeAdsToday >= maxLifeAdsPerDay) return false;
+    if (isLifeAdDailyCapReached) return false;
 
-    final granted = await _showRewardedAndGrant(
+    final lives = _ref.read(livesSnapshotProvider);
+    if (lives.isFull) return false;
+
+    return _showRewardedAndGrant(
       placement: AdPlacement.lifeRefill,
       grant: _repo.grantLifeFromAd,
-      onAdEarned: () => _lifeAdsToday++,
+      onGrantSuccess: () => _lifeAdsToday++,
     );
-    return granted;
   }
 
   Future<bool> showRewardedShopCoins() async {
+    final lastRewardedAt =
+        _ref.read(profileProvider).valueOrNull?.lastRewardedAdAt;
+    if (!canShowRewardedShopCoins(lastRewardedAt)) return false;
+
     return _showRewardedAndGrant(
       placement: AdPlacement.shopCoins,
       grant: _repo.claimRewardedAd,
@@ -102,7 +128,7 @@ class AdRewardRouter {
     return _showRewardedAndGrant(
       placement: AdPlacement.lossRetry,
       grant: _repo.refundLastCampaignLife,
-      onAdEarned: () {
+      onGrantSuccess: () {
         _rescueUsedThisMatch = true;
         _rescueAdsToday++;
       },
@@ -112,16 +138,15 @@ class AdRewardRouter {
   Future<bool> showRewardedRiposte() async {
     if (!canOfferRescueAd) return false;
 
-    final granted = await _showRewardedAndGrant(
+    return _showRewardedAndGrant(
       placement: AdPlacement.riposteRescue,
       grant: () =>
           _repo.grantPowerUp(PowerUpType.riposte.id, 1).then((_) => true),
-      onAdEarned: () {
+      onGrantSuccess: () {
         _rescueUsedThisMatch = true;
         _rescueAdsToday++;
       },
     );
-    return granted;
   }
 
   Future<bool> showRewardedExtraTurns({
@@ -146,7 +171,7 @@ class AdRewardRouter {
       placement: placement,
       grant: () =>
           _repo.grantPowerUp(PowerUpType.extraTurns.id, 1).then((_) => true),
-      onAdEarned: () {
+      onGrantSuccess: () {
         _rescueUsedThisMatch = true;
         _rescueAdsToday++;
       },
