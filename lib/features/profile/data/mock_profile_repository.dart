@@ -18,6 +18,7 @@ class MockProfileRepository implements ProfileRepository {
 
   late UserProfile _profile = _defaultProfile();
 
+  @override
   Stream<UserProfile> watchProfile() async* {
     yield _profile;
     yield* _controller.stream;
@@ -25,19 +26,23 @@ class MockProfileRepository implements ProfileRepository {
 
   UserProfile get current => _profile;
 
+  @override
   Future<void> setDisplayName(String name) async {
     final trimmed = name.trim();
     _emit(_profile.copyWith(displayName: trimmed.isEmpty ? 'Player' : trimmed));
   }
 
+  @override
   Future<void> equipTheme(String themeId) async {
     _emit(_profile.copyWith(themeId: themeId));
   }
 
+  @override
   Future<void> equipAvatar(String avatarId) async {
     _emit(_profile.copyWith(avatarId: avatarId));
   }
 
+  @override
   Future<void> equipInitialSkin(String skinId) async {
     _emit(_profile.copyWith(initialSkinId: skinId));
   }
@@ -61,6 +66,7 @@ class MockProfileRepository implements ProfileRepository {
     return true;
   }
 
+  @override
   Future<bool> purchaseTheme(String themeId, int priceCoins) async {
     if (_profile.ownedThemeIds.contains(themeId)) return true;
     if (_profile.coins < priceCoins) return false;
@@ -72,6 +78,7 @@ class MockProfileRepository implements ProfileRepository {
     return true;
   }
 
+  @override
   Future<bool> purchaseAvatar(String avatarId, int priceCoins) async {
     if (_profile.ownedAvatarIds.contains(avatarId)) return true;
     if (_profile.coins < priceCoins) return false;
@@ -83,6 +90,7 @@ class MockProfileRepository implements ProfileRepository {
     return true;
   }
 
+  @override
   Future<bool> purchaseInitialSkin(String skinId, int priceCoins) async {
     if (_profile.ownedInitialSkinIds.contains(skinId)) return true;
     if (_profile.coins < priceCoins) return false;
@@ -118,6 +126,7 @@ class MockProfileRepository implements ProfileRepository {
     return true;
   }
 
+  @override
   Future<bool> claimDaily() async {
     final now = DateTime.now();
     final last = _profile.lastDailyClaimAt;
@@ -242,6 +251,7 @@ class MockProfileRepository implements ProfileRepository {
   }
 
   /// Simulate authoritative match settlement in the backend.
+  @override
   Future<void> settleMatch(
     MatchResult result, {
     bool consumeLife = false,

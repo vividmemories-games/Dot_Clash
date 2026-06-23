@@ -4,7 +4,7 @@ import 'package:dot_clash/features/game/domain/models/game_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  CampaignLevel _level({
+  CampaignLevel level0({
     required StarObjective star1,
     required StarObjective star2,
     required StarObjective star3,
@@ -22,7 +22,7 @@ void main() {
         star3: star3,
       );
 
-  GameState _humanWinState({required int humanScore, required int aiScore}) {
+  GameState humanWinState({required int humanScore, required int aiScore}) {
     const human = 'H';
     return GameState(
       rows: 3,
@@ -47,24 +47,25 @@ void main() {
         playerIds: const ['H', 'B'],
       );
       final payload = MatchPayload(finalState: state, humanPlayerId: 'H');
-      final level = _level(
+      final level = level0(
         star1: StarObjective.win(),
         star2: StarObjective.margin(1),
         star3: StarObjective.margin(3),
       );
 
       expect(LevelEvaluator.evaluate(level, payload), 0);
-      expect(LevelEvaluator.evaluateDetailed(level, payload), LevelEvaluation.empty);
+      expect(LevelEvaluator.evaluateDetailed(level, payload),
+          LevelEvaluation.empty);
     });
 
     test('star2 missed but star3 met awards 2 stars (not gated)', () {
-      final level = _level(
+      final level = level0(
         star1: StarObjective.win(),
         star2: StarObjective.margin(5),
         star3: StarObjective.margin(2),
       );
       final payload = MatchPayload(
-        finalState: _humanWinState(humanScore: 4, aiScore: 1),
+        finalState: humanWinState(humanScore: 4, aiScore: 1),
         humanPlayerId: 'H',
       );
 
@@ -74,13 +75,13 @@ void main() {
     });
 
     test('all three objectives met yields 3 stars', () {
-      final level = _level(
+      final level = level0(
         star1: StarObjective.win(),
         star2: StarObjective.margin(1),
         star3: StarObjective.margin(2),
       );
       final payload = MatchPayload(
-        finalState: _humanWinState(humanScore: 3, aiScore: 0),
+        finalState: humanWinState(humanScore: 3, aiScore: 0),
         humanPlayerId: 'H',
       );
 
@@ -90,13 +91,13 @@ void main() {
     });
 
     test('only star1 met yields 1 star', () {
-      final level = _level(
+      final level = level0(
         star1: StarObjective.win(),
         star2: StarObjective.margin(5),
         star3: StarObjective.margin(10),
       );
       final payload = MatchPayload(
-        finalState: _humanWinState(humanScore: 1, aiScore: 0),
+        finalState: humanWinState(humanScore: 1, aiScore: 0),
         humanPlayerId: 'H',
       );
 

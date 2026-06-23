@@ -206,7 +206,7 @@ class _BottomNav extends StatelessWidget {
           boxShadow: v.useGlow
               ? [
                   BoxShadow(
-                    color: v.playerA.withOpacity(0.06),
+                    color: v.playerA.withValues(alpha: 0.06),
                     blurRadius: 20,
                     offset: const Offset(0, -4),
                   ),
@@ -278,8 +278,9 @@ class _NavItem extends StatelessWidget {
               curve: Curves.easeInOut,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color:
-                    selected ? v.playerA.withOpacity(0.14) : Colors.transparent,
+                color: selected
+                    ? v.playerA.withValues(alpha: 0.14)
+                    : Colors.transparent,
                 borderRadius: AppSpacing.roundedFull,
               ),
               child: Icon(

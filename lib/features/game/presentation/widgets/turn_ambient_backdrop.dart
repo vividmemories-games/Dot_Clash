@@ -23,7 +23,7 @@ class TurnAmbientBackdrop extends StatelessWidget {
     if (!enabled) return child;
 
     final active = isHumanTurn ? humanColor : opponentColor;
-    final centerOpacity = 0.08;
+    const centerOpacity = 0.08;
 
     return Stack(
       fit: StackFit.expand,
@@ -36,7 +36,7 @@ class TurnAmbientBackdrop extends StatelessWidget {
               center: const Alignment(0, -0.5),
               radius: 1.25,
               colors: [
-                active.withOpacity(centerOpacity),
+                active.withValues(alpha: centerOpacity),
                 Colors.transparent,
               ],
               stops: const [0.0, 0.55],

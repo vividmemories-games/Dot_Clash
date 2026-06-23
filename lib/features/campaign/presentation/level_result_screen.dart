@@ -105,7 +105,7 @@ class LevelResultPanel extends ConsumerWidget {
           AppSpacing.vGapLG,
           if (humanWon) ...[
             NeonCard(
-              glowColor: v.gold.withOpacity(0.08),
+              glowColor: v.gold.withValues(alpha: 0.08),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -141,7 +141,7 @@ class LevelResultPanel extends ConsumerWidget {
           ],
           if (saveFailed) ...[
             NeonCard(
-              glowColor: v.red.withOpacity(0.08),
+              glowColor: v.red.withValues(alpha: 0.08),
               child: Row(
                 children: [
                   Icon(Icons.cloud_off_rounded, color: v.red, size: 20),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/dot_clash_visuals.dart';
@@ -219,7 +218,7 @@ class _PowerUpCard extends StatelessWidget {
     return Opacity(
       opacity: opacity,
       child: Material(
-        color: highlighted ? color.withOpacity(0.1) : v.surface,
+        color: highlighted ? color.withValues(alpha: 0.1) : v.surface,
         borderRadius: AppSpacing.roundedMD,
         child: InkWell(
           onTap: onTap,
@@ -233,7 +232,7 @@ class _PowerUpCard extends StatelessWidget {
                     ? v.textDisabled
                     : highlighted
                         ? color
-                        : color.withOpacity(enabled ? 0.4 : 0.2),
+                        : color.withValues(alpha: enabled ? 0.4 : 0.2),
                 width: highlighted ? 2 : 1,
               ),
             ),
@@ -359,7 +358,7 @@ class _HintGradientButton extends StatelessWidget {
               boxShadow: enabled && v.useGlow
                   ? [
                       BoxShadow(
-                        color: v.playerA.withOpacity(0.25),
+                        color: v.playerA.withValues(alpha: 0.25),
                         blurRadius: 12,
                         offset: const Offset(0, 2),
                       ),
@@ -370,7 +369,7 @@ class _HintGradientButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                const Icon(
                   Icons.auto_awesome_rounded,
                   size: 16,
                   color: Colors.white,
@@ -389,7 +388,7 @@ class _HintGradientButton extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.25),
+                    color: Colors.black.withValues(alpha: 0.25),
                     borderRadius: AppSpacing.roundedFull,
                   ),
                   child: Text(

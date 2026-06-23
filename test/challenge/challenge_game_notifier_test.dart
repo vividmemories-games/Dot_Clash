@@ -43,8 +43,7 @@ ProviderContainer _container({
         (ref, code) => Stream<ChallengeRoom?>.value(room),
       ),
       challengeMoveSubmitterProvider.overrideWith(
-        (ref) =>
-            ({required String code, required String edgeKey}) async {
+        (ref) => ({required String code, required String edgeKey}) async {
           if (failSubmit) {
             throw const ChallengeException('Not your turn');
           }
@@ -114,8 +113,7 @@ void main() {
             ),
           ),
           challengeMoveSubmitterProvider.overrideWith(
-            (ref) =>
-                ({required String code, required String edgeKey}) async {},
+            (ref) => ({required String code, required String edgeKey}) async {},
           ),
           gameConfigProvider.overrideWith(
             (ref) => GameConfig.challenge(
@@ -151,8 +149,7 @@ void main() {
             ),
           ),
           challengeMoveSubmitterProvider.overrideWith(
-            (ref) =>
-                ({required String code, required String edgeKey}) async {
+            (ref) => ({required String code, required String edgeKey}) async {
               submittedEdge = edgeKey;
             },
           ),
@@ -192,8 +189,7 @@ void main() {
             ),
           ),
           challengeMoveSubmitterProvider.overrideWith(
-            (ref) =>
-                ({required String code, required String edgeKey}) async {
+            (ref) => ({required String code, required String edgeKey}) async {
               submitCount++;
             },
           ),

@@ -21,6 +21,7 @@ class ScoreStrip extends StatelessWidget {
     this.secondsLeft,
     this.showTimer = false,
     this.isLocalMode = false,
+
     /// When set (challenge / online), turn pills are relative to this player id.
     this.localPlayerId,
   });
@@ -239,12 +240,12 @@ class _Avatar extends StatelessWidget {
           height: 36,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: color.withOpacity(isActive ? 0.14 : 0.08),
+            color: color.withValues(alpha: isActive ? 0.14 : 0.08),
             border: Border.all(color: color, width: isActive ? 2.5 : 1.5),
             boxShadow: isActive && v.useGlow
                 ? [
                     BoxShadow(
-                      color: color.withOpacity(0.45),
+                      color: color.withValues(alpha: 0.45),
                       blurRadius: 10,
                       spreadRadius: 0,
                     ),
@@ -257,7 +258,7 @@ class _Avatar extends StatelessWidget {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w900,
-              color: isActive ? color : color.withOpacity(0.55),
+              color: isActive ? color : color.withValues(alpha: 0.55),
             ),
           ),
         ),
@@ -296,10 +297,10 @@ class _TurnPill extends StatelessWidget {
       curve: Curves.easeOut,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: pillColor.withOpacity(isActive ? 0.14 : 0.06),
+        color: pillColor.withValues(alpha: isActive ? 0.14 : 0.06),
         borderRadius: AppSpacing.roundedFull,
         border: Border.all(
-          color: pillColor.withOpacity(isActive ? 0.45 : 0.2),
+          color: pillColor.withValues(alpha: isActive ? 0.45 : 0.2),
         ),
       ),
       child: Row(
@@ -310,7 +311,7 @@ class _TurnPill extends StatelessWidget {
             height: 6,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isActive ? pillColor : pillColor.withOpacity(0.4),
+              color: isActive ? pillColor : pillColor.withValues(alpha: 0.4),
             ),
           ),
           const SizedBox(width: 5),
@@ -319,7 +320,7 @@ class _TurnPill extends StatelessWidget {
             style: TextStyle(
               fontSize: 9,
               fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-              color: pillColor.withOpacity(isActive ? 1 : 0.65),
+              color: pillColor.withValues(alpha: isActive ? 1 : 0.65),
               letterSpacing: 0.3,
             ),
           ),
@@ -407,8 +408,8 @@ class _ScoreCenter extends StatelessWidget {
                   borderRadius: AppSpacing.roundedFull,
                   border: Border.all(
                     color: isLowTime
-                        ? v.red.withOpacity(0.55)
-                        : v.playerA.withOpacity(0.35),
+                        ? v.red.withValues(alpha: 0.55)
+                        : v.playerA.withValues(alpha: 0.35),
                     width: isLowTime ? 1.5 : 1,
                   ),
                 ),

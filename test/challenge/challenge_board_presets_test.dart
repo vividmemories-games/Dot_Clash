@@ -9,7 +9,8 @@ void main() {
 
   group('Challenge board preset parity', () {
     test('challenge_classic initial state matches server vectors', () {
-      final state = GameState.initial(rows: 6, cols: 6, playerIds: const ['A', 'B']);
+      final state =
+          GameState.initial(rows: 6, cols: 6, playerIds: const ['A', 'B']);
       expect(state.totalBoxes, 25);
       expect(GameRules.legalMoves(state).length, 60);
       expect(state.currentPlayerId, 'A');
@@ -17,7 +18,8 @@ void main() {
     });
 
     test('challenge_blitz initial state matches server vectors', () {
-      final state = GameState.initial(rows: 4, cols: 4, playerIds: const ['A', 'B']);
+      final state =
+          GameState.initial(rows: 4, cols: 4, playerIds: const ['A', 'B']);
       expect(state.totalBoxes, 9);
       expect(GameRules.legalMoves(state).length, 24);
       expect(state.currentPlayerId, 'A');
@@ -38,9 +40,15 @@ void main() {
       expect(
         state.disabledCells,
         {
-          '1_1', '1_2', '1_3',
-          '2_1', '2_2', '2_3',
-          '3_1', '3_2', '3_3',
+          '1_1',
+          '1_2',
+          '1_3',
+          '2_1',
+          '2_2',
+          '2_3',
+          '3_1',
+          '3_2',
+          '3_3',
         },
       );
     });

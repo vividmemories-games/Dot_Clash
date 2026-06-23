@@ -136,9 +136,9 @@ class _BossIntroOverlayState extends State<BossIntroOverlay>
                       decoration: BoxDecoration(
                         borderRadius: AppSpacing.roundedLG,
                         border: Border.all(
-                          color: theme.accent.withOpacity(0.35),
+                          color: theme.accent.withValues(alpha: 0.35),
                         ),
-                        color: theme.accent.withOpacity(0.08),
+                        color: theme.accent.withValues(alpha: 0.08),
                       ),
                       child: Text(
                         widget.isMiniBoss
@@ -190,13 +190,13 @@ class _BossPortraitHero extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: AppSpacing.roundedXL,
         border: Border.all(
-          color: theme.accent.withOpacity(0.75),
+          color: theme.accent.withValues(alpha: 0.75),
           width: 2,
         ),
         boxShadow: v.useGlow
             ? [
                 BoxShadow(
-                  color: theme.accent.withOpacity(0.45),
+                  color: theme.accent.withValues(alpha: 0.45),
                   blurRadius: 28,
                   spreadRadius: 2,
                 ),
@@ -212,8 +212,8 @@ class _BossPortraitHero extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: RadialGradient(
                 colors: [
-                  theme.accent.withOpacity(0.35),
-                  theme.accent.withOpacity(0.08),
+                  theme.accent.withValues(alpha: 0.35),
+                  theme.accent.withValues(alpha: 0.08),
                 ],
               ),
             ),

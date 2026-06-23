@@ -133,13 +133,13 @@ class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           borderRadius: AppSpacing.roundedXL,
           border: Border.all(
-            color: accentColor.withOpacity(0.5),
+            color: accentColor.withValues(alpha: 0.5),
             width: 1.5,
           ),
           boxShadow: v.useGlow
               ? [
                   BoxShadow(
-                    color: accentColor.withOpacity(0.14),
+                    color: accentColor.withValues(alpha: 0.14),
                     blurRadius: 24,
                     spreadRadius: 2,
                   ),
@@ -170,8 +170,8 @@ class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Colors.black.withOpacity(0.3),
-                          Colors.black.withOpacity(0.82),
+                          Colors.black.withValues(alpha: 0.3),
+                          Colors.black.withValues(alpha: 0.82),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -192,7 +192,7 @@ class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            accentColor.withOpacity(0.18),
+                            accentColor.withValues(alpha: 0.18),
                             Colors.transparent,
                           ],
                         ),
@@ -270,10 +270,10 @@ class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: v.red.withOpacity(0.15),
+                                color: v.red.withValues(alpha: 0.15),
                                 borderRadius: AppSpacing.roundedFull,
                                 border: Border.all(
-                                  color: v.red.withOpacity(0.6),
+                                  color: v.red.withValues(alpha: 0.6),
                                 ),
                               ),
                               child: Row(
@@ -382,8 +382,8 @@ class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
                                     borderRadius: AppSpacing.roundedMD,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: accentColor.withOpacity(
-                                            _glowOpacity.value * 0.45),
+                                        color: accentColor.withValues(
+                                            alpha: _glowOpacity.value * 0.45),
                                         blurRadius: 16,
                                         spreadRadius: 1,
                                       ),
@@ -458,9 +458,12 @@ class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
             end: Alignment.bottomRight,
           ),
           borderRadius: AppSpacing.roundedXL,
-          border: Border.all(color: v.gold.withOpacity(0.6), width: 1.5),
+          border: Border.all(color: v.gold.withValues(alpha: 0.6), width: 1.5),
           boxShadow: v.useGlow
-              ? [BoxShadow(color: v.gold.withOpacity(0.15), blurRadius: 20)]
+              ? [
+                  BoxShadow(
+                      color: v.gold.withValues(alpha: 0.15), blurRadius: 20)
+                ]
               : null,
         ),
         child: Row(
@@ -468,7 +471,7 @@ class _HeroCardState extends State<_HeroCard> with TickerProviderStateMixin {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: v.gold.withOpacity(0.15),
+                color: v.gold.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.emoji_events_rounded, color: v.gold, size: 28),
@@ -542,7 +545,7 @@ class _MapPath extends StatelessWidget {
               child: Container(
                 height: 2,
                 color: nodes[i - 1].isCleared || nodes[i - 1].isCurrent
-                    ? accentColor.withOpacity(0.5)
+                    ? accentColor.withValues(alpha: 0.5)
                     : v.cardBorder,
               ),
             ),
@@ -588,7 +591,7 @@ class _MapNode extends StatelessWidget {
     Widget content;
 
     if (node.isCurrent) {
-      bgColor = accentColor.withOpacity(0.2);
+      bgColor = accentColor.withValues(alpha: 0.2);
       borderColor = accentColor;
       content = Text(
         '${node.index}',
@@ -599,12 +602,12 @@ class _MapNode extends StatelessWidget {
         ),
       );
     } else if (node.isBoss) {
-      bgColor = v.red.withOpacity(0.12);
-      borderColor = v.red.withOpacity(0.7);
+      bgColor = v.red.withValues(alpha: 0.12);
+      borderColor = v.red.withValues(alpha: 0.7);
       content = Icon(Icons.whatshot_rounded, size: 13, color: v.red);
     } else if (node.isCleared) {
-      bgColor = v.gold.withOpacity(0.12);
-      borderColor = v.gold.withOpacity(0.6);
+      bgColor = v.gold.withValues(alpha: 0.12);
+      borderColor = v.gold.withValues(alpha: 0.6);
       content = Icon(Icons.star_rounded, size: 13, color: v.gold);
     } else {
       bgColor = v.surface;
@@ -628,7 +631,7 @@ class _MapNode extends StatelessWidget {
         boxShadow: v.useGlow && node.isCurrent
             ? [
                 BoxShadow(
-                  color: accentColor.withOpacity(0.35),
+                  color: accentColor.withValues(alpha: 0.35),
                   blurRadius: 10,
                 )
               ]
@@ -662,9 +665,9 @@ class _RewardBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: AppSpacing.roundedFull,
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

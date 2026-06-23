@@ -48,12 +48,12 @@ class EquippedAvatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: accent.withOpacity(0.12),
-        border: Border.all(color: accent.withOpacity(0.55), width: 1.6),
+        color: accent.withValues(alpha: 0.12),
+        border: Border.all(color: accent.withValues(alpha: 0.55), width: 1.6),
         boxShadow: v.useGlow
             ? [
                 BoxShadow(
-                  color: accent.withOpacity(0.35),
+                  color: accent.withValues(alpha: 0.35),
                   blurRadius: 14,
                   spreadRadius: 1,
                 ),
@@ -141,18 +141,18 @@ class _NeonOrbCore extends StatelessWidget {
             Colors.white,
             Color.lerp(Colors.white, accent, 0.35)!,
             accent,
-            accent.withOpacity(0.45),
+            accent.withValues(alpha: 0.45),
           ],
           stops: const [0.0, 0.18, 0.5, 1.0],
         ),
         boxShadow: [
           BoxShadow(
-            color: accent.withOpacity(0.7),
+            color: accent.withValues(alpha: 0.7),
             blurRadius: diameter * 0.45,
             spreadRadius: diameter * 0.06,
           ),
           BoxShadow(
-            color: accent.withOpacity(0.25),
+            color: accent.withValues(alpha: 0.25),
             blurRadius: diameter * 0.9,
             spreadRadius: diameter * 0.12,
           ),

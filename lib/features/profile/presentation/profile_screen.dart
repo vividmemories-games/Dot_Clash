@@ -14,6 +14,7 @@ import '../../../shared/layout/app_spacing.dart';
 import '../../../shared/layout/responsive_layout.dart';
 import '../../../shared/widgets/profile_avatar_chip.dart';
 import '../../../shared/widgets/profile_bootstrap_screen.dart';
+
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -148,7 +149,7 @@ class _ProfileScreenBody extends ConsumerWidget {
                     foregroundColor: v.textPrimary,
                     side: BorderSide(color: v.cardBorder),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
+                    shape: const RoundedRectangleBorder(
                       borderRadius: AppSpacing.roundedMD,
                     ),
                   ),
@@ -206,9 +207,9 @@ class _RankBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: AppSpacing.roundedFull,
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -303,7 +304,7 @@ class _EconomyChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: v.surface,
         borderRadius: AppSpacing.roundedLG,
-        border: Border.all(color: color.withOpacity(0.35)),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
@@ -352,7 +353,10 @@ class _LevelProgressCard extends StatelessWidget {
         borderRadius: AppSpacing.roundedLG,
         border: Border.all(color: v.cardBorder),
         boxShadow: v.useGlow
-            ? [BoxShadow(color: v.playerA.withOpacity(0.07), blurRadius: 14)]
+            ? [
+                BoxShadow(
+                    color: v.playerA.withValues(alpha: 0.07), blurRadius: 14)
+              ]
             : null,
       ),
       child: Column(
@@ -381,9 +385,9 @@ class _LevelProgressCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: v.playerA.withOpacity(0.15),
+                  color: v.playerA.withValues(alpha: 0.15),
                   borderRadius: AppSpacing.roundedMD,
-                  border: Border.all(color: v.playerA.withOpacity(0.4)),
+                  border: Border.all(color: v.playerA.withValues(alpha: 0.4)),
                 ),
                 child: Text(
                   'LVL $level',
@@ -400,7 +404,7 @@ class _LevelProgressCard extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: levelFraction,
                         minHeight: 8,
-                        backgroundColor: v.cardBorder.withOpacity(0.5),
+                        backgroundColor: v.cardBorder.withValues(alpha: 0.5),
                         valueColor: AlwaysStoppedAnimation<Color>(v.playerA),
                       ),
                     ),
@@ -533,9 +537,9 @@ class _StatCard extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: AppSpacing.roundedLG,
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
         boxShadow: v.useGlow
-            ? [BoxShadow(color: color.withOpacity(0.08), blurRadius: 12)]
+            ? [BoxShadow(color: color.withValues(alpha: 0.08), blurRadius: 12)]
             : null,
       ),
       child: Row(
@@ -543,7 +547,7 @@ class _StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 16),

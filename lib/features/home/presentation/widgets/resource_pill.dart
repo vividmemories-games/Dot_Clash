@@ -30,7 +30,7 @@ class ResourcePill extends StatelessWidget {
       decoration: BoxDecoration(
         color: v.surface,
         borderRadius: AppSpacing.roundedFull,
-        border: Border.all(color: iconColor.withOpacity(0.4)),
+        border: Border.all(color: iconColor.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

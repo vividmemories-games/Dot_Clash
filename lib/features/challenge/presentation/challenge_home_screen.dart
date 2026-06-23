@@ -178,7 +178,7 @@ class _ChallengeHomeScreenState extends ConsumerState<ChallengeHomeScreen>
                         foregroundColor: v.textPrimary,
                         side: BorderSide(color: v.cardBorder),
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
+                        shape: const RoundedRectangleBorder(
                           borderRadius: AppSpacing.roundedMD,
                         ),
                       ),

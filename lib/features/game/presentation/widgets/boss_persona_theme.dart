@@ -26,16 +26,16 @@ class BossPersonaTheme {
 
 BossPersonaTheme bossPersonaTheme(BossPersona persona, DotClashVisuals v) {
   return switch (persona) {
-    BossPersona.machine => BossPersonaTheme(
-        accent: const Color(0xFF64B5F6),
+    BossPersona.machine => const BossPersonaTheme(
+        accent: Color(0xFF64B5F6),
         icon: Icons.smart_toy_rounded,
         portraitAsset: 'assets/images/boss_machine.png',
         taunt: 'Perfect lines. Zero mercy.',
         introLine: 'I never misfire. Every line is calculated.',
         subtitle: 'World boss · Relentless logic',
       ),
-    BossPersona.trapper => BossPersonaTheme(
-        accent: const Color(0xFFCE93D8),
+    BossPersona.trapper => const BossPersonaTheme(
+        accent: Color(0xFFCE93D8),
         icon: Icons.grid_on_rounded,
         portraitAsset: 'assets/images/boss_trapper.png',
         taunt: 'Every edge you take is bait.',

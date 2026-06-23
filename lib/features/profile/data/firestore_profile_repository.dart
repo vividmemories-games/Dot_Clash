@@ -939,7 +939,7 @@ class FirestoreProfileRepository implements ProfileRepository {
       updatedNextLifeAt = afterLoss.nextLifeAt;
     }
 
-    var inv = Map<String, int>.from(profile.powerUpInventory);
+    final inv = Map<String, int>.from(profile.powerUpInventory);
     if (win) {
       for (final entry in powerUpRewards.entries) {
         inv[entry.key] = (inv[entry.key] ?? 0) + entry.value;

@@ -48,7 +48,8 @@ class FcmService {
       unawaited(registerToken());
     });
 
-    _foregroundSub = FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    _foregroundSub =
+        FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
     _openedAppSub = FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
 
     final initial = await _messaging.getInitialMessage();

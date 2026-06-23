@@ -42,9 +42,7 @@ class ChallengeBoardPreviewCard extends StatelessWidget {
             color: v.surfaceElevated,
             borderRadius: AppSpacing.roundedLG,
             border: Border.all(
-              color: selected
-                  ? v.playerA.withValues(alpha: 0.85)
-                  : borderColor,
+              color: selected ? v.playerA.withValues(alpha: 0.85) : borderColor,
               width: selected ? 2 : 1,
             ),
             boxShadow: selected
@@ -87,7 +85,8 @@ class ChallengeBoardPreviewCard extends StatelessWidget {
                           style: t.bodySmall.copyWith(color: v.textSecondary),
                         ),
                         AppSpacing.vGapSM,
-                        _DurationChip(label: preset.estimatedMinutes, v: v, t: t),
+                        _DurationChip(
+                            label: preset.estimatedMinutes, v: v, t: t),
                       ],
                     ),
                   ),

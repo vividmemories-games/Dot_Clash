@@ -27,9 +27,9 @@ class BossTauntChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: theme.accent.withOpacity(0.10),
+          color: theme.accent.withValues(alpha: 0.10),
           borderRadius: AppSpacing.roundedMD,
-          border: Border.all(color: theme.accent.withOpacity(0.28)),
+          border: Border.all(color: theme.accent.withValues(alpha: 0.28)),
         ),
         child: Row(
           children: [

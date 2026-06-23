@@ -28,8 +28,7 @@ abstract final class AppSnackBar {
           duration: const Duration(seconds: 6),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side:
-                BorderSide(color: v.gold.withValues(alpha: 0.85), width: 2),
+            side: BorderSide(color: v.gold.withValues(alpha: 0.85), width: 2),
           ),
           action: SnackBarAction(
             label: actionLabel,

@@ -61,9 +61,9 @@ class _HomeScreenBackgroundState extends State<HomeScreenBackground>
               child: CustomPaint(
                 painter: _AmbientOrbPainter(
                   progress: t,
-                  colorA: v.playerAGlow.withOpacity(0.22),
-                  colorB: v.green.withOpacity(0.15),
-                  colorC: v.playerBGlow.withOpacity(0.12),
+                  colorA: v.playerAGlow.withValues(alpha: 0.22),
+                  colorB: v.green.withValues(alpha: 0.15),
+                  colorC: v.playerBGlow.withValues(alpha: 0.12),
                 ),
               ),
             ),

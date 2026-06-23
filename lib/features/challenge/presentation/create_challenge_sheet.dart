@@ -29,9 +29,10 @@ class _CreateChallengeSheetState extends ConsumerState<CreateChallengeSheet> {
     if (_creating) return;
     setState(() => _creating = true);
     try {
-      final result = await ref.read(challengeRepositoryProvider).createChallenge(
-            boardPresetId: _selectedPresetId,
-          );
+      final result =
+          await ref.read(challengeRepositoryProvider).createChallenge(
+                boardPresetId: _selectedPresetId,
+              );
       if (!mounted) return;
       Navigator.pop(context);
       context.push(AppRoutes.challengeLobbyPath(result.code));

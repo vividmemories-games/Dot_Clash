@@ -73,7 +73,7 @@ class _NeonButtonState extends State<NeonButton>
     final v = context.dc;
     final base = widget.color ?? v.playerA;
     final effectiveColor = widget.enabled ? base : v.textDisabled;
-    final fillOpacity = 0.15;
+    const fillOpacity = 0.15;
 
     final child = ScaleTransition(
       scale: _scaleAnim,
@@ -83,7 +83,7 @@ class _NeonButtonState extends State<NeonButton>
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 24),
         decoration: BoxDecoration(
-          color: effectiveColor.withOpacity(fillOpacity),
+          color: effectiveColor.withValues(alpha: fillOpacity),
           borderRadius: AppSpacing.roundedMD,
           border: Border.all(
             color: effectiveColor,
@@ -92,7 +92,7 @@ class _NeonButtonState extends State<NeonButton>
           boxShadow: widget.enabled && v.useGlow
               ? [
                   BoxShadow(
-                    color: effectiveColor.withOpacity(0.35),
+                    color: effectiveColor.withValues(alpha: 0.35),
                     blurRadius: 12,
                     spreadRadius: 0,
                   ),

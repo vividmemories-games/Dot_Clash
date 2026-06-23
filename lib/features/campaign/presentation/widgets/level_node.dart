@@ -27,14 +27,14 @@ class LevelNode extends StatelessWidget {
     final t = context.txt;
 
     final borderColor = level.isBoss
-        ? v.red.withOpacity(isUnlocked ? 0.8 : 0.3)
+        ? v.red.withValues(alpha: isUnlocked ? 0.8 : 0.3)
         : (isCurrent
-            ? v.gold.withOpacity(0.9)
-            : v.cardBorder.withOpacity(isUnlocked ? 1.0 : 0.4));
+            ? v.gold.withValues(alpha: 0.9)
+            : v.cardBorder.withValues(alpha: isUnlocked ? 1.0 : 0.4));
 
     final glowColor = isCurrent
-        ? v.gold.withOpacity(0.25)
-        : (level.isBoss && isUnlocked ? v.red.withOpacity(0.18) : null);
+        ? v.gold.withValues(alpha: 0.25)
+        : (level.isBoss && isUnlocked ? v.red.withValues(alpha: 0.18) : null);
 
     return GestureDetector(
       onTap: isUnlocked ? onTap : null,
@@ -85,7 +85,7 @@ class LevelNode extends StatelessWidget {
                   return Icon(
                     lit ? Icons.star_rounded : Icons.star_outline_rounded,
                     size: 11,
-                    color: lit ? v.gold : v.textDisabled.withOpacity(0.5),
+                    color: lit ? v.gold : v.textDisabled.withValues(alpha: 0.5),
                   );
                 }),
               ),

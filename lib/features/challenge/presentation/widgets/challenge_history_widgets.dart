@@ -153,9 +153,7 @@ class _HistoryTabPill extends StatelessWidget {
                 : v.surface.withValues(alpha: 0.6),
             borderRadius: AppSpacing.roundedFull,
             border: Border.all(
-              color: isSelected
-                  ? v.gold.withValues(alpha: 0.9)
-                  : v.cardBorder,
+              color: isSelected ? v.gold.withValues(alpha: 0.9) : v.cardBorder,
             ),
           ),
           child: Text(

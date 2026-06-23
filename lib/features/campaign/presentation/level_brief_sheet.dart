@@ -71,9 +71,9 @@ class LevelBriefSheet extends ConsumerWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: v.red.withOpacity(0.15),
+                    color: v.red.withValues(alpha: 0.15),
                     borderRadius: AppSpacing.roundedFull,
-                    border: Border.all(color: v.red.withOpacity(0.5)),
+                    border: Border.all(color: v.red.withValues(alpha: 0.5)),
                   ),
                   child: Text(
                     'BOSS',

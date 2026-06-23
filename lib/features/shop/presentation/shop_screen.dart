@@ -234,10 +234,9 @@ class ShopScreen extends ConsumerWidget {
                               onWatchAdForLife: () => ref
                                   .read(adRewardRouterProvider)
                                   .showRewardedLifeAd(),
-                              onClaimDaily: () => repo.claimDaily(),
-                              onDevResetDaily: AppEnv.isDev
-                                  ? () => repo.devResetDailyClaim()
-                                  : null,
+                              onClaimDaily: repo.claimDaily,
+                              onDevResetDaily:
+                                  AppEnv.isDev ? repo.devResetDailyClaim : null,
                               onWatchAdForCoins: () => ref
                                   .read(adRewardRouterProvider)
                                   .showRewardedShopCoins(),
@@ -248,7 +247,7 @@ class ShopScreen extends ConsumerWidget {
                                   ok ? null : iap.lastPurchaseError,
                                 );
                               },
-                              onRestorePurchases: () => iap.restorePurchases(),
+                              onRestorePurchases: iap.restorePurchases,
                             ),
                           ],
                         ),
@@ -1371,7 +1370,7 @@ class _CosmeticPreview extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          EquippedAvatar(
+          const EquippedAvatar(
             avatarId: 'avatar_orb_cyan',
             fallbackInitial: 'A',
             size: 42,

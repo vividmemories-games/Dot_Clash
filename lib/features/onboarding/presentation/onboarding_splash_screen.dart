@@ -78,8 +78,8 @@ class _OnboardingSplashScreenState extends ConsumerState<OnboardingSplashScreen>
                 gradient: LinearGradient(
                   colors: [
                     Colors.transparent,
-                    Colors.black.withOpacity(0.4),
-                    Colors.black.withOpacity(0.92),
+                    Colors.black.withValues(alpha: 0.4),
+                    Colors.black.withValues(alpha: 0.92),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -116,7 +116,7 @@ class _OnboardingSplashScreenState extends ConsumerState<OnboardingSplashScreen>
                       letterSpacing: 6,
                       shadows: [
                         Shadow(
-                          color: v.playerA.withOpacity(0.8),
+                          color: v.playerA.withValues(alpha: 0.8),
                           blurRadius: 24,
                         ),
                       ],
@@ -144,7 +144,7 @@ class _OnboardingSplashScreenState extends ConsumerState<OnboardingSplashScreen>
                         backgroundColor: v.playerA,
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 18),
-                        shape: RoundedRectangleBorder(
+                        shape: const RoundedRectangleBorder(
                           borderRadius: AppSpacing.roundedLG,
                         ),
                         elevation: 0,

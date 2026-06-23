@@ -34,9 +34,7 @@ abstract final class LivesLogic {
       );
     }
 
-    if (resolvedNextLifeAt == null) {
-      resolvedNextLifeAt = now.add(Progression.lifeRegenDuration);
-    }
+    resolvedNextLifeAt ??= now.add(Progression.lifeRegenDuration);
 
     while (resolvedLives < Progression.maxLives &&
         resolvedNextLifeAt != null &&

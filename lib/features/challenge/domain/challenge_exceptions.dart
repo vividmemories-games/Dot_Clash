@@ -38,7 +38,8 @@ class ChallengeException implements Exception {
         return const ChallengeException('This challenge expired.');
       }
       if (msg.contains('joinable')) {
-        return const ChallengeException('This challenge is no longer joinable.');
+        return const ChallengeException(
+            'This challenge is no longer joinable.');
       }
       return ChallengeException(msg.isEmpty ? 'Challenge unavailable.' : msg);
     }

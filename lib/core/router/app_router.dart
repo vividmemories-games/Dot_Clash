@@ -114,9 +114,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       String? redirectTarget;
       if (isSplash) {
-        if (isLoggedIn)
+        if (isLoggedIn) {
           redirectTarget = AppRoutes.home;
-        else if (onboardingComplete) redirectTarget = AppRoutes.auth;
+        } else if (onboardingComplete) {
+          redirectTarget = AppRoutes.auth;
+        }
       } else if (!onboardingComplete && !isLoggedIn) {
         redirectTarget = AppRoutes.splash;
       } else if (!firebaseConfigured) {

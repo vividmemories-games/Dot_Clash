@@ -488,7 +488,7 @@ class SettingsScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
-        title: Text('SETTINGS'),
+        title: const Text('SETTINGS'),
         actions: [
           IconButton(
             tooltip: 'Sign out',
@@ -748,8 +748,8 @@ class _AboutSheet extends ConsumerWidget {
   }
 
   static String _copyLine(PackageInfo info) {
-    final env = AppEnv.flavor;
-    final beta = AppEnv.betaAds ? ' beta_ads' : '';
+    const env = AppEnv.flavor;
+    const beta = AppEnv.betaAds ? ' beta_ads' : '';
     return '${info.appName} ${info.version} (${info.buildNumber}) $env$beta';
   }
 

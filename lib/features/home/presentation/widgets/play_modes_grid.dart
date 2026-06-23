@@ -140,7 +140,10 @@ class _ActionCard extends StatelessWidget {
           borderRadius: AppSpacing.roundedLG,
           border: Border.all(color: color.withValues(alpha: 0.4)),
           boxShadow: v.useGlow
-              ? [BoxShadow(color: color.withValues(alpha: 0.15), blurRadius: 14)]
+              ? [
+                  BoxShadow(
+                      color: color.withValues(alpha: 0.15), blurRadius: 14)
+                ]
               : null,
         ),
         child: ClipRRect(
@@ -340,7 +343,8 @@ class _DailyPuzzleCardState extends State<_DailyPuzzleCard> {
                       decoration: BoxDecoration(
                         color: v.gold.withValues(alpha: 0.15),
                         borderRadius: AppSpacing.roundedFull,
-                        border: Border.all(color: v.gold.withValues(alpha: 0.4)),
+                        border:
+                            Border.all(color: v.gold.withValues(alpha: 0.4)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,

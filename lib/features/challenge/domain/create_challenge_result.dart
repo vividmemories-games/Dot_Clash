@@ -19,11 +19,11 @@ class CreateChallengeResult {
   factory CreateChallengeResult.fromCallable(Map<String, dynamic> json) {
     final code = json['code'] as String?;
     if (code == null || code.trim().isEmpty) {
-      throw FormatException('createChallenge response missing code');
+      throw const FormatException('createChallenge response missing code');
     }
 
-    final presetId =
-        json['boardPresetId'] as String? ?? ChallengeBoardPreset.defaultPresetId;
+    final presetId = json['boardPresetId'] as String? ??
+        ChallengeBoardPreset.defaultPresetId;
     final preset = ChallengeBoardPreset.byId(presetId);
 
     return CreateChallengeResult(

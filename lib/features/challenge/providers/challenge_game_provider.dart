@@ -20,8 +20,7 @@ typedef ChallengeMoveSubmitter = Future<void> Function({
 
 final challengeMoveSubmitterProvider = Provider<ChallengeMoveSubmitter>((ref) {
   final repo = ref.read(challengeRepositoryProvider);
-  return ({required String code, required String edgeKey}) =>
-      repo.submitChallengeMove(code: code, edgeKey: edgeKey);
+  return repo.submitChallengeMove;
 });
 
 /// Server-synced board state for a live challenge match.
@@ -70,7 +69,8 @@ class ChallengeTurnTimerNotifier extends StateNotifier<int> {
     final started = _turnStartedAt;
     if (started == null) return;
     final elapsed = DateTime.now().difference(started).inSeconds;
-    state = (AppEnv.turnTimerSeconds - elapsed).clamp(0, AppEnv.turnTimerSeconds);
+    state =
+        (AppEnv.turnTimerSeconds - elapsed).clamp(0, AppEnv.turnTimerSeconds);
   }
 
   @override
@@ -131,9 +131,9 @@ class ChallengeGameNotifier extends StateNotifier<GameState> {
 
     try {
       await _ref.read(challengeMoveSubmitterProvider)(
-            code: code,
-            edgeKey: edgeKey,
-          );
+        code: code,
+        edgeKey: edgeKey,
+      );
     } on ChallengeException {
       final serverState =
           _ref.read(challengeRoomProvider(code)).valueOrNull?.gameState;

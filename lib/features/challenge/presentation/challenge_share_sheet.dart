@@ -18,8 +18,7 @@ class ChallengeShareSheet extends StatelessWidget {
   final String code;
   final String hostDisplayName;
 
-  static const httpsJoinBase =
-      'https://${ChallengeLinkParser.httpsHost}/join';
+  static const httpsJoinBase = 'https://${ChallengeLinkParser.httpsHost}/join';
 
   String get httpsLink => '$httpsJoinBase/$code';
   String get customSchemeLink => 'dotclash://join/$code';
