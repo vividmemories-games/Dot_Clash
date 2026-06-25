@@ -80,6 +80,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
   /// Deferred campaign settlement after mini-boss post-win spotlight.
   GameState? _pendingSettleState;
 
+  /// Prevents duplicate settlement when the game-over listener fires twice.
+  bool _campaignSettlementStarted = false;
+
   /// Prevents pushing two victory overlays if settlement fires twice.
   bool _campaignResultPushed = false;
 
@@ -1130,6 +1133,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
       BuildContext context, WidgetRef ref, GameState state) async {
     final levelId = widget.config.campaignLevelId;
     if (levelId == null) return;
+    if (_campaignSettlementStarted) return;
+    _campaignSettlementStarted = true;
 
     final level = _campaignLevel ??
         await CampaignContentRepository.instance.levelById(levelId);
@@ -1257,6 +1262,11 @@ class _GameScreenState extends ConsumerState<GameScreen>
       }
     }
 
+    // Start settlement once here — not inside the route builder. MaterialPageRoute
+    // builders can run more than once during install/rebuild; calling runSave()
+    // there fired completeCampaignLevel twice (−2 lives on loss).
+    final saveFuture = runSave();
+
     if (!context.mounted) return;
 
     Navigator.of(context, rootNavigator: true).push(
@@ -1269,7 +1279,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
           humanWon: humanWon,
           powerUpRewards: powerUpRewards,
           initialCoins: initialCoins,
-          saveFuture: runSave(),
+          saveFuture: saveFuture,
           onRetrySave: runSave,
         ),
       ),
