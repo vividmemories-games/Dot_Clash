@@ -51,7 +51,17 @@ class NeonCard extends StatelessWidget {
               ]
             : null,
       ),
-      child: child,
+      // ListTile / InkWell paint their background and ink ripples on the
+      // nearest Material ancestor. Without this, the card's BoxDecoration fill
+      // sits between them and the Scaffold's Material, so Flutter asserts the
+      // splashes are invisible. A transparent Material here gives interactive
+      // children a paint surface, clipped to the card's rounded corners.
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: BorderRadius.circular(borderRadius),
+        clipBehavior: Clip.antiAlias,
+        child: child,
+      ),
     );
   }
 }
