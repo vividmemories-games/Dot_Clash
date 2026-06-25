@@ -631,13 +631,19 @@ class FirestoreProfileRepository implements ProfileRepository {
       final serverXp =
           (callableResult['xpReward'] as num?)?.toInt() ?? xpReward;
       final current = await _loadProfileBestEffort();
+      // Lives are authoritative on the server: completeCampaignLevel already
+      // applied the loss deduction. Do NOT re-apply onLoss in the optimistic
+      // emit — the profile snapshot listener can deliver the server's
+      // post-deduction value before this runs, double-counting it (loss showed
+      // -2 instead of -1). Mirror coins/XP/stars instantly and let the snapshot
+      // listener + _refreshProfileFromServer reconcile the authoritative lives.
       _emit(_profileAfterCampaignSettlement(
         current,
         levelId: levelId,
         starsEarned: starsEarned,
         coinReward: serverCoins,
         xpReward: serverXp,
-        consumeLife: consumeLife,
+        consumeLife: false,
         win: win,
         boxesCaptured: boxesCaptured,
         powerUpRewards: powerUpRewards,

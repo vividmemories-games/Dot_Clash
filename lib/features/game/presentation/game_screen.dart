@@ -992,6 +992,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
           final ok = await router.showRewardedExtraTurns(grantInventory: false);
           if (ok) {
             ref.read(gameProvider.notifier).addTurnsFromBoost(_extraTurnsGrant);
+          } else {
+            _showBoostMessage("Couldn't apply the reward. Please try again.");
           }
         },
         onUseBoost: () => _onBoostTap(PowerUpType.extraTurns),
@@ -1028,6 +1030,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
           final ok = await router.showRewardedRiposte();
           if (ok) {
             await _onBoostTap(PowerUpType.riposte);
+          } else {
+            _showBoostMessage("Couldn't apply the reward. Please try again.");
           }
         },
         onUseInventory: () => _onBoostTap(PowerUpType.riposte),

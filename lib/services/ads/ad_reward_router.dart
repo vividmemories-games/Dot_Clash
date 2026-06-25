@@ -88,7 +88,19 @@ class AdRewardRouter {
 
     AnalyticsService.instance.logAdImpression(placement.analyticsName);
 
-    final granted = await grant();
+    final bool granted;
+    try {
+      granted = await grant();
+    } catch (e, st) {
+      // The grant callable can throw on prod (e.g. App Check / network); never
+      // let that escape as an unhandled exception. Return false so the caller
+      // shows a graceful retry message, and crucially do NOT call
+      // onGrantSuccess — the rescue/daily counters stay un-incremented so the
+      // user can try the reward again rather than silently losing the ad watch.
+      debugPrint('[AdReward] ${placement.name}: in-game grant threw — $e');
+      await AnalyticsService.instance.recordError(e, st);
+      return false;
+    }
     if (granted) {
       onGrantSuccess?.call();
     } else {

@@ -195,49 +195,54 @@ class _BottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final v = context.dc;
-    return SafeArea(
-      top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: v.surface,
-          border: Border(
-            top: BorderSide(color: v.cardBorder, width: 1),
-          ),
-          boxShadow: v.useGlow
-              ? [
-                  BoxShadow(
-                    color: v.playerA.withValues(alpha: 0.06),
-                    blurRadius: 20,
-                    offset: const Offset(0, -4),
-                  ),
-                ]
-              : null,
+    // SafeArea sits *inside* the Container so the surface color fills the
+    // home-indicator inset too — otherwise the inset region shows the Scaffold
+    // background and creates a two-tone seam under the nav items.
+    return Container(
+      decoration: BoxDecoration(
+        color: v.surface,
+        border: Border(
+          top: BorderSide(color: v.cardBorder, width: 1),
         ),
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-        child: Row(
-          children: [
-            for (var i = 0; i < _destinations.length; i++)
-              Expanded(
-                child: i == 1
-                    ? CoachTourTarget(
-                        id: CoachTourTargetId.homeNavCampaign,
-                        child: _NavItem(
+        boxShadow: v.useGlow
+            ? [
+                BoxShadow(
+                  color: v.playerA.withValues(alpha: 0.06),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
+                ),
+              ]
+            : null,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+          child: Row(
+            children: [
+              for (var i = 0; i < _destinations.length; i++)
+                Expanded(
+                  child: i == 1
+                      ? CoachTourTarget(
+                          id: CoachTourTargetId.homeNavCampaign,
+                          child: _NavItem(
+                            icon: _destinations[i].icon,
+                            iconSelected: _destinations[i].iconSelected,
+                            label: _destinations[i].label,
+                            selected: i == currentIndex,
+                            onTap: () => onTap(i),
+                          ),
+                        )
+                      : _NavItem(
                           icon: _destinations[i].icon,
                           iconSelected: _destinations[i].iconSelected,
                           label: _destinations[i].label,
                           selected: i == currentIndex,
                           onTap: () => onTap(i),
                         ),
-                      )
-                    : _NavItem(
-                        icon: _destinations[i].icon,
-                        iconSelected: _destinations[i].iconSelected,
-                        label: _destinations[i].label,
-                        selected: i == currentIndex,
-                        onTap: () => onTap(i),
-                      ),
-              ),
-          ],
+                ),
+            ],
+          ),
         ),
       ),
     );

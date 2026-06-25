@@ -72,61 +72,76 @@ class _HomeScreenBody extends ConsumerWidget {
               ),
             ),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.md,
-                  AppSpacing.xs,
-                  AppSpacing.md,
-                  AppSpacing.md,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Zone 2: Hero progress stage (dominant CTA) ───────────
-                    CoachTourTarget(
-                      id: CoachTourTargetId.homeCampaignHero,
-                      child: CampaignHeroCard(
-                        campaignLocked: campaignLocked,
-                        lockSubtitle: lockSubtitle,
-                        onNeedsLives: () => showHomeLivesSheet(
-                          context: context,
-                          ref: ref,
-                          livesSnapshot: livesSnapshot,
-                          coins: profile.coins,
-                        ),
-                      ),
+              // SliverFillRemaining keeps the content at least as tall as the
+              // viewport so the flexible gap below distributes leftover space
+              // (no dead band above the bottom nav on tall / gesture-nav
+              // devices) while still scrolling when content overflows.
+              child: CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.xs,
+                      AppSpacing.md,
+                      AppSpacing.md,
                     ),
-                    AppSpacing.vGapSM,
-
-                    // ── Zone 3: Play modes grid ────────────────────────────────
-                    PlayModesGrid(
-                      onAiTap: () => startVsAiChallenge(context, ref),
-                      onLocalTap: () => pickLocalBoardSize(context, ref),
-                    ),
-                    AppSpacing.vGapMD,
-
-                    // ── Zone 4: Daily missions ───────────────────────────────
-                    DailyMissionsSection(
-                      missions: missions,
-                      onClaim: (id) async {
-                        final ok = await ref
-                            .read(profileRepositoryProvider)
-                            .claimDailyMission(id);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                ok
-                                    ? 'Mission reward claimed!'
-                                    : 'Mission not ready yet.',
+                    sliver: SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ── Zone 2: Hero progress stage (dominant CTA) ─────
+                          CoachTourTarget(
+                            id: CoachTourTargetId.homeCampaignHero,
+                            child: CampaignHeroCard(
+                              campaignLocked: campaignLocked,
+                              lockSubtitle: lockSubtitle,
+                              onNeedsLives: () => showHomeLivesSheet(
+                                context: context,
+                                ref: ref,
+                                livesSnapshot: livesSnapshot,
+                                coins: profile.coins,
                               ),
                             ),
-                          );
-                        }
-                      },
+                          ),
+                          AppSpacing.vGapSM,
+
+                          // ── Zone 3: Play modes grid ────────────────────────
+                          PlayModesGrid(
+                            onAiTap: () => startVsAiChallenge(context, ref),
+                            onLocalTap: () => pickLocalBoardSize(context, ref),
+                          ),
+
+                          // Absorbs spare vertical space (collapses to 0 when
+                          // the content needs to scroll).
+                          const Spacer(),
+                          AppSpacing.vGapMD,
+
+                          // ── Zone 4: Daily missions ─────────────────────────
+                          DailyMissionsSection(
+                            missions: missions,
+                            onClaim: (id) async {
+                              final ok = await ref
+                                  .read(profileRepositoryProvider)
+                                  .claimDailyMission(id);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      ok
+                                          ? 'Mission reward claimed!'
+                                          : 'Mission not ready yet.',
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
