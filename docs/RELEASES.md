@@ -2,9 +2,11 @@
 
 **Naming:** Features ship by **build number** (`+N` in `pubspec.yaml`), e.g. build 19 — not "Release N". Always read `pubspec.yaml` before stating the current target.
 
-**Active build target:** `1.4.2+20` in `pubspec.yaml` (bump `+N` before each store upload)  
-**Previous closed testing:** build 19 (`1.4.1+19`) — Challenge a Friend v1  
-**Public launch:** follow **[LAUNCH.md](LAUNCH.md)** (target week of 2026-06-16; launch build `1.5.0+21+`)  
+**Active build target:** `1.5.0+23` in `pubspec.yaml` (bump `+N` before each store upload)  
+**Gate 3a (in progress):** closed testing with `BETA_ADS=true` — ad-flow QA on real devices ([LAUNCH.md](LAUNCH.md) Gate 3a)  
+**Previous QA sign-off:** build 21 (`1.4.3+21`) — Gate 0/1  
+**Previous closed testing:** build 20 (`1.4.2+20`) — Challenge board presets  
+**Public launch (prod ads):** [LAUNCH.md](LAUNCH.md) Gate 3b — target `1.5.0+24+` after public store listing + AdMob app review  
 **Track:** Prod package + Firebase (`dot-clash-72cc6`), `BETA_ADS=true` (test ads) for closed testing only  
 **IAP / ops:** `SETUP.md` §4b · **Security:** `SETUP.md` App Check + [`firestore.rules`](../firestore.rules)
 
@@ -26,21 +28,62 @@ bash scripts/build_closed_testing.sh ios
 | Android | `build/app/outputs/bundle/prodRelease/app-prod-release.aab` |
 | iOS | `build/ios/ipa/*.ipa` |
 
-**Pre-upload checklist (build 20 — Challenge board presets)**
+**Pre-upload checklist (build 23 — Gate 3a ad-flow QA)**
 
-- [ ] `pubspec.yaml` build number incremented (`1.4.2+20`)
-- [ ] Prod Functions deployed if backend changed: `firebase deploy --only functions -P dot-clash-72cc6`
-- [ ] **Classic:** CREATE (default) → guest preview → explicit join → full match (same as build 19)
-- [ ] **Blitz / Fortress:** create each preset → lobby **YOUR BOARD** / guest **THEIR BOARD** → join → correct grid + Fortress void
-- [ ] Guest: no auto-join; **JOIN CHALLENGE** required; join sheet keyboard does not cover code field
-- [ ] Rematch after Fortress/Blitz → new room same preset; share sheet + FCM mention preset
-- [ ] Deep link / FCM cold start → lobby shows board before join
-- [ ] Build 19 regression: Campaign, Quick Match, Local, Classic Challenge
-- [ ] Crashlytics: filter `1.4.2+20` after rollout
+- [ ] `pubspec.yaml` at `1.5.0+23`
+- [ ] `bash scripts/build_closed_testing.sh` (sets `BETA_ADS=true` + iOS native test AdMob ID)
+- [ ] Device logs: `testUnits=true`; rewarded loads without `No ad to show`
+- [ ] G3a matrix in [LAUNCH.md](LAUNCH.md) — coins, life, retry, interstitial FTUE, Remove Ads IAP
+- [ ] Prod Functions deployed if backend changed: `firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-72cc6`
+- [ ] Build 20/21 regression: Challenge presets, Campaign, Quick Match
+- [ ] Crashlytics: filter `1.5.0+23` after rollout
 
 ---
 
-## Build 20 — Challenge board presets
+## Build 23 — Gate 3a rewarded ads & polish
+
+**Version:** `1.5.0+23`  
+**Track:** Play closed testing + TestFlight · prod Firebase · **`BETA_ADS=true`**
+
+### Shipped / in this build
+
+| Item | Notes |
+|------|--------|
+| Rewarded race fix v2 | Poll `onUserEarnedReward` after dismiss (`reward_signal_wait.dart`) |
+| Rewarded polish | Coin cooldown UI; disable life ad when full / daily cap; clearer snackbars |
+| Daily ad counters | Increment only after successful server grant |
+| Analyze cleanup | `flutter analyze` 0 issues; `flutter test` passing |
+| Gate 3a QA | Real-device ad **flow** with Google test units (not prod fill) |
+
+**Key modules:** `ad_reward_router.dart`, `admob_ad_service.dart`, `rewarded_ad_rules.dart`, `shop_screen.dart`, `lives_refill_sheet.dart`
+
+### Regression checklist
+
+| Scenario | Expected |
+|----------|----------|
+| Shop coin ad (test ad) | Opens → +35 coins on full watch |
+| Coin cooldown | Disabled or server `cooldown` within 30 min |
+| Life ad at 5 lives | Button disabled |
+| Campaign retry ad | Life refund on full watch |
+| Challenge / Campaign core | Same as build 20/21 matrix |
+
+### Store notes (build 23 — Play / TestFlight closed testing)
+
+**Short**
+
+> Quality and monetization polish for launch prep — smoother rewarded ads (lives, coins, retry), clearer feedback, and stability fixes. Same Challenge a Friend, campaign, and quick match you’ve been testing.
+
+**Bullets**
+
+- Improved **watch-ad** experience for coins and lives
+- Clearer messages when an ad can’t grant a reward yet
+- Under-the-hood fixes for ad rewards and app stability
+
+*(Internal testers only — ads show **Test Ad** label; not the public launch build.)*
+
+---
+
+## Build 20 — Challenge board presets (archive)
 
 **Version:** `1.4.2+20`
 
@@ -92,7 +135,7 @@ bash scripts/build_closed_testing.sh ios
 - [ ] Challenge: HTTPS link + FCM tap → lobby → play
 - [ ] Challenge hub: rivalries list, rematch, view all history (not on Profile)
 - [ ] Mid-match **Home** / **MORE → Exit** / system back → confirm dialog; **Stay** keeps board
-- [ ] Campaign abandon → **Leave** exits without consuming a life; fresh level (no moves) → no dialog
+- [ ] Campaign abandon → **Leave** after moves → dialog warns 1 life; life deducted once; fresh level (no moves) → no dialog
 - [ ] Quick match / vs AI: generic “Leave match?” copy
 - [ ] Build 12 smoke: campaign Next level, turn budgets, shop UX (see build 12 checklist below)
 - [ ] Prod functions + indexes if backend changed: `firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-72cc6`
@@ -218,7 +261,7 @@ firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-
 | Item | Notes |
 |------|--------|
 | Leave match confirmation | Home, MORE → Exit, and system back ask before leaving mid-game |
-| Campaign copy | Level progress lost; life **not** consumed on abandon |
+| Campaign copy | Level progress lost; **1 life** consumed on confirmed abandon (build 25+) |
 | No dialog when safe | Fresh board (no moves) or finished game exits immediately |
 
 **Key file:** `lib/features/game/presentation/game_screen.dart` (`_shouldConfirmLeave`, `_requestLeaveGame`, `PopScope`)
@@ -237,7 +280,7 @@ firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-
 ### Store notes (draft)
 
 - Confirm before leaving a match so progress isn’t lost by accident
-- Campaign: abandoning a level doesn’t use a life
+- Campaign: abandoning mid-level costs 1 life (see `forfeitCampaignLevel`)
 
 ---
 

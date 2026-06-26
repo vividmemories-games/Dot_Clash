@@ -185,6 +185,7 @@ class SettingsScreen extends ConsumerWidget {
           AppSpacing.vGapSM,
           NeonCard(
             padding: EdgeInsets.zero,
+            clipInk: true,
             child: Column(
               children: [
                 _SettingsTile(
@@ -280,6 +281,7 @@ class SettingsScreen extends ConsumerWidget {
           AppSpacing.vGapSM,
           NeonCard(
             padding: EdgeInsets.zero,
+            clipInk: true,
             child: Column(
               children: [
                 _SettingsTile(
@@ -488,7 +490,7 @@ class SettingsScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
-        title: Text('SETTINGS'),
+        title: const Text('SETTINGS'),
         actions: [
           IconButton(
             tooltip: 'Sign out',
@@ -706,6 +708,7 @@ class _HelpLegalSectionState extends ConsumerState<_HelpLegalSection> {
         AppSpacing.vGapSM,
         NeonCard(
           padding: EdgeInsets.zero,
+          clipInk: true,
           child: Column(
             children: [
               ListTile(
@@ -748,8 +751,8 @@ class _AboutSheet extends ConsumerWidget {
   }
 
   static String _copyLine(PackageInfo info) {
-    final env = AppEnv.flavor;
-    final beta = AppEnv.betaAds ? ' beta_ads' : '';
+    const env = AppEnv.flavor;
+    const beta = AppEnv.betaAds ? ' beta_ads' : '';
     return '${info.appName} ${info.version} (${info.buildNumber}) $env$beta';
   }
 
@@ -943,6 +946,7 @@ class _TermsAndPrivacySheet extends StatelessWidget {
           AppSpacing.vGapSM,
           NeonCard(
             padding: EdgeInsets.zero,
+            clipInk: true,
             child: Column(
               children: [
                 ListTile(

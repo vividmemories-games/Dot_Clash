@@ -259,7 +259,7 @@ void main() {
   // ── LevelEvaluator ────────────────────────────────────────────────────────
 
   group('LevelEvaluator', () {
-    CampaignLevel _level({
+    CampaignLevel level0({
       required StarObjective star1,
       required StarObjective star2,
       required StarObjective star3,
@@ -280,7 +280,7 @@ void main() {
     test('returns 0 when human loses', () {
       // Play the simplest game: AI wins by closing all boxes.
       // 2×2 box grid — AI wins, human score = 0.
-      var state = GameState.initial(
+      final state = GameState.initial(
         rows: 3,
         cols: 3,
         playerIds: const [_human, _ai],
@@ -293,7 +293,7 @@ void main() {
         finalState: state,
         humanPlayerId: _human,
       );
-      final level = _level(
+      final level = level0(
         star1: StarObjective.win(),
         star2: StarObjective.win(),
         star3: StarObjective.win(),
@@ -325,7 +325,7 @@ void main() {
       if (!payload.humanWon) {
         expect(
             LevelEvaluator.evaluate(
-              _level(
+              level0(
                   star1: StarObjective.win(),
                   star2: StarObjective.win(),
                   star3: StarObjective.win()),

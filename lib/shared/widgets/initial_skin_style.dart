@@ -12,15 +12,15 @@ abstract final class InitialSkinStyles {
         return _base(fontSize).copyWith(
           color: Colors.white,
           shadows: [
-            Shadow(color: accent.withOpacity(0.95), blurRadius: 14),
-            Shadow(color: accent.withOpacity(0.55), blurRadius: 22),
+            Shadow(color: accent.withValues(alpha: 0.95), blurRadius: 14),
+            Shadow(color: accent.withValues(alpha: 0.55), blurRadius: 22),
           ],
         );
       case 'initial_skin_ultra':
         return _base(fontSize).copyWith(
           color: const Color(0xFFFFF4C2),
           shadows: [
-            Shadow(color: accent.withOpacity(0.9), blurRadius: 10),
+            Shadow(color: accent.withValues(alpha: 0.9), blurRadius: 10),
             const Shadow(color: Color(0xFFFFE082), blurRadius: 6),
           ],
         );
@@ -48,14 +48,14 @@ abstract final class InitialSkinStyles {
         );
       case 'initial_skin_shadow':
         return _base(fontSize).copyWith(
-          color: Colors.white.withOpacity(0.92),
+          color: Colors.white.withValues(alpha: 0.92),
           shadows: [
             Shadow(
-              color: Colors.black.withOpacity(0.85),
+              color: Colors.black.withValues(alpha: 0.85),
               blurRadius: 0,
               offset: Offset(fontSize * 0.06, fontSize * 0.08),
             ),
-            Shadow(color: accent.withOpacity(0.35), blurRadius: 6),
+            Shadow(color: accent.withValues(alpha: 0.35), blurRadius: 6),
           ],
         );
       case 'initial_skin_chrome':
@@ -79,9 +79,9 @@ abstract final class InitialSkinStyles {
           color: const Color(0xFFB8FF30),
           shadows: [
             Shadow(
-                color: Colors.black.withOpacity(0.9),
+                color: Colors.black.withValues(alpha: 0.9),
                 blurRadius: 0,
-                offset: Offset(2, 2)),
+                offset: const Offset(2, 2)),
             const Shadow(color: Color(0xFF00D4FF), blurRadius: 8),
           ],
         );
@@ -90,7 +90,7 @@ abstract final class InitialSkinStyles {
         return _base(fontSize).copyWith(
           color: Colors.white,
           shadows: [
-            Shadow(color: accent.withOpacity(0.9), blurRadius: 8),
+            Shadow(color: accent.withValues(alpha: 0.9), blurRadius: 8),
           ],
         );
     }

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -81,6 +80,15 @@ class _GameScreenState extends ConsumerState<GameScreen>
   /// Deferred campaign settlement after mini-boss post-win spotlight.
   GameState? _pendingSettleState;
 
+  /// Prevents duplicate settlement when the game-over listener fires twice.
+  bool _campaignSettlementStarted = false;
+
+  /// Idempotency key for campaign session (forfeit + settlement share one ID).
+  late final String _campaignSessionId;
+
+  /// Idempotency key for local / practice match settlement.
+  late final String _matchSessionId;
+
   /// Prevents pushing two victory overlays if settlement fires twice.
   bool _campaignResultPushed = false;
 
@@ -99,6 +107,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
   @override
   void initState() {
     super.initState();
+    _campaignSessionId =
+        '${widget.config.campaignLevelId ?? 'campaign'}_${DateTime.now().microsecondsSinceEpoch}';
+    _matchSessionId =
+        '${widget.config.mode.name}_${DateTime.now().microsecondsSinceEpoch}';
     CoachTourTargetRegistry.claimGameScope(_gameTourScope);
     WidgetsBinding.instance.addObserver(this);
     if (widget.config.mode == GameMode.campaign &&
@@ -106,7 +118,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
       _bossIntroDismissed = false;
     }
     // Riverpod forbids provider writes in initState; apply after build completes.
-    Future(() => _syncGameConfig());
+    Future(_syncGameConfig);
     final campaignLevelId = widget.config.campaignLevelId;
     if (widget.config.mode == GameMode.campaign && campaignLevelId != null) {
       CampaignContentRepository.instance
@@ -224,9 +236,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
     final state = _isChallenge
         ? ref.watch(challengeGameProvider(_challengeCode!))
         : ref.watch(gameProvider);
-    final session = _isChallenge
-        ? const MatchSession()
-        : ref.watch(matchSessionProvider);
+    final session =
+        _isChallenge ? const MatchSession() : ref.watch(matchSessionProvider);
     final secondsLeft = _isChallenge
         ? ref.watch(challengeTurnTimerProvider(_challengeCode!))
         : ref.watch(turnTimerProvider);
@@ -254,8 +265,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
       ref.read(turnTimerProvider.notifier).stop();
     }
 
-    final challengeOpponent =
-        widget.config.opponentDisplayName ?? 'Rival';
+    final challengeOpponent = widget.config.opponentDisplayName ?? 'Rival';
     final playerAName = _scoreboardLabel(switch (widget.config.mode) {
       GameMode.challenge =>
         _myPlayerId == 'A' ? settings.youName : challengeOpponent,
@@ -345,26 +355,26 @@ class _GameScreenState extends ConsumerState<GameScreen>
       ref.listen<GameState>(gameProvider, (prev, next) {
         if (!mounted) return;
         if (prev == null) return;
-      final coachState = ref.read(matchCoachTourProvider);
-      if (!coachState.isActive) return;
+        final coachState = ref.read(matchCoachTourProvider);
+        if (!coachState.isActive) return;
 
-      if (next.moveHistory.length <= prev.moveHistory.length) return;
+        if (next.moveHistory.length <= prev.moveHistory.length) return;
 
-      final humanId = next.playerIds[0];
-      final lastEdge = next.moveHistory.last;
-      if (next.edgeOwners[lastEdge] != humanId) return;
+        final humanId = next.playerIds[0];
+        final lastEdge = next.moveHistory.last;
+        if (next.edgeOwners[lastEdge] != humanId) return;
 
-      ref.read(matchCoachTourProvider.notifier).onHumanMove(next);
+        ref.read(matchCoachTourProvider.notifier).onHumanMove(next);
 
-      if (next.claimedCount > prev.claimedCount) {
-        for (final entry in next.claimedBoxes.entries) {
-          if (prev.claimedBoxes.containsKey(entry.key)) continue;
-          if (entry.value == humanId) {
-            ref.read(matchCoachTourProvider.notifier).onHumanBoxClaimed();
-            break;
+        if (next.claimedCount > prev.claimedCount) {
+          for (final entry in next.claimedBoxes.entries) {
+            if (prev.claimedBoxes.containsKey(entry.key)) continue;
+            if (entry.value == humanId) {
+              ref.read(matchCoachTourProvider.notifier).onHumanBoxClaimed();
+              break;
+            }
           }
         }
-      }
       });
     }
 
@@ -378,35 +388,41 @@ class _GameScreenState extends ConsumerState<GameScreen>
         if (widget.config.mode == GameMode.campaign) {
           _settleCampaign(context, ref, next);
         } else {
-        final result = next.isTie
-            ? MatchResult.tie
-            : (next.winnerId == next.playerIds[0]
-                ? MatchResult.win
-                : MatchResult.loss);
-        final repo = ref.read(profileRepositoryProvider);
-        repo
-            .settleMatch(result, consumeLife: false)
-            .catchError((e) => debugPrint('[Profile][settleMatch] failed=$e'));
-        final modeLabel =
-            widget.config.mode == GameMode.ai ? 'Practice' : 'Local';
-        final opponent = widget.config.mode == GameMode.ai
-            ? ref.read(settingsProvider).aiName
-            : 'Friend';
-        repo
-            .recordMatch(
-              result: result,
-              modeLabel: modeLabel,
-              opponentLabel: opponent,
-            )
-            .catchError((e) => debugPrint('[Profile][recordMatch] failed=$e'));
-        if (widget.config.mode == GameMode.ai) {
-          final removeAds =
-              ref.read(profileProvider).valueOrNull?.removeAds ?? false;
-          unawaited(ref.read(adRewardRouterProvider).handleMatchFinished(
-                removeAds: removeAds,
-              ));
-        }
-        _showResultDialog(context, next);
+          final result = next.isTie
+              ? MatchResult.tie
+              : (next.winnerId == next.playerIds[0]
+                  ? MatchResult.win
+                  : MatchResult.loss);
+          final repo = ref.read(profileRepositoryProvider);
+          repo
+              .settleMatch(
+                result,
+                consumeLife: false,
+                matchId: _matchSessionId,
+              )
+              .catchError(
+              (e) => debugPrint('[Profile][settleMatch] failed=$e'));
+          final modeLabel =
+              widget.config.mode == GameMode.ai ? 'Practice' : 'Local';
+          final opponent = widget.config.mode == GameMode.ai
+              ? ref.read(settingsProvider).aiName
+              : 'Friend';
+          repo
+              .recordMatch(
+                result: result,
+                modeLabel: modeLabel,
+                opponentLabel: opponent,
+              )
+              .catchError(
+                  (e) => debugPrint('[Profile][recordMatch] failed=$e'));
+          if (widget.config.mode == GameMode.ai) {
+            final removeAds =
+                ref.read(profileProvider).valueOrNull?.removeAds ?? false;
+            unawaited(ref.read(adRewardRouterProvider).handleMatchFinished(
+                  removeAds: removeAds,
+                ));
+          }
+          _showResultDialog(context, next);
         }
       });
     }
@@ -414,13 +430,11 @@ class _GameScreenState extends ConsumerState<GameScreen>
     final isVsAi = widget.config.mode == GameMode.ai ||
         widget.config.mode == GameMode.campaign;
     final isAiTurn = isVsAi && state.currentPlayerId == state.playerIds[1];
-    final isOpponentTurn =
-        _isChallenge && state.currentPlayerId != _myPlayerId;
+    final isOpponentTurn = _isChallenge && state.currentPlayerId != _myPlayerId;
     final humanTurnReady =
         _isChallenge ? true : ref.watch(humanTurnReadyProvider);
-    final opponentHighlightEdge = (isVsAi || _isChallenge)
-        ? ref.watch(opponentLastEdgeProvider)
-        : null;
+    final opponentHighlightEdge =
+        (isVsAi || _isChallenge) ? ref.watch(opponentLastEdgeProvider) : null;
 
     final coachTourState = ref.watch(matchCoachTourProvider);
     final coachLogic = coachTourState.logic;
@@ -452,8 +466,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
     final boostEnabled = canInteract || coachAllowsHint || coachAllowsHold;
 
-    final humanPlayerId =
-        _isChallenge ? _myPlayerId : state.playerIds[0];
+    final humanPlayerId = _isChallenge ? _myPlayerId : state.playerIds[0];
     // Count human TURNS (chains = 1 turn, not every line drawn).
     final humanTurnCount =
         CampaignMoveMetrics.humanTurnCount(state, humanPlayerId);
@@ -588,9 +601,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
           canUndo:
               !_isChallenge && state.moveHistory.isNotEmpty && !state.isOver,
           onUndo: _onUndo,
-          onRestart: _isChallenge
-              ? () {}
-              : () => _confirmNewGame(context),
+          onRestart: _isChallenge ? () {} : () => _confirmNewGame(context),
           onExit: () => _requestLeaveGame(
             context,
             navigate: () => context.go(
@@ -705,6 +716,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
     final isCampaign = widget.config.mode == GameMode.campaign;
     final isChallenge = _isChallenge;
+    final campaignForfeitsLife = isCampaign &&
+        !widget.config.isDailyPuzzle &&
+        !_tutorialFreeAttempt;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
@@ -717,11 +731,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
           }),
           content: Text(
             switch ((isCampaign, isChallenge)) {
-              (true, _) =>
-                'Your progress on this level will be lost. '
-                    'Your life won\'t be used — you can try again from the map.',
-              (_, true) =>
-                'Leaving forfeits the match. Your opponent may win.',
+              (true, _) => campaignForfeitsLife
+                  ? 'Leaving costs 1 life. Progress on this level will be lost.'
+                  : 'Your progress on this level will be lost.',
+              (_, true) => 'Leaving forfeits the match. Your opponent may win.',
               _ => 'Your current game progress will be lost.',
             },
           ),
@@ -745,6 +758,24 @@ class _GameScreenState extends ConsumerState<GameScreen>
   }
 
   Future<void> _leaveGameRoute(void Function() navigate) async {
+    if (widget.config.mode == GameMode.campaign &&
+        widget.config.campaignLevelId != null &&
+        !widget.config.isDailyPuzzle &&
+        !_tutorialFreeAttempt &&
+        !_campaignSettlementStarted) {
+      final state = ref.read(gameProvider);
+      if (!state.isOver && state.moveHistory.isNotEmpty) {
+        try {
+          await ref.read(profileRepositoryProvider).forfeitCampaignLevel(
+                levelId: widget.config.campaignLevelId!,
+                forfeitId: _campaignSessionId,
+              );
+        } catch (e, st) {
+          debugPrint('[Campaign][forfeit] failed=$e');
+          await AnalyticsService.instance.recordError(e, st);
+        }
+      }
+    }
     if (_isChallenge) {
       final code = _challengeCode!;
       final room = ref.read(challengeRoomProvider(code)).valueOrNull;
@@ -1002,6 +1033,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
           final ok = await router.showRewardedExtraTurns(grantInventory: false);
           if (ok) {
             ref.read(gameProvider.notifier).addTurnsFromBoost(_extraTurnsGrant);
+          } else {
+            _showBoostMessage("Couldn't apply the reward. Please try again.");
           }
         },
         onUseBoost: () => _onBoostTap(PowerUpType.extraTurns),
@@ -1038,6 +1071,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
           final ok = await router.showRewardedRiposte();
           if (ok) {
             await _onBoostTap(PowerUpType.riposte);
+          } else {
+            _showBoostMessage("Couldn't apply the reward. Please try again.");
           }
         },
         onUseInventory: () => _onBoostTap(PowerUpType.riposte),
@@ -1125,6 +1160,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
     setState(() {
       _hintsLeft = 3;
       _hintEdge = null;
+      _matchSessionId =
+          '${widget.config.mode.name}_${DateTime.now().microsecondsSinceEpoch}';
     });
     ref.read(gameProvider.notifier).newGame();
     ref.read(turnTimerProvider.notifier).reset();
@@ -1136,6 +1173,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
       BuildContext context, WidgetRef ref, GameState state) async {
     final levelId = widget.config.campaignLevelId;
     if (levelId == null) return;
+    if (_campaignSettlementStarted) return;
+    _campaignSettlementStarted = true;
 
     final level = _campaignLevel ??
         await CampaignContentRepository.instance.levelById(levelId);
@@ -1160,6 +1199,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
       }
     }
 
+    if (!context.mounted) return;
     await _pushCampaignCompleteScreen(context, ref, state, level);
   }
 
@@ -1232,6 +1272,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
       try {
         await repo.settleCampaignLevel(
           levelId: levelId,
+          settlementId: _campaignSessionId,
           starsEarned: stars,
           coinReward: level.coinReward,
           xpReward: level.xpReward,
@@ -1262,6 +1303,11 @@ class _GameScreenState extends ConsumerState<GameScreen>
       }
     }
 
+    // Start settlement once here — not inside the route builder. MaterialPageRoute
+    // builders can run more than once during install/rebuild; calling runSave()
+    // there fired completeCampaignLevel twice (−2 lives on loss).
+    final saveFuture = runSave();
+
     if (!context.mounted) return;
 
     Navigator.of(context, rootNavigator: true).push(
@@ -1274,7 +1320,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
           humanWon: humanWon,
           powerUpRewards: powerUpRewards,
           initialCoins: initialCoins,
-          saveFuture: runSave(),
+          saveFuture: saveFuture,
           onRetrySave: runSave,
         ),
       ),
@@ -1315,7 +1361,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black.withOpacity(0.7),
+      barrierColor: Colors.black.withValues(alpha: 0.7),
       builder: (_) => _ResultDialog(
         headline: headline,
         subline: subline,
@@ -1499,13 +1545,13 @@ class _ResultDialogState extends State<_ResultDialog>
               color: v.surface,
               borderRadius: AppSpacing.roundedXL,
               border: Border.all(
-                color: widget.color.withOpacity(0.5),
+                color: widget.color.withValues(alpha: 0.5),
                 width: 1.5,
               ),
               boxShadow: v.useGlow
                   ? [
                       BoxShadow(
-                        color: widget.color.withOpacity(0.25),
+                        color: widget.color.withValues(alpha: 0.25),
                         blurRadius: 30,
                         spreadRadius: 2,
                       ),
@@ -1520,13 +1566,13 @@ class _ResultDialogState extends State<_ResultDialog>
                   height: 64,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: widget.color.withOpacity(0.12),
+                    color: widget.color.withValues(alpha: 0.12),
                     border: Border.all(
-                        color: widget.color.withOpacity(0.4), width: 1.5),
+                        color: widget.color.withValues(alpha: 0.4), width: 1.5),
                     boxShadow: v.useGlow
                         ? [
                             BoxShadow(
-                              color: widget.color.withOpacity(0.35),
+                              color: widget.color.withValues(alpha: 0.35),
                               blurRadius: 16,
                             ),
                           ]
@@ -1587,7 +1633,10 @@ class _ResultDialogState extends State<_ResultDialog>
                         style: ElevatedButton.styleFrom(
                             backgroundColor: widget.color),
                         onPressed: widget.onPlayAgain,
-                        child: const Text('Play Again'),
+                        child: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('Play Again'),
+                        ),
                       ),
                     ),
                   ],

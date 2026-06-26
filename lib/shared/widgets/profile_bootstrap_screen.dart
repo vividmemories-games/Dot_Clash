@@ -183,8 +183,8 @@ class ProfileTabLoadingPlaceholder extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: v.scaffold,
-      body: HomeScreenBackground(
-        child: const SafeArea(
+      body: const HomeScreenBackground(
+        child: SafeArea(
           child: Center(child: CircularProgressIndicator()),
         ),
       ),

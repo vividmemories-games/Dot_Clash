@@ -151,7 +151,7 @@ class _CampaignLevelCompleteScreenState
     _coinCtrl.forward(from: 0);
     final target = widget.initialCoins + widget.level.coinReward;
     const steps = 12;
-    final stepMs = 750 ~/ steps;
+    const stepMs = 750 ~/ steps;
     for (var i = 1; i <= steps; i++) {
       _timers.add(Timer(Duration(milliseconds: stepMs * i), () {
         if (!mounted) return;

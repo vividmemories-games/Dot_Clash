@@ -20,6 +20,7 @@ import {
   purchasePowerUp,
   settleQuickMatch,
   devResetDailyClaim,
+  forfeitCampaignLevel,
 } from './economy';
 import { onLoss, resolveLives, syncLives } from './lives';
 import { levelForStars, totalStarsFromMap } from './progression';
@@ -50,6 +51,7 @@ export {
   grantPowerUp,
   syncLives,
   devResetDailyClaim,
+  forfeitCampaignLevel,
   createChallenge,
   joinChallenge,
   submitChallengeMove,
@@ -64,6 +66,7 @@ interface CampaignSettleRequest {
   starsEarned: number;
   win: boolean;
   boxesCaptured?: number;
+  settlementId: string;
 }
 
 function bumpDailyMissions(
@@ -101,8 +104,15 @@ export const completeCampaignLevel = onCall(
     const data = request.data as CampaignSettleRequest;
     const { levelId, starsEarned, win } = data;
     const boxesCaptured = Number(data.boxesCaptured ?? 0);
+    const settlementId =
+      typeof data.settlementId === 'string' ? data.settlementId.trim() : '';
 
-    if (!levelId || typeof starsEarned !== 'number' || typeof win !== 'boolean') {
+    if (
+      !levelId ||
+      typeof starsEarned !== 'number' ||
+      typeof win !== 'boolean' ||
+      !settlementId
+    ) {
       throw new HttpsError('invalid-argument', 'Missing fields.');
     }
 
@@ -114,8 +124,14 @@ export const completeCampaignLevel = onCall(
     const nowMs = Date.now();
 
     const profileRef = db.collection('profiles').doc(uid);
+    const settlementRef = profileRef.collection('campaign_settlements').doc(settlementId);
 
-    await db.runTransaction(async (txn) => {
+    const txnResult = await db.runTransaction(async (txn) => {
+      const existingSettlement = await txn.get(settlementRef);
+      if (existingSettlement.exists) {
+        return { alreadySettled: true as const };
+      }
+
       const snap = await txn.get(profileRef);
       if (!snap.exists) {
         throw new HttpsError('not-found', 'Profile not found.');
@@ -161,10 +177,29 @@ export const completeCampaignLevel = onCall(
         dailyMissions: bumpDailyMissions(profile, { win, boxesCaptured }),
         updatedAt: FieldValue.serverTimestamp(),
       });
+
+      txn.set(settlementRef, {
+        levelId,
+        win,
+        starsEarned: clampedStars,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+      return { alreadySettled: false as const };
     });
+
+    if (txnResult.alreadySettled) {
+      return {
+        success: true,
+        alreadySettled: true,
+        coinReward: 0,
+        xpReward: 0,
+      };
+    }
 
     return {
       success: true,
+      alreadySettled: false,
       coinReward: effectiveCoins,
       xpReward: effectiveXp,
     };

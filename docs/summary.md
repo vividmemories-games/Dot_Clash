@@ -3,7 +3,7 @@
 **Date:** 2026-06-08 through 2026-06-13  
 **Branch:** merged to `main` (was `one-to-one-challange`)  
 **Firebase projects:** `dot-clash-dev` (dev flavor) · `dot-clash-72cc6` (prod / closed testing)  
-**Current build:** `1.4.2+20` (see `pubspec.yaml`)  
+**Current build:** `1.5.0+23` (see `pubspec.yaml`) — Gate 3a closed testing, `BETA_ADS=true`  
 **Canonical plan:** `.cursor/plans/challenge_a_friend.plan.md` · board presets: `.cursor/plans/challenge_board_presets_5e988364.plan.md`
 
 ---
@@ -20,7 +20,7 @@
 
 **Presets:** Classic 6×6, Blitz 4×4, Fortress 5×5 (center void). Server: `functions/src/challenge_board_presets.ts`. Guest explicit **JOIN CHALLENGE** after lobby preview. Host: CREATE → preset sheet.
 
-**Manual before upload:** full preset matrix on two devices, prod Functions deploy, `bash scripts/build_closed_testing.sh`, TestFlight/Play + Crashlytics — see [RELEASES.md](RELEASES.md) build 20 checklist.
+**Manual before upload:** Gate 3a ad-flow matrix on two devices, prod Functions deploy if needed, `bash scripts/build_closed_testing.sh`, TestFlight/Play + Crashlytics — see [RELEASES.md](RELEASES.md) build 23 checklist and [LAUNCH.md](LAUNCH.md) Gate 3a.
 
 ---
 

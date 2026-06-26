@@ -12,9 +12,9 @@ abstract final class DailyPuzzle {
   static String levelIdForDate(DateTime utcNow) {
     final day = _dateKey(utcNow.toUtc());
     final digest = sha1.convert(utf8.encode('$_salt-$day')).bytes;
-    var worldIndex = digest[0] % CampaignCatalog.worlds.length;
-    var world = CampaignCatalog.worlds[worldIndex];
-    var levelIndex = (digest[1] % world.levelCount) + 1;
+    final worldIndex = digest[0] % CampaignCatalog.worlds.length;
+    final world = CampaignCatalog.worlds[worldIndex];
+    final levelIndex = (digest[1] % world.levelCount) + 1;
     return CampaignCatalog.levelId(world.id, levelIndex);
   }
 

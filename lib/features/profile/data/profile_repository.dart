@@ -1,4 +1,5 @@
 import '../domain/user_profile.dart';
+import '../domain/rewarded_ad_rules.dart';
 
 enum MatchResult { win, loss, tie }
 
@@ -17,9 +18,19 @@ abstract class ProfileRepository {
 
   Future<bool> claimDaily();
   Future<bool> devResetDailyClaim();
-  Future<bool> claimRewardedAd();
-  Future<bool> grantLifeFromAd();
-  Future<bool> refundLastCampaignLife();
+  Future<bool> claimRewardedAd({required String grantId});
+  Future<bool> grantLifeFromAd({
+    required String grantId,
+    String kind = AdGrantKinds.lifeRefill,
+  });
+  Future<bool> refundLastCampaignLife({required String grantId});
+
+  /// Forfeit a campaign level in progress (mid-match leave). Idempotent per
+  /// [forfeitId] — safe to retry the same abandon attempt.
+  Future<bool> forfeitCampaignLevel({
+    required String levelId,
+    required String forfeitId,
+  });
 
   Future<bool> purchasePowerUp(String powerUpId, int priceCoins,
       {int quantity = 1});
@@ -30,12 +41,15 @@ abstract class ProfileRepository {
   Future<void> settleMatch(
     MatchResult result, {
     bool consumeLife = false,
+    required String matchId,
   });
 
   /// Settle a campaign level. Grants coins/XP and updates best star count.
   /// Stars improve only when [starsEarned] > current best for [levelId].
+  /// Idempotent per [settlementId] on the server.
   Future<void> settleCampaignLevel({
     required String levelId,
+    required String settlementId,
     required int starsEarned,
     required int coinReward,
     required int xpReward,

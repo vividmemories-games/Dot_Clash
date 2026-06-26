@@ -11,8 +11,8 @@ final challengeRepositoryProvider = Provider<ChallengeRepository>((ref) {
 });
 
 /// Live Firestore snapshot for `challenges/{code}`.
-final challengeRoomProvider = StreamProvider.autoDispose
-    .family<ChallengeRoom?, String>((ref, code) {
+final challengeRoomProvider =
+    StreamProvider.autoDispose.family<ChallengeRoom?, String>((ref, code) {
   return ref.watch(challengeRepositoryProvider).watchRoom(code);
 });
 

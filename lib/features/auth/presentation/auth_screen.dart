@@ -265,10 +265,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.black.withOpacity(0.30),
-                    Colors.black.withOpacity(0.15),
-                    Colors.black.withOpacity(0.70),
-                    Colors.black.withOpacity(0.96),
+                    Colors.black.withValues(alpha: 0.30),
+                    Colors.black.withValues(alpha: 0.15),
+                    Colors.black.withValues(alpha: 0.70),
+                    Colors.black.withValues(alpha: 0.96),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -353,14 +353,14 @@ class _AuthPanel extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: v.red.withOpacity(0.12),
+                color: v.red.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: v.red.withOpacity(0.4)),
+                border: Border.all(color: v.red.withValues(alpha: 0.4)),
               ),
               child: Text(
                 'Firebase did not start — sign-in is unavailable.',
                 style: TextStyle(
-                  color: v.red.withOpacity(0.9),
+                  color: v.red.withValues(alpha: 0.9),
                   fontSize: 12,
                   height: 1.4,
                 ),
@@ -376,13 +376,14 @@ class _AuthPanel extends StatelessWidget {
               children: [
                 Expanded(
                     child: Divider(
-                        color: Colors.white.withOpacity(0.15), thickness: 1)),
+                        color: Colors.white.withValues(alpha: 0.15),
+                        thickness: 1)),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text(
                     'LOGIN TO CONTINUE',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.45),
+                      color: Colors.white.withValues(alpha: 0.45),
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.8,
@@ -391,7 +392,8 @@ class _AuthPanel extends StatelessWidget {
                 ),
                 Expanded(
                     child: Divider(
-                        color: Colors.white.withOpacity(0.15), thickness: 1)),
+                        color: Colors.white.withValues(alpha: 0.15),
+                        thickness: 1)),
               ],
             ),
             const SizedBox(height: 20),
@@ -431,13 +433,14 @@ class _AuthPanel extends StatelessWidget {
               children: [
                 Expanded(
                     child: Divider(
-                        color: Colors.white.withOpacity(0.12), thickness: 1)),
+                        color: Colors.white.withValues(alpha: 0.12),
+                        thickness: 1)),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   child: Text(
                     'OR',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.35),
+                      color: Colors.white.withValues(alpha: 0.35),
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.5,
@@ -446,7 +449,8 @@ class _AuthPanel extends StatelessWidget {
                 ),
                 Expanded(
                     child: Divider(
-                        color: Colors.white.withOpacity(0.12), thickness: 1)),
+                        color: Colors.white.withValues(alpha: 0.12),
+                        thickness: 1)),
               ],
             ),
             const SizedBox(height: 16),
@@ -457,16 +461,16 @@ class _AuthPanel extends StatelessWidget {
             onTap: loading ? null : onGuest,
             child: Opacity(
               opacity: loading ? 0.45 : 1.0,
-              child: Row(
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     Icons.person_outline_rounded,
                     size: 18,
-                    color: const Color(0xFF64B5F6),
+                    color: Color(0xFF64B5F6),
                   ),
-                  const SizedBox(width: 7),
-                  const Text(
+                  SizedBox(width: 7),
+                  Text(
                     'PLAY AS GUEST',
                     style: TextStyle(
                       color: Color(0xFF64B5F6),
@@ -483,9 +487,9 @@ class _AuthPanel extends StatelessWidget {
           const SizedBox(height: 20),
 
           // Trust badge
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
+            children: [
               Icon(
                 Icons.verified_user_outlined,
                 size: 14,
@@ -530,9 +534,9 @@ class _AuthOutlineButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white.withOpacity(0.06),
+          backgroundColor: Colors.white.withValues(alpha: 0.06),
           side: BorderSide(
-            color: Colors.white.withOpacity(enabled ? 0.22 : 0.08),
+            color: Colors.white.withValues(alpha: enabled ? 0.22 : 0.08),
             width: 1,
           ),
           shape: RoundedRectangleBorder(
@@ -550,8 +554,9 @@ class _AuthOutlineButton extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color:
-                    enabled ? Colors.white.withOpacity(0.88) : Colors.white24,
+                color: enabled
+                    ? Colors.white.withValues(alpha: 0.88)
+                    : Colors.white24,
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,

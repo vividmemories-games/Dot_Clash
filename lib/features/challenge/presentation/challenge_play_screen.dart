@@ -25,7 +25,8 @@ class ChallengePlayScreen extends ConsumerStatefulWidget {
   final String code;
 
   @override
-  ConsumerState<ChallengePlayScreen> createState() => _ChallengePlayScreenState();
+  ConsumerState<ChallengePlayScreen> createState() =>
+      _ChallengePlayScreenState();
 }
 
 class _ChallengePlayScreenState extends ConsumerState<ChallengePlayScreen> {
@@ -151,7 +152,8 @@ class _ChallengePlayScreenState extends ConsumerState<ChallengePlayScreen> {
     return switch (room.status) {
       ChallengeStatus.waiting => 'Return to the lobby while your friend joins.',
       ChallengeStatus.expired => 'Create a new challenge from home.',
-      ChallengeStatus.finished || ChallengeStatus.abandoned =>
+      ChallengeStatus.finished ||
+      ChallengeStatus.abandoned =>
         'Return home to start another match.',
       ChallengeStatus.active => 'Return to the lobby or home.',
     };

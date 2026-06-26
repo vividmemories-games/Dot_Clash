@@ -136,7 +136,7 @@ class GameNotifier extends StateNotifier<GameState> {
   }
 
   void _onHumanControlPeriodEnded() {
-    var session = _session;
+    final session = _session;
     if (!session.hasTurnBudget || state.isOver) return;
 
     final remaining = (session.turnsRemaining ?? 0) - 1;

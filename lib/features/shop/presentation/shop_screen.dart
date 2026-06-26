@@ -22,7 +22,9 @@ import '../../../shared/navigation/main_shell_swipe.dart';
 import '../../../shared/widgets/equipped_avatar.dart';
 import '../../../shared/widgets/initial_skin_style.dart';
 import '../../../shared/widgets/neon_card.dart';
+import '../../../features/profile/domain/rewarded_ad_rules.dart';
 import '../../../services/ads/ad_reward_router.dart';
+import '../../../services/ads/rewarded_ad_messages.dart';
 import '../../../services/analytics/analytics_service.dart';
 import '../../../services/iap/iap_service.dart';
 
@@ -221,6 +223,7 @@ class ShopScreen extends ConsumerWidget {
                               inventory: profile.powerUpInventory,
                               coins: profile.coins,
                               lastDailyClaimAt: profile.lastDailyClaimAt,
+                              lastRewardedAdAt: profile.lastRewardedAdAt,
                               snapshot: livesSnapshot,
                               removeAds: profile.removeAds,
                               removeAdsPrice:
@@ -234,10 +237,9 @@ class ShopScreen extends ConsumerWidget {
                               onWatchAdForLife: () => ref
                                   .read(adRewardRouterProvider)
                                   .showRewardedLifeAd(),
-                              onClaimDaily: () => repo.claimDaily(),
-                              onDevResetDaily: AppEnv.isDev
-                                  ? () => repo.devResetDailyClaim()
-                                  : null,
+                              onClaimDaily: repo.claimDaily,
+                              onDevResetDaily:
+                                  AppEnv.isDev ? repo.devResetDailyClaim : null,
                               onWatchAdForCoins: () => ref
                                   .read(adRewardRouterProvider)
                                   .showRewardedShopCoins(),
@@ -248,7 +250,7 @@ class ShopScreen extends ConsumerWidget {
                                   ok ? null : iap.lastPurchaseError,
                                 );
                               },
-                              onRestorePurchases: () => iap.restorePurchases(),
+                              onRestorePurchases: iap.restorePurchases,
                             ),
                           ],
                         ),
@@ -818,6 +820,7 @@ class _BoostsAndStoreTab extends StatelessWidget {
     required this.inventory,
     required this.coins,
     required this.lastDailyClaimAt,
+    required this.lastRewardedAdAt,
     required this.snapshot,
     required this.removeAds,
     required this.removeAdsPrice,
@@ -838,6 +841,7 @@ class _BoostsAndStoreTab extends StatelessWidget {
   final Map<String, int> inventory;
   final int coins;
   final DateTime? lastDailyClaimAt;
+  final DateTime? lastRewardedAdAt;
   final LivesSnapshot snapshot;
   final bool removeAds;
   final String? removeAdsPrice;
@@ -861,6 +865,11 @@ class _BoostsAndStoreTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final v = context.dc;
     final t = context.txt;
+    final router = ref.read(adRewardRouterProvider);
+    final coinCooldown =
+        RewardedAdRules.coinCooldownRemaining(lastRewardedAdAt);
+    final canWatchCoinAd = router.canShowRewardedShopCoins(lastRewardedAdAt);
+    final canWatchLifeAd = router.canShowRewardedLifeAd(snapshot);
     final canBuyLife = !snapshot.isFull &&
         coins >= Progression.lifeRefillPriceCoins &&
         !purchaseInFlight;
@@ -973,21 +982,32 @@ class _BoostsAndStoreTab extends StatelessWidget {
               ),
               AppSpacing.vGapSM,
               _ShopPillButton(
-                label: 'Watch ad for 1 life',
+                label: router.isLifeAdDailyCapReached
+                    ? 'Daily life ads used (3/3)'
+                    : 'Watch ad for 1 life',
                 icon: Icons.play_circle_outline_rounded,
                 color: v.green,
                 expanded: true,
-                onPressed: () async {
-                  final ok = await onWatchAdForLife();
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        ok ? 'Life granted!' : 'Ad unavailable.',
-                      ),
-                    ),
-                  );
-                },
+                enabled: canWatchLifeAd,
+                onPressed: canWatchLifeAd
+                    ? () async {
+                        final ok = await onWatchAdForLife();
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              ok
+                                  ? 'Life granted!'
+                                  : RewardedAdMessages.shopLifeFailure(
+                                      livesFull: snapshot.isFull,
+                                      dailyCapReached:
+                                          router.isLifeAdDailyCapReached,
+                                    ),
+                            ),
+                          ),
+                        );
+                      }
+                    : null,
               ),
             ],
           ),
@@ -1009,23 +1029,30 @@ class _BoostsAndStoreTab extends StatelessWidget {
         AppSpacing.vGapSM,
         _PerkCard(
           title: 'Watch ad for coins',
-          description: 'Watch a short ad and earn coins.',
+          description: coinCooldown != null
+              ? 'Available in ${RewardedAdRules.formatCooldown(coinCooldown)}.'
+              : 'Watch a short ad and earn +${RewardedAdRules.rewardedCoinGrant} coins.',
           icon: Icons.play_circle_outline_rounded,
           color: v.playerB,
           actionLabel: '+COINS',
-          onAction: () async {
-            final ok = await onWatchAdForCoins();
-            if (!context.mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  ok
-                      ? 'Reward granted (+coins)!'
-                      : 'Could not grant coins (watch full ad or wait).',
-                ),
-              ),
-            );
-          },
+          enabled: canWatchCoinAd,
+          onAction: canWatchCoinAd
+              ? () async {
+                  final ok = await onWatchAdForCoins();
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        ok
+                            ? 'Reward granted (+${RewardedAdRules.rewardedCoinGrant} coins)!'
+                            : RewardedAdMessages.shopCoinsFailure(
+                                lastRewardedAdAt: lastRewardedAdAt,
+                              ),
+                      ),
+                    ),
+                  );
+                }
+              : null,
         ),
         AppSpacing.vGapLG,
         _SectionLabel(
@@ -1371,7 +1398,7 @@ class _CosmeticPreview extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          EquippedAvatar(
+          const EquippedAvatar(
             avatarId: 'avatar_orb_cyan',
             fallbackInitial: 'A',
             size: 42,

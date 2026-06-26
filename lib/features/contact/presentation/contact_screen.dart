@@ -26,7 +26,7 @@ class ContactScreen extends ConsumerWidget {
     if (!context.mounted) return;
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
             'Could not open your mail app. Email us at ${AppEnv.contactEmail}.',
           ),
@@ -47,7 +47,7 @@ class ContactScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
-        title: Text('CONTACT US'),
+        title: const Text('CONTACT US'),
       ),
       body: SafeArea(
         child: ListView(

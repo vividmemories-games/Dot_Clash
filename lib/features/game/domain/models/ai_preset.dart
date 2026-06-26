@@ -43,13 +43,13 @@ class AiPreset {
       rows: 4,
       cols: 4,
     ),
-    AiPreset(
+    const AiPreset(
       id: 'maze',
       name: 'Maze',
       description: 'Corners carved away — irregular edges everywhere.',
       rows: 6,
       cols: 6,
-      disabledCells: const [
+      disabledCells: [
         '0_0',
         '0_5',
         '1_0',
@@ -78,13 +78,13 @@ class AiPreset {
       rows: 7,
       cols: 7,
     ),
-    AiPreset(
+    const AiPreset(
       id: 'donut',
       name: 'Donut',
       description: 'Hollow center — capture the ring around the void.',
       rows: 6,
       cols: 6,
-      disabledCells: const ['2_2', '2_3', '3_2', '3_3'],
+      disabledCells: ['2_2', '2_3', '3_2', '3_3'],
     ),
     AiPreset(
       id: 'crossroads',
@@ -101,13 +101,13 @@ class AiPreset {
       rows: 9,
       cols: 3,
     ),
-    AiPreset(
+    const AiPreset(
       id: 'shattered',
       name: 'Shattered',
       description: 'Scattered voids — territory shifts every match.',
       rows: 6,
       cols: 6,
-      disabledCells: const [
+      disabledCells: [
         '0_0',
         '0_4',
         '2_2',

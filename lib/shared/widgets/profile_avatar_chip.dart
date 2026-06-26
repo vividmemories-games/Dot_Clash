@@ -141,7 +141,7 @@ class _LevelBadge extends StatelessWidget {
         boxShadow: v.useGlow
             ? [
                 BoxShadow(
-                  color: v.playerA.withOpacity(0.35),
+                  color: v.playerA.withValues(alpha: 0.35),
                   blurRadius: 6,
                 ),
               ]

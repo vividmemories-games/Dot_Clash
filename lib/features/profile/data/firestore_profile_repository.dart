@@ -14,6 +14,7 @@ import 'profile_repository.dart';
 import '../domain/lives_logic.dart';
 import '../domain/progression.dart';
 import '../domain/rank.dart';
+import '../domain/rewarded_ad_rules.dart';
 import '../domain/user_profile.dart';
 
 class FirestoreProfileRepository implements ProfileRepository {
@@ -318,51 +319,116 @@ class FirestoreProfileRepository implements ProfileRepository {
   }
 
   @override
-  Future<bool> claimRewardedAd() async {
+  Future<bool> claimRewardedAd({required String grantId}) async {
     return _economyBool(
       'claimRewardedAd',
-      const {},
-      devFallback: () => _guardBoolTransaction('claimRewardedAd', () async {
-        await _ensureExists();
-        return _firestore.runTransaction<bool>((txn) async {
-          final snap = await txn.get(_doc);
-          final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
-          final now = DateTime.now();
-          final last = profile.lastRewardedAdAt;
-          if (last != null &&
-              now.difference(last) < const Duration(minutes: 30)) {
-            return false;
-          }
-          txn.update(_doc, {
-            'coins': profile.coins + 35,
-            'lastRewardedAdAt': Timestamp.fromDate(now),
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-          return true;
+      {'grantId': grantId},
+      devFallback: () => _claimRewardedAdLocal(grantId),
+    );
+  }
+
+  Future<bool> _claimRewardedAdLocal(String grantId) async {
+    if (_consumedAdGrantIds.contains(grantId)) return true;
+    return _guardBoolTransaction('claimRewardedAd', () async {
+      await _ensureExists();
+      return _firestore.runTransaction<bool>((txn) async {
+        final snap = await txn.get(_doc);
+        final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
+        final now = DateTime.now();
+        final last = profile.lastRewardedAdAt;
+        if (last != null &&
+            now.difference(last) < RewardedAdRules.coinCooldown) {
+          return false;
+        }
+        txn.update(_doc, {
+          'coins': profile.coins + RewardedAdRules.rewardedCoinGrant,
+          'lastRewardedAdAt': Timestamp.fromDate(now),
+          'updatedAt': FieldValue.serverTimestamp(),
         });
-      }),
+        _consumedAdGrantIds.add(grantId);
+        return true;
+      });
+    });
+  }
+
+  @override
+  Future<bool> grantLifeFromAd({
+    required String grantId,
+    String kind = AdGrantKinds.lifeRefill,
+  }) async {
+    return _economyBool(
+      'grantLifeFromAd',
+      {'grantId': grantId, 'kind': kind},
+      devFallback: () => _grantFreeLifeLocal(grantId, kind),
     );
   }
 
   @override
-  Future<bool> grantLifeFromAd() async {
-    return _economyBool(
-      'grantLifeFromAd',
-      const {},
-      devFallback: _grantFreeLifeLocal,
+  Future<bool> refundLastCampaignLife({required String grantId}) async {
+    return grantLifeFromAd(
+      grantId: grantId,
+      kind: AdGrantKinds.campaignRefund,
     );
   }
 
   @override
-  Future<bool> refundLastCampaignLife() async {
-    return _economyBool(
-      'grantLifeFromAd',
-      const {},
-      devFallback: _grantFreeLifeLocal,
+  Future<bool> forfeitCampaignLevel({
+    required String levelId,
+    required String forfeitId,
+  }) async {
+    final result = await _tryCallableWithResult(
+      'forfeitCampaignLevel',
+      {'levelId': levelId, 'forfeitId': forfeitId},
     );
+    if (result != null) {
+      await _refreshProfileFromServer();
+      return result['success'] == true;
+    }
+    if (!_allowEconomyLocalFallback) return false;
+    final ok = await _forfeitCampaignLevelLocal(forfeitId);
+    if (ok) await _refreshProfileFromServer();
+    return ok;
   }
 
-  Future<bool> _grantFreeLifeLocal() async {
+  Future<bool> _forfeitCampaignLevelLocal(String forfeitId) async {
+    if (_consumedForfeitIds.contains(forfeitId)) return true;
+    return _guardBoolTransaction('forfeitCampaign', () async {
+      await _ensureExists();
+      return _firestore.runTransaction<bool>((txn) async {
+        final snap = await txn.get(_doc);
+        final profile = _fromMap(uid, snap.data() ?? _defaultProfileMap(uid));
+        final now = DateTime.now();
+        final resolved = LivesLogic.resolve(
+          lives: profile.lives,
+          nextLifeAt: profile.nextLifeAt,
+          now: now,
+        );
+        final afterLoss = LivesLogic.onLoss(
+          lives: resolved.effectiveLives,
+          nextLifeAt: resolved.nextLifeAt,
+          now: now,
+        );
+        txn.update(_doc, {
+          'lives': afterLoss.lives,
+          'nextLifeAt': afterLoss.nextLifeAt,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        _consumedForfeitIds.add(forfeitId);
+        return true;
+      });
+    });
+  }
+
+  final Set<String> _consumedForfeitIds = {};
+  final Set<String> _consumedCampaignSettlementIds = {};
+  final Set<String> _consumedQuickMatchIds = {};
+  final Set<String> _consumedAdGrantIds = {};
+
+  Future<bool> _grantFreeLifeLocal(String grantId, String kind) async {
+    if (_consumedAdGrantIds.contains(grantId)) return true;
+    assert(
+      kind == AdGrantKinds.lifeRefill || kind == AdGrantKinds.campaignRefund,
+    );
     return _guardBoolTransaction('grantFreeLife', () async {
       await _ensureExists();
       return _firestore.runTransaction<bool>((txn) async {
@@ -387,6 +453,7 @@ class FirestoreProfileRepository implements ProfileRepository {
               : Timestamp.fromDate(updated.nextLifeAt!),
           'updatedAt': FieldValue.serverTimestamp(),
         });
+        _consumedAdGrantIds.add(grantId);
         return true;
       });
     });
@@ -510,21 +577,25 @@ class FirestoreProfileRepository implements ProfileRepository {
   Future<void> settleMatch(
     MatchResult result, {
     bool consumeLife = false,
+    required String matchId,
   }) async {
     final outcome = switch (result) {
       MatchResult.win => 'win',
       MatchResult.loss => 'loss',
       MatchResult.tie => 'tie',
     };
-    final usedCallable = await _tryCallable(
+    final callableResult = await _tryCallableWithResult(
       'settleQuickMatch',
-      {'outcome': outcome, 'consumeLife': consumeLife},
+      {'outcome': outcome, 'consumeLife': consumeLife, 'matchId': matchId},
     );
-    if (usedCallable) {
+    if (callableResult != null) {
       await _refreshProfileFromServer();
       return;
     }
     if (!_allowEconomyLocalFallback) return;
+
+    if (_consumedQuickMatchIds.contains(matchId)) return;
+    _consumedQuickMatchIds.add(matchId);
 
     await _ensureExists();
     final profile = await _loadProfileBestEffort();
@@ -608,6 +679,7 @@ class FirestoreProfileRepository implements ProfileRepository {
   @override
   Future<void> settleCampaignLevel({
     required String levelId,
+    required String settlementId,
     required int starsEarned,
     required int coinReward,
     required int xpReward,
@@ -623,21 +695,32 @@ class FirestoreProfileRepository implements ProfileRepository {
         'starsEarned': starsEarned,
         'win': win,
         'boxesCaptured': boxesCaptured,
+        'settlementId': settlementId,
       },
     );
     if (callableResult != null) {
+      if (callableResult['alreadySettled'] == true) {
+        await _refreshProfileFromServer();
+        return;
+      }
       final serverCoins =
           (callableResult['coinReward'] as num?)?.toInt() ?? coinReward;
       final serverXp =
           (callableResult['xpReward'] as num?)?.toInt() ?? xpReward;
       final current = await _loadProfileBestEffort();
+      // Lives are authoritative on the server: completeCampaignLevel already
+      // applied the loss deduction. Do NOT re-apply onLoss in the optimistic
+      // emit — the profile snapshot listener can deliver the server's
+      // post-deduction value before this runs, double-counting it (loss showed
+      // -2 instead of -1). Mirror coins/XP/stars instantly and let the snapshot
+      // listener + _refreshProfileFromServer reconcile the authoritative lives.
       _emit(_profileAfterCampaignSettlement(
         current,
         levelId: levelId,
         starsEarned: starsEarned,
         coinReward: serverCoins,
         xpReward: serverXp,
-        consumeLife: consumeLife,
+        consumeLife: false,
         win: win,
         boxesCaptured: boxesCaptured,
         powerUpRewards: powerUpRewards,
@@ -660,6 +743,7 @@ class FirestoreProfileRepository implements ProfileRepository {
     }
     await _settleCampaignLevelLocal(
       levelId: levelId,
+      settlementId: settlementId,
       starsEarned: starsEarned,
       coinReward: coinReward,
       xpReward: xpReward,
@@ -787,7 +871,7 @@ class FirestoreProfileRepository implements ProfileRepository {
 
     final result = await _tryCallableWithResult(name, data);
     if (result != null) {
-      if (result['success'] == true) {
+      if (result['success'] == true || result['alreadyGranted'] == true) {
         if (previous != null) {
           // Optimistic emit already updated the UI — reconcile off the hot path.
           unawaited(_refreshProfileFromServer());
@@ -939,7 +1023,7 @@ class FirestoreProfileRepository implements ProfileRepository {
       updatedNextLifeAt = afterLoss.nextLifeAt;
     }
 
-    var inv = Map<String, int>.from(profile.powerUpInventory);
+    final inv = Map<String, int>.from(profile.powerUpInventory);
     if (win) {
       for (final entry in powerUpRewards.entries) {
         inv[entry.key] = (inv[entry.key] ?? 0) + entry.value;
@@ -972,6 +1056,7 @@ class FirestoreProfileRepository implements ProfileRepository {
 
   Future<void> _settleCampaignLevelLocal({
     required String levelId,
+    required String settlementId,
     required int starsEarned,
     required int coinReward,
     required int xpReward,
@@ -980,6 +1065,9 @@ class FirestoreProfileRepository implements ProfileRepository {
     required int boxesCaptured,
     Map<String, int> powerUpRewards = const {},
   }) async {
+    if (_consumedCampaignSettlementIds.contains(settlementId)) return;
+    _consumedCampaignSettlementIds.add(settlementId);
+
     final profile = await _loadProfileBestEffort();
     final updated = _profileAfterCampaignSettlement(
       profile,
@@ -1094,7 +1182,11 @@ class FirestoreProfileRepository implements ProfileRepository {
     }
     if (!_allowEconomyLocalFallback) return;
 
-    await settleMatch(result, consumeLife: false);
+    await settleMatch(
+      result,
+      consumeLife: false,
+      matchId: 'challenge_$normalized',
+    );
     final outcome = switch (result) {
       MatchResult.win => 'win',
       MatchResult.loss => 'loss',

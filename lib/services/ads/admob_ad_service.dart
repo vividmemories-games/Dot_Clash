@@ -9,15 +9,18 @@ import '../analytics/analytics_service.dart';
 import 'ad_consent_service.dart';
 import 'ad_placement.dart';
 import 'ad_service.dart';
+import 'reward_signal_wait.dart';
 
 /// Google Mobile Ads — test units when [AppEnv.usesTestAdUnits] (dev or BETA_ADS).
 ///
-/// Rewarded flow (dev + prod): [RewardedAd.show] dismisses when the ad closes;
-/// [onUserEarnedReward] is the earn signal. We [await] that hook (with timeout)
-/// before reloading the ad, then [AdRewardRouter] grants by [AdPlacement].
+/// Rewarded flow (dev + prod): [RewardedAd.show] starts native presentation;
+/// full-screen callbacks tell us when the ad closes. [onUserEarnedReward] is
+/// the earn signal. We wait for the ad to close, then wait for that hook
+/// (primary + grace) before reloading the ad. [AdRewardRouter] grants by
+/// placement.
 class AdMobAdService implements AdService {
-  /// Max wait after dismiss for [onUserEarnedReward] (iOS / simulator).
-  static const Duration _rewardSignalTimeout = Duration(seconds: 8);
+  static const Duration _rewardSignalTotalTimeout = Duration(seconds: 11);
+  static const Duration _rewardSignalPrimaryWindow = Duration(seconds: 8);
 
   InterstitialAd? _interstitial;
   RewardedAd? _rewarded;
@@ -128,22 +131,17 @@ class AdMobAdService implements AdService {
     _loadRewarded();
   }
 
-  /// Waits for [onUserEarnedReward] after the ad UI has closed.
-  Future<void> _awaitRewardSignal(Completer<void> rewardEarned) async {
-    if (rewardEarned.isCompleted) return;
-    try {
-      await rewardEarned.future.timeout(_rewardSignalTimeout);
-    } on TimeoutException {
-      // User skipped or closed before earn — [rewardEarned] stays incomplete.
-    }
-  }
-
   @override
-  Future<AdShowResult> showRewarded(AdPlacement placement) async {
+  Future<AdShowResult> showRewarded(
+    AdPlacement placement, {
+    void Function()? onDismissed,
+  }) async {
     final ad = _rewarded;
     if (ad == null) return AdShowResult.unavailable;
 
     final rewardEarned = Completer<void>();
+    final dismissed = Completer<void>();
+    final failedToShow = Completer<void>();
     final placementName = placement.name;
 
     void onUserEarnedReward(AdWithoutView _, RewardItem reward) {
@@ -158,32 +156,80 @@ class AdMobAdService implements AdService {
     }
 
     _rewardedShowInProgress = true;
+    _rewarded = null;
+    ad.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (_) {
+        if (!dismissed.isCompleted) dismissed.complete();
+      },
+      onAdFailedToShowFullScreenContent: (_, err) {
+        debugPrint(
+          '[AdMobAdService] Rewarded show failed ($placementName): $err',
+        );
+        if (!failedToShow.isCompleted) failedToShow.complete();
+      },
+    );
+
     var showSucceeded = false;
     try {
       await ad.show(onUserEarnedReward: onUserEarnedReward);
       showSucceeded = true;
     } catch (e, st) {
       debugPrint('[AdMobAdService] showRewarded error: $e\n$st');
-    } finally {
-      if (showSucceeded) {
-        await _awaitRewardSignal(rewardEarned);
-      }
-      _finishRewardedShow();
     }
 
-    if (!showSucceeded) return AdShowResult.unavailable;
-
-    if (!rewardEarned.isCompleted) {
-      debugPrint(
-        '[AdMobAdService] No reward signal ($placementName) — not granting',
+    late final AdShowResult result;
+    if (!showSucceeded) {
+      result = AdShowResult.unavailable;
+    } else {
+      final lifecycleResult = await waitForRewardedShowLifecycle(
+        dismissed: dismissed.future,
+        failedToShow: failedToShow.future,
       );
-      return AdShowResult.cancelled;
+      if (lifecycleResult == RewardedShowLifecycleResult.failedToShow) {
+        _finishRewardedShow();
+        return AdShowResult.unavailable;
+      }
+      if (lifecycleResult == RewardedShowLifecycleResult.timedOut) {
+        debugPrint(
+          '[AdMobAdService] Rewarded lifecycle timed out '
+          '($placementName) — not granting',
+        );
+        _finishRewardedShow();
+        return AdShowResult.cancelled;
+      }
+
+      onDismissed?.call();
+
+      await yieldForAdMobRewardCallback();
+
+      final waitStartedAt = DateTime.now();
+      var earned = await waitForRewardEarnedSignal(
+        () => rewardEarned.isCompleted,
+        totalTimeout: _rewardSignalTotalTimeout,
+      );
+      if (!earned) {
+        // Platform channel may deliver onUserEarnedReward one tick after polling ends.
+        await yieldForAdMobRewardCallback();
+        earned = rewardEarned.isCompleted;
+      }
+      if (!earned) {
+        debugPrint(
+          '[AdMobAdService] No reward signal ($placementName) — not granting',
+        );
+        result = AdShowResult.cancelled;
+      } else {
+        final usedGrace = DateTime.now().difference(waitStartedAt) >
+            _rewardSignalPrimaryWindow;
+        debugPrint(
+          '[AdMobAdService] Reward signal OK ($placementName'
+          '${usedGrace ? ', late grace' : ''}) — AdRewardRouter grants',
+        );
+        result = AdShowResult.completed;
+      }
     }
 
-    debugPrint(
-      '[AdMobAdService] Reward signal OK ($placementName) — AdRewardRouter grants',
-    );
-    return AdShowResult.completed;
+    _finishRewardedShow();
+    return result;
   }
 
   @override

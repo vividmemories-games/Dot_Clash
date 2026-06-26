@@ -2,6 +2,8 @@
 /// Validates bundled campaign JSON (schema, counts, boss cadence).
 ///
 /// Run: dart run tool/validate_levels.dart
+library;
+
 import 'dart:convert';
 import 'dart:io';
 

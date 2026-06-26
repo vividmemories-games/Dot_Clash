@@ -3,7 +3,7 @@ import 'package:dot_clash/features/home/domain/home_ui_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  RecentMatch _match({
+  RecentMatch match({
     required String uid,
     required String name,
     required MatchOutcome outcome,
@@ -21,19 +21,19 @@ void main() {
   group('HeadToHeadStats.forOpponent', () {
     test('aggregates wins losses ties for one uid', () {
       final matches = [
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.win,
           playedAt: DateTime(2026, 6, 1),
         ),
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.loss,
           playedAt: DateTime(2026, 6, 2),
         ),
-        _match(
+        match(
           uid: 'rival2',
           name: 'Alex',
           outcome: MatchOutcome.win,
@@ -58,19 +58,19 @@ void main() {
   group('HeadToHeadStats.currentStreak', () {
     test('counts consecutive wins from most recent', () {
       final matches = [
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.win,
           playedAt: DateTime(2026, 6, 10),
         ),
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.win,
           playedAt: DateTime(2026, 6, 9),
         ),
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.loss,
@@ -83,7 +83,7 @@ void main() {
 
     test('counts consecutive losses as negative streak', () {
       final matches = [
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.loss,
@@ -96,7 +96,7 @@ void main() {
 
     test('tie breaks streak', () {
       final matches = [
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.tie,
@@ -111,25 +111,25 @@ void main() {
   group('HeadToHeadStats.recentResultsForOpponent', () {
     test('returns newest results up to limit', () {
       final matches = [
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.win,
           playedAt: DateTime(2026, 6, 1),
         ),
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.loss,
           playedAt: DateTime(2026, 6, 10),
         ),
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.tie,
           playedAt: DateTime(2026, 6, 5),
         ),
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.win,
@@ -148,19 +148,19 @@ void main() {
   group('HeadToHeadStats.recentRivals', () {
     test('returns unique rivals most recent first with series record', () {
       final matches = [
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.win,
           playedAt: DateTime(2026, 6, 1),
         ),
-        _match(
+        match(
           uid: 'rival2',
           name: 'Alex',
           outcome: MatchOutcome.loss,
           playedAt: DateTime(2026, 6, 10),
         ),
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.tie,
@@ -194,13 +194,13 @@ void main() {
   group('HeadToHeadStats.allRivals', () {
     test('returns all rivals sorted by last played', () {
       final matches = [
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.win,
           playedAt: DateTime(2026, 6, 1),
         ),
-        _match(
+        match(
           uid: 'rival2',
           name: 'Alex',
           outcome: MatchOutcome.loss,
@@ -217,13 +217,13 @@ void main() {
   group('HeadToHeadStats.chronologicalHistory', () {
     test('returns challenge matches newest first', () {
       final matches = [
-        _match(
+        match(
           uid: 'rival1',
           name: 'Sam',
           outcome: MatchOutcome.win,
           playedAt: DateTime(2026, 6, 1),
         ),
-        _match(
+        match(
           uid: 'rival2',
           name: 'Alex',
           outcome: MatchOutcome.loss,

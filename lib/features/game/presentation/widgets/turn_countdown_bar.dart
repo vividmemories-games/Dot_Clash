@@ -38,7 +38,7 @@ class TurnCountdownBar extends StatelessWidget {
           color: v.surface,
           borderRadius: AppSpacing.roundedMD,
           border: Border.all(
-            color: barColor.withOpacity(isLow ? 0.45 : 0.2),
+            color: barColor.withValues(alpha: isLow ? 0.45 : 0.2),
           ),
         ),
         child: Row(

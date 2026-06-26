@@ -16,6 +16,7 @@ class NeonCard extends StatelessWidget {
     this.color,
     this.glowBlur = 12,
     this.glowSpread = 0,
+    this.clipInk = false,
   });
 
   final Widget child;
@@ -27,6 +28,11 @@ class NeonCard extends StatelessWidget {
   final Color? color;
   final double glowBlur;
   final double glowSpread;
+
+  /// When true, clips children to the card radius so [ListTile] / [InkWell]
+  /// ripples stay inside the border. Off by default — clipping chops wide
+  /// letter-spacing and pill buttons in shop/resources cards.
+  final bool clipInk;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +57,14 @@ class NeonCard extends StatelessWidget {
               ]
             : null,
       ),
-      child: child,
+      child: clipInk
+          ? Material(
+              type: MaterialType.transparency,
+              borderRadius: BorderRadius.circular(borderRadius),
+              clipBehavior: Clip.antiAlias,
+              child: child,
+            )
+          : child,
     );
   }
 }

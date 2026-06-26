@@ -57,8 +57,10 @@ class ChallengeRival {
   final DateTime lastPlayedAt;
   final HeadToHeadRecord record;
   final MatchOutcome lastOutcome;
+
   /// Positive = consecutive wins vs opponent; negative = consecutive losses.
   final int currentStreak;
+
   /// Newest-first individual results vs this opponent (Profile shows up to 3).
   final List<RecentMatch> recentResults;
 
@@ -76,7 +78,8 @@ class ChallengeRival {
 
 /// Aggregates challenge match history by [RecentMatch.opponentUid].
 abstract final class HeadToHeadStats {
-  static Iterable<RecentMatch> _challengeMatches(Iterable<RecentMatch> matches) {
+  static Iterable<RecentMatch> _challengeMatches(
+      Iterable<RecentMatch> matches) {
     return matches.where(
       (m) => m.modeLabel == 'Challenge' && m.opponentUid != null,
     );

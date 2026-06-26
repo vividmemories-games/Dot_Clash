@@ -42,6 +42,9 @@ Immutable decisions agents and contributors should not reverse without an explic
 | **F-1** | **Two Firebase projects:** `dot-clash-dev` (dev flavor) and `dot-clash-72cc6` (prod flavor). Never mix config files or deploy targets. | Auth, Firestore, Functions, and IAP depend on correct project. |
 | **F-2** | **`challenges/{code}` — clients may read; clients may not write.** All room mutations go through Cloud Functions. | Prevents move tampering and state corruption. |
 | **F-2b** | **`recordChallengeMatch` must stay idempotent** — safe if invoked more than once per player per finished room. | Reconnects and duplicate bindings must not double-write history. |
+| **F-2c** | **`forfeitCampaignLevel` must stay idempotent** — safe if retried with the same `forfeitId` per game session. | Leave flow and network retries must not double-deduct lives. |
+| **F-2d** | **`completeCampaignLevel` and `settleQuickMatch` must stay idempotent** — safe if retried with the same `settlementId` / `matchId` per game session. | Prevents economy farming via callable replay; client retries must not double-grant. |
+| **F-2e** | **`grantLifeFromAd` and `claimRewardedAd` must stay idempotent** — safe if retried with the same `grantId` per completed ad watch. Server enforces life-refill cap (3/day UTC), rescue life-refund cap (5/day UTC), and shop-coin cooldown (30 min). | Prevents ad-grant farming via callable replay; distinguishes `life_refill` vs `campaign_refund` on `grantLifeFromAd`. |
 | **F-3** | **Turn timeouts and stale rooms** handled by `processChallengeTimeouts` (scheduler, ~1 min) plus client backup in `ChallengeGameNotifier.onTurnTimedOut`. | Server is primary; client improves UX when push is delayed. |
 | **F-4** | **Campaign level content** loads from bundled JSON (`assets/campaign/world_*.json`), not Firestore during play. | Offline-capable campaign; predictable content shipping. |
 | **F-5** | **Economy mutations** (coins, XP, lives, missions) go through settlement callables — not direct client Firestore writes to profile economy fields. | Server-authoritative progression. |
@@ -74,5 +77,5 @@ Immutable decisions agents and contributors should not reverse without an explic
 
 | ID | Decision | Rationale |
 |----|----------|-----------|
-| **U-1** | **Campaign abandon:** leaving a level in progress does not consume a life; a fresh level with no moves shows no leave dialog. | Documented ship behavior — regressions block release. |
+| **U-1** | **Campaign abandon:** leaving a level in progress **costs 1 life** (via `forfeitCampaignLevel` callable, idempotent per `forfeitId`); FTUE free-attempt and daily puzzle are exempt; a fresh level with no moves shows no leave dialog. | Prevents quit-and-retry abuse; server-authoritative life deduction. |
 | **U-2** | **Mid-match navigation** (Home, MORE → Exit, system back) shows confirm dialog; **Stay** preserves board state. | Applies to Challenge and other live matches. |

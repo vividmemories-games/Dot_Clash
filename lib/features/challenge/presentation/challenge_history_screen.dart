@@ -42,7 +42,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
         ),
         body: matchesAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => SafeArea(
+          error: (_, __) => const SafeArea(
             child: Padding(
               padding: AppSpacing.pagePadding,
               child: ChallengeHistoryEmptyState(

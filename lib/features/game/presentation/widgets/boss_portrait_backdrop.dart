@@ -75,9 +75,9 @@ class BossPortraitBackdrop extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(scrimStrength * 0.9),
-                  v.scaffold.withOpacity(0.88),
-                  v.scaffold.withOpacity(0.96),
+                  Colors.black.withValues(alpha: scrimStrength * 0.9),
+                  v.scaffold.withValues(alpha: 0.88),
+                  v.scaffold.withValues(alpha: 0.96),
                 ],
                 stops: const [0.0, 0.45, 1.0],
               ),
@@ -105,13 +105,13 @@ class _PortraitFallback extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: RadialGradient(
           colors: [
-            accent.withOpacity(0.25),
+            accent.withValues(alpha: 0.25),
             Colors.black,
           ],
         ),
       ),
       child: Center(
-        child: Icon(icon, color: accent.withOpacity(0.6), size: 72),
+        child: Icon(icon, color: accent.withValues(alpha: 0.6), size: 72),
       ),
     );
   }

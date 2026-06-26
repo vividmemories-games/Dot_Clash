@@ -53,6 +53,9 @@ export const LIFE_REFILL_PRICE_COINS = 100;
 export const DAILY_REWARD_COINS = 60;
 export const DAILY_REWARD_XP = 40;
 export const REWARDED_AD_COINS = 35;
+export const REWARDED_AD_COOLDOWN_MS = 30 * 60 * 1000;
+export const MAX_LIFE_REFILL_ADS_PER_DAY = 3;
+export const MAX_RESCUE_LIFE_ADS_PER_DAY = 5;
 export const DAILY_BOOST_QUANTITY = 2;
 
 export const DAILY_BOOST_SCHEDULE = ['hold', 'riposte', 'extraTurns'] as const;

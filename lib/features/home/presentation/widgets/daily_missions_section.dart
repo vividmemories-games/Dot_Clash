@@ -40,13 +40,13 @@ class DailyMissionsSection extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: completedCount == missions.length
-                    ? v.green.withOpacity(0.15)
-                    : v.playerA.withOpacity(0.12),
+                    ? v.green.withValues(alpha: 0.15)
+                    : v.playerA.withValues(alpha: 0.12),
                 borderRadius: AppSpacing.roundedFull,
                 border: Border.all(
                   color: completedCount == missions.length
-                      ? v.green.withOpacity(0.5)
-                      : v.playerA.withOpacity(0.3),
+                      ? v.green.withValues(alpha: 0.5)
+                      : v.playerA.withValues(alpha: 0.3),
                 ),
               ),
               child: Text(
@@ -139,12 +139,16 @@ class _MissionSquareCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: AppSpacing.roundedLG,
           border: Border.all(
-            color:
-                mission.readyToClaim ? v.green.withOpacity(0.5) : v.cardBorder,
+            color: mission.readyToClaim
+                ? v.green.withValues(alpha: 0.5)
+                : v.cardBorder,
             width: mission.readyToClaim ? 1.5 : 1.0,
           ),
           boxShadow: v.useGlow && mission.readyToClaim
-              ? [BoxShadow(color: v.green.withOpacity(0.12), blurRadius: 10)]
+              ? [
+                  BoxShadow(
+                      color: v.green.withValues(alpha: 0.12), blurRadius: 10)
+                ]
               : null,
         ),
         child: ClipRRect(
@@ -166,8 +170,8 @@ class _MissionSquareCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Colors.black.withOpacity(0.6),
-                          Colors.black.withOpacity(0.75),
+                          Colors.black.withValues(alpha: 0.6),
+                          Colors.black.withValues(alpha: 0.75),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -193,13 +197,13 @@ class _MissionSquareCard extends StatelessWidget {
                                   bgImage,
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => Container(
-                                    color: iconColor.withOpacity(0.12),
+                                    color: iconColor.withValues(alpha: 0.12),
                                     child: Icon(iconData,
                                         size: 16, color: iconColor),
                                   ),
                                 )
                               : Container(
-                                  color: iconColor.withOpacity(0.12),
+                                  color: iconColor.withValues(alpha: 0.12),
                                   child: Icon(iconData,
                                       size: 16, color: iconColor),
                                 ),
@@ -221,7 +225,7 @@ class _MissionSquareCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: mission.fraction,
                           minHeight: 5,
-                          backgroundColor: v.cardBorder.withOpacity(0.5),
+                          backgroundColor: v.cardBorder.withValues(alpha: 0.5),
                           valueColor: AlwaysStoppedAnimation<Color>(barColor),
                         ),
                       ),

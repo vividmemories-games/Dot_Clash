@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('CampaignProgress.continueLevelId', () {
     test('returns first uncleared level', () {
-      final progress = CampaignProgress(
+      const progress = CampaignProgress(
         starsByLevelId: {
           'w1_l01': 3,
           'w1_l02': 3,

@@ -397,6 +397,7 @@ flowchart LR
 
   subgraph callables [Callable functions selected]
     CCL[completeCampaignLevel]
+    FCL[forfeitCampaignLevel]
     CDP[completeDailyPuzzle]
     CDM[claimDailyMission]
     CC[createChallenge joinChallenge submitChallengeMove abandonChallenge]
@@ -411,10 +412,13 @@ flowchart LR
 
 | Callable | Role | Client |
 |----------|------|--------|
-| `completeCampaignLevel` | Campaign rewards + missions | `firestore_profile_repository.dart` |
+| `completeCampaignLevel` | Campaign win/loss rewards + missions (idempotent per `settlementId`) | `firestore_profile_repository.dart` |
+| `forfeitCampaignLevel` | Mid-level campaign leave (−1 life, idempotent per `forfeitId`) | `game_screen.dart` → `firestore_profile_repository.dart` |
 | `completeDailyPuzzle` | Daily puzzle coins | same |
 | `claimDailyMission` | Mission claim | same |
-| `settleQuickMatch` | Quick match economy | same |
+| `settleQuickMatch` | Quick match / practice economy (idempotent per `matchId`) | same |
+| `grantLifeFromAd` | Life from rewarded ad (idempotent per `grantId`; `life_refill` vs `campaign_refund`) | `ad_reward_router.dart` |
+| `claimRewardedAd` | Shop coin grant from rewarded ad (idempotent per `grantId`) | `ad_reward_router.dart` |
 | Economy / shop / lives | `economy.ts`, `lives.ts` | shop, game boosts |
 | `createChallenge` / `joinChallenge` | Room lifecycle | `challenge_repository.dart` |
 | `submitChallengeMove` | Server-validated moves | `ChallengeGameNotifier` |

@@ -27,7 +27,7 @@ fvm flutter run --flavor dev --dart-define=FLAVOR=dev
 
 Use **prod** package name, Firebase, and IAP — but **Google test ads** so real-world beta testers don’t trigger invalid AdMob traffic.
 
-**Before each upload:** bump the build number in [`pubspec.yaml`](pubspec.yaml) (current: `1.4.2+20` — the number after `+` must increase every store upload).
+**Before each upload:** bump the build number in [`pubspec.yaml`](pubspec.yaml) (current: `1.5.0+23` — the number after `+` must increase every store upload).
 
 Scripts live at the **project root** in `scripts/` (not `android/scripts/`):
 
@@ -109,27 +109,26 @@ Details and AdMob IDs: [`lib/core/env/app_env.dart`](lib/core/env/app_env.dart)
 
 ---
 
-## Current closed testing — build 20 (`1.4.2+20`)
+## Current closed testing — build 23 (`1.5.0+23`)
 
-**Challenge a Friend board presets** — live 1v1 Dots & Boxes online with host-selected layouts. In closed testing on Play + TestFlight.
+**Gate 3a — ad-flow QA** on prod Firebase with **Google test ads** (`BETA_ADS=true`). Validates rewarded/interstitial integration on real devices before public launch prod ads ([LAUNCH.md](docs/LAUNCH.md) Gate 3b).
 
 | Feature | Notes |
 |---------|--------|
-| **Challenge presets** | Classic 6×6, Blitz 4×4, Fortress 5×5 center void |
-| **Guest preview** | Guests see the board and tap **JOIN CHALLENGE** explicitly |
-| **Challenge hub** | Rematch recent rivals; rematch keeps the source preset |
-| **App Links + FCM** | `vividmemories-games.github.io/join/{CODE}`; invite push includes preset name |
-| **Turn timer** | 30s per turn; leave confirmation (build 13) still applies in other modes |
+| **Rewarded ads polish** | Coin cooldown UI, life-ad disable when full/capped, clearer snackbars |
+| **Reward grant reliability** | Earn signal wait + grant only after server success |
+| **Challenge presets** | Classic / Blitz / Fortress (from build 20) |
+| **Closed testing track** | Play + TestFlight · same as builds 15–20 |
 
 Session notes and QA history: **[docs/summary.md](docs/summary.md)**  
 Full build history, checklists, and **store release notes**: **[docs/RELEASES.md](docs/RELEASES.md)**
 
-### Pre-upload smoke (build 20)
+### Pre-upload smoke (build 23)
 
-- [ ] Challenge: create Classic / Blitz / Fortress → guest preview → join → full match
-- [ ] Rematch after Blitz / Fortress keeps the same preset
-- [ ] HTTPS link + FCM tap → lobby preview → join → play
-- [ ] Campaign Next level + quick match leave dialog (builds 12–13 regression)
+- [ ] Logs show `testUnits=true` on device; ads labeled **Test Ad**
+- [ ] Shop coin ad → grant; life ad; campaign retry ad (see LAUNCH Gate 3a matrix)
+- [ ] Interstitial not on w1_l01–w1_l04
+- [ ] Challenge preset smoke: Classic create → join → match (build 20 regression)
 - [ ] Prod backend if changed: `firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-72cc6`
 
 ---

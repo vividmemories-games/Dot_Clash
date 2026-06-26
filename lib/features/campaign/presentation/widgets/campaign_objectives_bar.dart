@@ -131,11 +131,11 @@ class _ObjectivePill extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: v.surface.withOpacity(0.92),
+        color: v.surface.withValues(alpha: 0.92),
         borderRadius: AppSpacing.roundedFull,
         border: Border.all(
           color: status == _ObjStatus.achieved
-              ? v.gold.withOpacity(0.5)
+              ? v.gold.withValues(alpha: 0.5)
               : v.cardBorder,
         ),
       ),

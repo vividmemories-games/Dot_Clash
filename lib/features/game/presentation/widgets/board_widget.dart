@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../shared/feedback/app_haptics.dart';
 import '../../../../core/theme/dot_clash_visuals.dart';
@@ -165,8 +164,12 @@ class _BoardWidgetState extends State<BoardWidget>
   void dispose() {
     _pulseCtrl.dispose();
     _rewindCtrl?.dispose();
-    for (final c in _edgeAnims.values) c.dispose();
-    for (final c in _claimAnims.values) c.dispose();
+    for (final c in _edgeAnims.values) {
+      c.dispose();
+    }
+    for (final c in _claimAnims.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -478,7 +481,7 @@ class _BoardPainter extends CustomPainter {
         final br = layout.dot(r + 1, c + 1);
         canvas.drawRect(
           Rect.fromLTRB(tl.dx, tl.dy, br.dx, br.dy),
-          Paint()..color = visuals.scaffold.withOpacity(0.7),
+          Paint()..color = visuals.scaffold.withValues(alpha: 0.7),
         );
       }
     }
@@ -519,8 +522,8 @@ class _BoardPainter extends CustomPainter {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              col.withOpacity(0.42 * opacity),
-              col.withOpacity(0.18 * opacity),
+              col.withValues(alpha: 0.42 * opacity),
+              col.withValues(alpha: 0.18 * opacity),
             ],
           ).createShader(rect),
       );
@@ -535,14 +538,14 @@ class _BoardPainter extends CustomPainter {
       final isHover = key == hoveredEdge;
       final isPress = key == pressedEdge;
 
-      final pressColor = visuals.onAccent.withOpacity(0.55);
-      final hoverColor = visuals.onAccent.withOpacity(0.32);
+      final pressColor = visuals.onAccent.withValues(alpha: 0.55);
+      final hoverColor = visuals.onAccent.withValues(alpha: 0.32);
 
       if (isPress) {
         _strokeLine(canvas, p1, p2, pressColor, width: _edgeW, glow: true);
       } else if (isHint) {
         final pulse = 0.55 + pulseValue * 0.45;
-        _strokeLine(canvas, p1, p2, visuals.gold.withOpacity(pulse),
+        _strokeLine(canvas, p1, p2, visuals.gold.withValues(alpha: pulse),
             width: _edgeW * 0.9, glow: true);
       } else if (isHover) {
         _strokeLine(canvas, p1, p2, hoverColor,
@@ -592,7 +595,7 @@ class _BoardPainter extends CustomPainter {
           canvas,
           p1,
           endpoint,
-          color.withOpacity(pulse),
+          color.withValues(alpha: pulse),
           width: _edgeW * 1.45,
           glow: true,
         );
@@ -614,7 +617,7 @@ class _BoardPainter extends CustomPainter {
         Rect.fromLTRB(tl.dx - pad, tl.dy - pad, br.dx + pad, br.dy + pad),
         const Radius.circular(18),
       ),
-      Paint()..color = visuals.red.withOpacity(0.12 * rewindFadeT),
+      Paint()..color = visuals.red.withValues(alpha: 0.12 * rewindFadeT),
     );
 
     for (final entry in rewindFadeBoxes.entries) {
@@ -636,7 +639,7 @@ class _BoardPainter extends CustomPainter {
       final col = visuals.playerColor(entry.value);
       canvas.drawRect(
         rect,
-        Paint()..color = col.withOpacity(0.55 * rewindFadeT),
+        Paint()..color = col.withValues(alpha: 0.55 * rewindFadeT),
       );
     }
 
@@ -648,7 +651,7 @@ class _BoardPainter extends CustomPainter {
         canvas,
         p1,
         p2,
-        color.withOpacity(rewindFadeT),
+        color.withValues(alpha: rewindFadeT),
         width: _edgeW * 1.1,
         glow: false,
       );
@@ -671,7 +674,7 @@ class _BoardPainter extends CustomPainter {
             pos,
             baseR * 1.8,
             Paint()
-              ..color = visuals.dotGlow.withOpacity(haloOpacity)
+              ..color = visuals.dotGlow.withValues(alpha: haloOpacity)
               ..maskFilter = MaskFilter.blur(BlurStyle.normal, baseR * 0.9),
           );
           canvas.drawCircle(pos, baseR, Paint()..color = core);
@@ -698,7 +701,7 @@ class _BoardPainter extends CustomPainter {
       final textT = ((rawT - 0.45) / 0.55).clamp(0.0, 1.0);
       if (textT <= 0) continue;
 
-      final col = visuals.playerColor(pid).withOpacity(textT);
+      final col = visuals.playerColor(pid).withValues(alpha: textT);
       final center = Offset(
         layout.offsetX + (c + 0.5) * layout.cellSize,
         layout.offsetY + (r + 0.5) * layout.cellSize,
@@ -712,7 +715,7 @@ class _BoardPainter extends CustomPainter {
         center.translate(0, -layout.cellSize * 0.16),
         TextStyle(
           fontSize: crownSize,
-          color: col.withOpacity(textT * 0.55),
+          color: col.withValues(alpha: textT * 0.55),
         ),
       );
 
@@ -754,10 +757,10 @@ class _BoardPainter extends CustomPainter {
         p1,
         p2,
         Paint()
-          ..color = color.withOpacity(0.35)
+          ..color = color.withValues(alpha: 0.35)
           ..strokeWidth = width + 4
           ..strokeCap = StrokeCap.round
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3),
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
       );
     }
 
