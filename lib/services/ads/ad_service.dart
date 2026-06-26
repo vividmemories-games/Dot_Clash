@@ -8,7 +8,13 @@ abstract class AdService {
 
   /// Shows a rewarded ad. Returns [AdShowResult.completed] only after AdMob
   /// [onUserEarnedReward] (same behavior in dev test units and prod).
-  Future<AdShowResult> showRewarded(AdPlacement placement);
+  ///
+  /// [onDismissed] runs when the full-screen ad closes (before the earn signal
+  /// is confirmed and before the router grants the in-game reward).
+  Future<AdShowResult> showRewarded(
+    AdPlacement placement, {
+    void Function()? onDismissed,
+  });
 
   /// Returns true when an interstitial was displayed.
   Future<bool> showInterstitial();

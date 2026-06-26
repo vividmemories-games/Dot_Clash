@@ -132,7 +132,10 @@ class AdMobAdService implements AdService {
   }
 
   @override
-  Future<AdShowResult> showRewarded(AdPlacement placement) async {
+  Future<AdShowResult> showRewarded(
+    AdPlacement placement, {
+    void Function()? onDismissed,
+  }) async {
     final ad = _rewarded;
     if (ad == null) return AdShowResult.unavailable;
 
@@ -194,6 +197,8 @@ class AdMobAdService implements AdService {
         _finishRewardedShow();
         return AdShowResult.cancelled;
       }
+
+      onDismissed?.call();
 
       await yieldForAdMobRewardCallback();
 

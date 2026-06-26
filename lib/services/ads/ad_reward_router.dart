@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/powerups/domain/power_up.dart';
@@ -7,6 +8,7 @@ import '../../features/profile/domain/lives_logic.dart';
 import '../../features/profile/domain/rewarded_ad_rules.dart';
 import '../../features/profile/providers/lives_provider.dart';
 import '../../features/profile/providers/profile_providers.dart';
+import '../../shared/feedback/app_snackbar.dart';
 import '../analytics/analytics_service.dart';
 import 'ad_placement.dart';
 import 'ad_service.dart';
@@ -31,8 +33,8 @@ class AdRewardRouter {
   String? _rescueAdsDate;
   bool _rescueUsedThisMatch = false;
 
-  static const maxLifeAdsPerDay = 3;
-  static const maxRescueAdsPerDay = 5;
+  static const maxLifeAdsPerDay = RewardedAdRules.maxLifeRefillAdsPerDay;
+  static const maxRescueAdsPerDay = RewardedAdRules.maxRescueLifeAdsPerDay;
 
   void resetMatchRescueFlag() => _rescueUsedThisMatch = false;
 
@@ -72,13 +74,23 @@ class AdRewardRouter {
   bool canShowRewardedLifeAd(LivesSnapshot lives) =>
       !lives.isFull && !isLifeAdDailyCapReached;
 
+  void _showApplyingRewardFeedback() {
+    final context = _ref.read(rootNavigatorKeyProvider).currentContext;
+    if (context != null && context.mounted) {
+      AppSnackBar.show(context, 'Applying reward…');
+    }
+  }
+
   /// AdMob earn signal → analytics → profile grant.
   Future<bool> _showRewardedAndGrant({
     required AdPlacement placement,
-    required Future<bool> Function() grant,
+    required Future<bool> Function(String grantId) grant,
     void Function()? onGrantSuccess,
   }) async {
-    final result = await _ads.showRewarded(placement);
+    final result = await _ads.showRewarded(
+      placement,
+      onDismissed: _showApplyingRewardFeedback,
+    );
     if (result != AdShowResult.completed) {
       debugPrint(
         '[AdReward] ${placement.name}: ad not completed ($result)',
@@ -88,9 +100,12 @@ class AdRewardRouter {
 
     AnalyticsService.instance.logAdImpression(placement.analyticsName);
 
+    final grantId =
+        '${placement.analyticsName}_${DateTime.now().microsecondsSinceEpoch}';
+
     final bool granted;
     try {
-      granted = await grant();
+      granted = await grant(grantId);
     } catch (e, st) {
       // The grant callable can throw on prod (e.g. App Check / network); never
       // let that escape as an unhandled exception. Return false so the caller
@@ -118,7 +133,7 @@ class AdRewardRouter {
 
     return _showRewardedAndGrant(
       placement: AdPlacement.lifeRefill,
-      grant: _repo.grantLifeFromAd,
+      grant: (grantId) => _repo.grantLifeFromAd(grantId: grantId),
       onGrantSuccess: () => _lifeAdsToday++,
     );
   }
@@ -130,7 +145,7 @@ class AdRewardRouter {
 
     return _showRewardedAndGrant(
       placement: AdPlacement.shopCoins,
-      grant: _repo.claimRewardedAd,
+      grant: (grantId) => _repo.claimRewardedAd(grantId: grantId),
     );
   }
 
@@ -139,7 +154,7 @@ class AdRewardRouter {
 
     return _showRewardedAndGrant(
       placement: AdPlacement.lossRetry,
-      grant: _repo.refundLastCampaignLife,
+      grant: (grantId) => _repo.refundLastCampaignLife(grantId: grantId),
       onGrantSuccess: () {
         _rescueUsedThisMatch = true;
         _rescueAdsToday++;
@@ -152,7 +167,7 @@ class AdRewardRouter {
 
     return _showRewardedAndGrant(
       placement: AdPlacement.riposteRescue,
-      grant: () =>
+      grant: (_) =>
           _repo.grantPowerUp(PowerUpType.riposte.id, 1).then((_) => true),
       onGrantSuccess: () {
         _rescueUsedThisMatch = true;
@@ -171,7 +186,10 @@ class AdRewardRouter {
         lowTurns ? AdPlacement.extraTurnsLow : AdPlacement.extraTurns;
 
     if (!grantInventory) {
-      final result = await _ads.showRewarded(placement);
+      final result = await _ads.showRewarded(
+        placement,
+        onDismissed: _showApplyingRewardFeedback,
+      );
       if (result != AdShowResult.completed) return false;
       _rescueUsedThisMatch = true;
       _rescueAdsToday++;
@@ -181,8 +199,9 @@ class AdRewardRouter {
 
     return _showRewardedAndGrant(
       placement: placement,
-      grant: () =>
-          _repo.grantPowerUp(PowerUpType.extraTurns.id, 1).then((_) => true),
+      grant: (_) => _repo
+          .grantPowerUp(PowerUpType.extraTurns.id, 1)
+          .then((_) => true),
       onGrantSuccess: () {
         _rescueUsedThisMatch = true;
         _rescueAdsToday++;

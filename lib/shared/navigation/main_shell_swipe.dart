@@ -79,7 +79,14 @@ class _ShopOuterSwipeBridgeState extends ConsumerState<ShopOuterSwipeBridge> {
   void _syncShopSubTabIndex() {
     final controller = _tabController;
     if (controller == null) return;
-    ref.read(shopSubTabIndexProvider.notifier).state = controller.index;
+    // TabController sync runs from didChangeDependencies and tab listeners —
+    // defer so we never write Riverpod state mid-build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final c = _tabController;
+      if (c == null) return;
+      ref.read(shopSubTabIndexProvider.notifier).state = c.index;
+    });
   }
 
   void _onPointerDown(PointerDownEvent event) {

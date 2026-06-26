@@ -2,6 +2,8 @@
 abstract final class RewardedAdRules {
   static const Duration coinCooldown = Duration(minutes: 30);
   static const int rewardedCoinGrant = 35;
+  static const int maxLifeRefillAdsPerDay = 3;
+  static const int maxRescueLifeAdsPerDay = 5;
 
   static Duration? coinCooldownRemaining(
     DateTime? lastRewardedAdAt, [
@@ -26,4 +28,10 @@ abstract final class RewardedAdRules {
     final seconds = remaining.inSeconds.clamp(1, 59);
     return '${seconds}s';
   }
+}
+
+/// Server `grantLifeFromAd` kind values — keep in sync with functions/src/economy.ts.
+abstract final class AdGrantKinds {
+  static const lifeRefill = 'life_refill';
+  static const campaignRefund = 'campaign_refund';
 }

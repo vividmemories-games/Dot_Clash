@@ -135,7 +135,7 @@ bash scripts/build_closed_testing.sh ios
 - [ ] Challenge: HTTPS link + FCM tap → lobby → play
 - [ ] Challenge hub: rivalries list, rematch, view all history (not on Profile)
 - [ ] Mid-match **Home** / **MORE → Exit** / system back → confirm dialog; **Stay** keeps board
-- [ ] Campaign abandon → **Leave** exits without consuming a life; fresh level (no moves) → no dialog
+- [ ] Campaign abandon → **Leave** after moves → dialog warns 1 life; life deducted once; fresh level (no moves) → no dialog
 - [ ] Quick match / vs AI: generic “Leave match?” copy
 - [ ] Build 12 smoke: campaign Next level, turn budgets, shop UX (see build 12 checklist below)
 - [ ] Prod functions + indexes if backend changed: `firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-72cc6`
@@ -261,7 +261,7 @@ firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-
 | Item | Notes |
 |------|--------|
 | Leave match confirmation | Home, MORE → Exit, and system back ask before leaving mid-game |
-| Campaign copy | Level progress lost; life **not** consumed on abandon |
+| Campaign copy | Level progress lost; **1 life** consumed on confirmed abandon (build 25+) |
 | No dialog when safe | Fresh board (no moves) or finished game exits immediately |
 
 **Key file:** `lib/features/game/presentation/game_screen.dart` (`_shouldConfirmLeave`, `_requestLeaveGame`, `PopScope`)
@@ -280,7 +280,7 @@ firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-
 ### Store notes (draft)
 
 - Confirm before leaving a match so progress isn’t lost by accident
-- Campaign: abandoning a level doesn’t use a life
+- Campaign: abandoning mid-level costs 1 life (see `forfeitCampaignLevel`)
 
 ---
 

@@ -1,7 +1,7 @@
 # Dot Clash — Public launch runbook
 
 **Target:** go live **week of 2026-06-16** (adjust dates as needed)  
-**Current closed-testing upload:** build **23** (`1.5.0+23`) — `BETA_ADS=true`, Gate 3 ad-flow QA on real devices  
+**Current closed-testing upload:** build **26** (`1.5.0+26`) — `BETA_ADS=true`, Gate 3a ad-flow QA **signed off 2026-06-25**  
 **Public launch (prod ads):** build **`1.5.0+24`** or higher `+N` — **after** public Play / App Store listing + AdMob store link + app review  
 **Never reuse a build number** already uploaded to a store (Gate 0/1 QA **build 21** `1.4.3+21`; prior closed testing **build 20** `1.4.2+20`).
 
@@ -13,7 +13,7 @@
 
 | Track | Firebase | Ads | When |
 |-------|----------|-----|------|
-| **Closed testing** (done / ongoing) | `dot-clash-72cc6` | `BETA_ADS=true` (test units) | Builds 15–20; **23** = Gate 3 ad-flow QA |
+| **Closed testing** (done / ongoing) | `dot-clash-72cc6` | `BETA_ADS=true` (test units) | Builds 15–20; **26** = Gate 3a signed off |
 | **Public launch** (this runbook) | `dot-clash-72cc6` | **No `BETA_ADS`** — production AdMob | Build **24+** (after AdMob app review) |
 
 **Do not publish public production with `BETA_ADS`.** See [DECISIONS.md](DECISIONS.md) R-2, R-3.
@@ -27,7 +27,7 @@
 - [ ] Prod backend deployed: functions + rules + indexes on `dot-clash-72cc6`
 - [ ] `processChallengeTimeouts` scheduler runs without recurring HTTP 500 (Cloud Logging)
 - [ ] Two-device Challenge matrix passed on **launch build** (iOS + Android)
-- [ ] Gate 3a: rewarded/interstitial **flow** verified on real devices (`BETA_ADS=true`, “Test Ad” label)
+- [x] Gate 3a: rewarded/interstitial **flow** verified on real devices (`BETA_ADS=true`, “Test Ad” label) — build **26**, 2026-06-25
 - [ ] Gate 3b: **prod** ad units verified on both platforms (after public store listing + AdMob review)
 - [ ] Crashlytics forced-crash test on launch build (symbols uploaded)
 - [ ] Store listings live: privacy URL, delete-data URL, contact URL, screenshots, age rating
@@ -44,7 +44,7 @@ Use this as a default schedule; shift days if review times differ.
 |-----|--------|--------------|
 | **Mon** | Sign off build 20 closed testing + fix P0/P1 only | Complete QA matrix below; check Crashlytics for 20 |
 | **Tue** | Backend + scheduler verification | Deploy prod if any backend delta; confirm scheduler logs clean |
-| **Wed** | Gate 3a closed testing (`1.5.0+23`) + ad-flow QA on real devices | `BETA_ADS=true`; rewarded polish + grant matrix on 2 phones |
+| **Wed** | Gate 3a closed testing (`1.5.0+26`) + ad-flow QA on real devices | `BETA_ADS=true`; rewarded polish + grant matrix on 2 phones — **done** |
 | **Post-listing** | Gate 3b prod ads + launch build (`1.5.0+24+`) | No `BETA_ADS`; after AdMob “Add store” + app review |
 | **Thu** | Store submission | Upload AAB + IPA; submit for review; staged rollout config |
 | **Fri** | Publish (if approved) + monitor | Start 5–20% Android; iOS release; watch Crashlytics 24h |
@@ -103,7 +103,7 @@ Complete on **build 21** (`1.4.3+21`). Manual QA signed off **2026-06-23**.
 | # | Scenario | Expected | Pass |
 |---|----------|----------|------|
 | R1 | Campaign beat level → **Next level** | Fresh board; no flash of finished level | [x] |
-| R2 | Campaign mid-match → Leave | Life **not** consumed | [x] |
+| R2 | Campaign mid-match → Leave | Dialog warns **1 life** cost; confirm → life deducted via `forfeitCampaignLevel` | [ ] |
 | R3 | Fresh level (0 moves) → Home | No leave dialog | [x] |
 | R4 | Quick match mid-game leave | Generic “Leave match?” copy | [x] |
 | R5 | Shop buy boost | Optimistic coins; button disabled in-flight | [x] |
@@ -172,9 +172,9 @@ AdMob **account** may be approved while each app still shows **Requires review**
 
 ---
 
-### Gate 3a — Closed testing ad-flow QA (build 23) — **in progress**
+### Gate 3a — Closed testing ad-flow QA (build 26) — ✅
 
-**Target:** **`1.5.0+23`** (build **23** — exceeds Gate 0/1 QA **+21** and closed-testing **+20**).
+**Target:** **`1.5.0+26`** (build **26** — economy hardening, ad-grant idempotency, splash). Manual QA signed off **2026-06-25**.
 
 **Track:** prod Firebase + IAP, **`BETA_ADS=true`** (Google test units). Ads must show **“Test Ad”** label.
 
@@ -183,11 +183,11 @@ AdMob **account** may be approved while each app still shows **Requires review**
 In `pubspec.yaml`:
 
 ```yaml
-version: 1.5.0+23   # increment +N for every store upload
+version: 1.5.0+26   # increment +N for every store upload
 ```
 
 - [x] Version name `1.5.0` (Challenge launch marketing version)
-- [x] Build number `+23` higher than QA build 21 and prior closed-testing uploads
+- [x] Build number `+26` higher than QA build 21 and prior closed-testing uploads
 
 #### Build commands — closed testing (test ads)
 
@@ -238,25 +238,25 @@ Must **not** see prod-only `No ad to show` on test units. If `testUnits=false`, 
 
 | # | Scenario | Expected | Pass |
 |---|----------|----------|------|
-| G3a-1 | Shop → **Watch ad for coins** (first watch) | “Test Ad” opens; +35 coins; `[Callable] claimRewardedAd succeeded` | [ ] |
-| G3a-2 | Shop → coin ad again within **30 min** | Button disabled / cooldown copy; or watch → grant rejected (`cooldown`) | [ ] |
-| G3a-3 | Shop / lives sheet → **life ad** at &lt;5 lives | “Test Ad” opens; life granted; daily counter only on success | [ ] |
-| G3a-4 | Life ad at **5 lives** | Button disabled (“Lives full” / greyed) | [ ] |
-| G3a-5 | **3 life ads** in one UTC day | 4th disabled; cap message | [ ] |
-| G3a-6 | Campaign loss → **Watch ad · retry** | Ad opens; life refunded; replay works | [ ] |
-| G3a-7 | Dismiss ad early (no full watch) | No grant; clear snackbar; daily counters unchanged | [ ] |
-| G3a-8 | Post-match **interstitial** | **Not** on w1_l01–w1_l04; shows on later matches | [ ] |
-| G3a-9 | **UMP** consent | `canRequestAds=true` after flow (EEA test if possible) | [ ] |
-| G3a-10 | **Remove Ads** IAP (sandbox) | Purchase succeeds; interstitials suppressed | [ ] |
+| G3a-1 | Shop → **Watch ad for coins** (first watch) | “Test Ad” opens; +35 coins; `[Callable] claimRewardedAd succeeded` | [x] |
+| G3a-2 | Shop → coin ad again within **30 min** | Button disabled / cooldown copy; or watch → grant rejected (`cooldown`) | [x] |
+| G3a-3 | Shop / lives sheet → **life ad** at &lt;5 lives | “Test Ad” opens; life granted; daily counter only on success | [x] |
+| G3a-4 | Life ad at **5 lives** | Button disabled (“Lives full” / greyed) | [x] |
+| G3a-5 | **3 life ads** in one UTC day | 4th disabled; cap message | [x] |
+| G3a-6 | Campaign loss → **Watch ad · retry** | Ad opens; life refunded; replay works | [x] |
+| G3a-7 | Dismiss ad early (no full watch) | No grant; clear snackbar; daily counters unchanged | [x] |
+| G3a-8 | Post-match **interstitial** | **Not** on w1_l01–w1_l04; shows on later matches | [x] |
+| G3a-9 | **UMP** consent | `canRequestAds=true` after flow (EEA test if possible) | [x] |
+| G3a-10 | **Remove Ads** IAP (sandbox) | Purchase succeeds; interstitials suppressed | [x] |
 
-**Exit Gate 3a:** zero **Fail** on G3a-1, G3a-3, G3a-6, G3a-8. G3a-2/4/5/7/9/10 strongly recommended.
+**Exit Gate 3a:** zero **Fail** on G3a-1, G3a-3, G3a-6, G3a-8. G3a-2/4/5/7/9/10 strongly recommended. **Passed 2026-06-25** — all G3a scenarios pass.
 
-Re-run abbreviated Challenge smoke on build 23: **C1, C4, R1, A4, A5**.
+Re-run abbreviated Challenge smoke on build 26: **C1, C4, R1, A4, A5**.
 
-#### Crashlytics (build 23)
+#### Crashlytics (build 26)
 
-- [ ] Normal sessions appear in Crashlytics with version filter `1.5.0+23`
-- [ ] dSYM / mapping uploaded with TestFlight / Play upload
+- [x] Normal sessions appear in Crashlytics with version filter `1.5.0+26`
+- [x] dSYM / mapping uploaded with TestFlight / Play upload
 
 **Prerequisites done (AdMob publisher):**
 
@@ -321,10 +321,10 @@ On a **debug/dev** build only (never ship forced crash):
 - [ ] App icon 1024×1024 (no alpha on iOS)
 - [ ] Screenshots updated — nostalgia + online Challenge + campaign (ASO: dots and boxes, classic school game)
 - [ ] Short + long description matches shipped features (see store copy below)
-- [ ] Privacy policy: `https://vividmemories-games.github.io/privacy-policy/`
-- [ ] Delete data: `https://vividmemories-games.github.io/delete-data/`
-- [ ] Contact: `https://vividmemories-games.github.io/contact/`
-- [ ] Legal site published from [vividmemories-games.github.io](https://github.com/vividmemories-games/vividmemories-games.github.io) repo
+- [x] Privacy policy: `https://vividmemories-games.github.io/privacy-policy/`
+- [x] Delete data: `https://vividmemories-games.github.io/delete-data/`
+- [x] Contact: `https://vividmemories-games.github.io/contact/`
+- [x] Legal site published from [vividmemories-games.github.io](https://github.com/vividmemories-games/vividmemories-games.github.io) repo
 
 ### Google Play
 
@@ -439,7 +439,7 @@ Use or adapt from [RELEASES.md](RELEASES.md) build 20 section.
 | “Challenge didn’t give coins” | By design — Challenge is history/H2H only (v1) |
 | “Turn didn’t advance after 30s” | Server timeout + client backup; ask for app version + approximate time |
 | “Link opened browser, not app” | Check App Links / reinstall; verify signed-in state |
-| “Campaign used a life when I left” | Should not — confirm steps; file bug if reproducible on latest build |
+| “Campaign used a life when I left” | **Expected** on build 25+ after confirmed leave mid-match (see U-1). File bug only if life drops without confirm or on 0-move exit. |
 
 ---
 
@@ -506,4 +506,4 @@ flutter test test/challenge/ test/deep_links/challenge_link_parser_test.dart tes
 
 ---
 
-*Created 2026-06-13 for public launch week. Updated 2026-06-23: Gate 3 split (3a build 23 beta ads / 3b prod ads post-listing). Adjust dates and build numbers as the ship date moves.*
+*Created 2026-06-13 for public launch week. Updated 2026-06-23: Gate 3 split (3a build 23 beta ads / 3b prod ads post-listing). Updated 2026-06-25: Gate 3a signed off on build 26. Adjust dates and build numbers as the ship date moves.*

@@ -83,6 +83,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
   /// Prevents duplicate settlement when the game-over listener fires twice.
   bool _campaignSettlementStarted = false;
 
+  /// Idempotency key for campaign session (forfeit + settlement share one ID).
+  late final String _campaignSessionId;
+
+  /// Idempotency key for local / practice match settlement.
+  late final String _matchSessionId;
+
   /// Prevents pushing two victory overlays if settlement fires twice.
   bool _campaignResultPushed = false;
 
@@ -101,6 +107,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
   @override
   void initState() {
     super.initState();
+    _campaignSessionId =
+        '${widget.config.campaignLevelId ?? 'campaign'}_${DateTime.now().microsecondsSinceEpoch}';
+    _matchSessionId =
+        '${widget.config.mode.name}_${DateTime.now().microsecondsSinceEpoch}';
     CoachTourTargetRegistry.claimGameScope(_gameTourScope);
     WidgetsBinding.instance.addObserver(this);
     if (widget.config.mode == GameMode.campaign &&
@@ -384,7 +394,13 @@ class _GameScreenState extends ConsumerState<GameScreen>
                   ? MatchResult.win
                   : MatchResult.loss);
           final repo = ref.read(profileRepositoryProvider);
-          repo.settleMatch(result, consumeLife: false).catchError(
+          repo
+              .settleMatch(
+                result,
+                consumeLife: false,
+                matchId: _matchSessionId,
+              )
+              .catchError(
               (e) => debugPrint('[Profile][settleMatch] failed=$e'));
           final modeLabel =
               widget.config.mode == GameMode.ai ? 'Practice' : 'Local';
@@ -700,6 +716,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
     final isCampaign = widget.config.mode == GameMode.campaign;
     final isChallenge = _isChallenge;
+    final campaignForfeitsLife = isCampaign &&
+        !widget.config.isDailyPuzzle &&
+        !_tutorialFreeAttempt;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
@@ -712,8 +731,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
           }),
           content: Text(
             switch ((isCampaign, isChallenge)) {
-              (true, _) => 'Your progress on this level will be lost. '
-                  'Your life won\'t be used — you can try again from the map.',
+              (true, _) => campaignForfeitsLife
+                  ? 'Leaving costs 1 life. Progress on this level will be lost.'
+                  : 'Your progress on this level will be lost.',
               (_, true) => 'Leaving forfeits the match. Your opponent may win.',
               _ => 'Your current game progress will be lost.',
             },
@@ -738,6 +758,24 @@ class _GameScreenState extends ConsumerState<GameScreen>
   }
 
   Future<void> _leaveGameRoute(void Function() navigate) async {
+    if (widget.config.mode == GameMode.campaign &&
+        widget.config.campaignLevelId != null &&
+        !widget.config.isDailyPuzzle &&
+        !_tutorialFreeAttempt &&
+        !_campaignSettlementStarted) {
+      final state = ref.read(gameProvider);
+      if (!state.isOver && state.moveHistory.isNotEmpty) {
+        try {
+          await ref.read(profileRepositoryProvider).forfeitCampaignLevel(
+                levelId: widget.config.campaignLevelId!,
+                forfeitId: _campaignSessionId,
+              );
+        } catch (e, st) {
+          debugPrint('[Campaign][forfeit] failed=$e');
+          await AnalyticsService.instance.recordError(e, st);
+        }
+      }
+    }
     if (_isChallenge) {
       final code = _challengeCode!;
       final room = ref.read(challengeRoomProvider(code)).valueOrNull;
@@ -1122,6 +1160,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
     setState(() {
       _hintsLeft = 3;
       _hintEdge = null;
+      _matchSessionId =
+          '${widget.config.mode.name}_${DateTime.now().microsecondsSinceEpoch}';
     });
     ref.read(gameProvider.notifier).newGame();
     ref.read(turnTimerProvider.notifier).reset();
@@ -1232,6 +1272,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
       try {
         await repo.settleCampaignLevel(
           levelId: levelId,
+          settlementId: _campaignSessionId,
           starsEarned: stars,
           coinReward: level.coinReward,
           xpReward: level.xpReward,

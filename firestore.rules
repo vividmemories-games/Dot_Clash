@@ -94,6 +94,30 @@ service cloud.firestore {
         allow create: if isOwner(uid) && validMatchCreate();
         allow update, delete: if false;
       }
+
+      // Written only by Cloud Functions (forfeitCampaignLevel idempotency).
+      match /campaign_forfeits/{forfeitId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      // Written only by Cloud Functions (completeCampaignLevel idempotency).
+      match /campaign_settlements/{settlementId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      // Written only by Cloud Functions (settleQuickMatch idempotency).
+      match /quick_match_settlements/{matchId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      // Written only by Cloud Functions (ad grant idempotency).
+      match /ad_grants/{grantId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
     }
 
     match /campaigns/{campaignId} {

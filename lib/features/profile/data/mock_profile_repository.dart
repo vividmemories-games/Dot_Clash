@@ -4,6 +4,7 @@ import 'profile_repository.dart';
 import '../domain/lives_logic.dart';
 import '../domain/progression.dart';
 import '../domain/rank.dart';
+import '../domain/rewarded_ad_rules.dart';
 import '../domain/user_profile.dart';
 import '../../powerups/domain/power_up.dart';
 import '../../powerups/domain/power_up_catalog.dart';
@@ -15,6 +16,10 @@ class MockProfileRepository implements ProfileRepository {
   final _matchesController =
       StreamController<List<RecentMatchRecord>>.broadcast();
   final List<RecentMatchRecord> _matches = [];
+  final Set<String> _consumedForfeitIds = {};
+  final Set<String> _consumedCampaignSettlementIds = {};
+  final Set<String> _consumedQuickMatchIds = {};
+  final Set<String> _consumedAdGrantIds = {};
 
   late UserProfile _profile = _defaultProfile();
 
@@ -152,13 +157,47 @@ class MockProfileRepository implements ProfileRepository {
   }
 
   @override
-  Future<bool> grantLifeFromAd() async {
-    return _grantFreeLife();
+  Future<bool> grantLifeFromAd({
+    required String grantId,
+    String kind = AdGrantKinds.lifeRefill,
+  }) async {
+    if (_consumedAdGrantIds.contains(grantId)) return true;
+    final ok = _grantFreeLife();
+    if (ok) _consumedAdGrantIds.add(grantId);
+    return ok;
   }
 
   @override
-  Future<bool> refundLastCampaignLife() async {
-    return _grantFreeLife();
+  Future<bool> refundLastCampaignLife({required String grantId}) async {
+    return grantLifeFromAd(
+      grantId: grantId,
+      kind: AdGrantKinds.campaignRefund,
+    );
+  }
+
+  @override
+  Future<bool> forfeitCampaignLevel({
+    required String levelId,
+    required String forfeitId,
+  }) async {
+    if (_consumedForfeitIds.contains(forfeitId)) return true;
+    final now = DateTime.now();
+    final resolved = LivesLogic.resolve(
+      lives: _profile.lives,
+      nextLifeAt: _profile.nextLifeAt,
+      now: now,
+    );
+    final afterLoss = LivesLogic.onLoss(
+      lives: resolved.effectiveLives,
+      nextLifeAt: resolved.nextLifeAt,
+      now: now,
+    );
+    _consumedForfeitIds.add(forfeitId);
+    _emit(_profile.copyWith(
+      lives: afterLoss.lives,
+      nextLifeAt: afterLoss.nextLifeAt,
+    ));
+    return true;
   }
 
   bool _grantFreeLife() {
@@ -220,14 +259,17 @@ class MockProfileRepository implements ProfileRepository {
   }
 
   @override
-  Future<bool> claimRewardedAd() async {
+  Future<bool> claimRewardedAd({required String grantId}) async {
+    if (_consumedAdGrantIds.contains(grantId)) return true;
     final now = DateTime.now();
     final last = _profile.lastRewardedAdAt;
-    if (last != null && now.difference(last) < const Duration(minutes: 30)) {
+    if (last != null &&
+        now.difference(last) < RewardedAdRules.coinCooldown) {
       return false;
     }
+    _consumedAdGrantIds.add(grantId);
     _emit(_profile.copyWith(
-      coins: _profile.coins + 35,
+      coins: _profile.coins + RewardedAdRules.rewardedCoinGrant,
       lastRewardedAdAt: now,
     ));
     return true;
@@ -255,7 +297,11 @@ class MockProfileRepository implements ProfileRepository {
   Future<void> settleMatch(
     MatchResult result, {
     bool consumeLife = false,
+    required String matchId,
   }) async {
+    if (_consumedQuickMatchIds.contains(matchId)) return;
+    _consumedQuickMatchIds.add(matchId);
+
     final now = DateTime.now();
     final syncedLives = LivesLogic.resolve(
       lives: _profile.lives,
@@ -327,6 +373,7 @@ class MockProfileRepository implements ProfileRepository {
   @override
   Future<void> settleCampaignLevel({
     required String levelId,
+    required String settlementId,
     required int starsEarned,
     required int coinReward,
     required int xpReward,
@@ -335,6 +382,9 @@ class MockProfileRepository implements ProfileRepository {
     int boxesCaptured = 0,
     Map<String, int> powerUpRewards = const {},
   }) async {
+    if (_consumedCampaignSettlementIds.contains(settlementId)) return;
+    _consumedCampaignSettlementIds.add(settlementId);
+
     final now = DateTime.now();
     final syncedLives = LivesLogic.resolve(
       lives: _profile.lives,
@@ -466,7 +516,12 @@ class MockProfileRepository implements ProfileRepository {
     required MatchResult result,
     required String opponentLabel,
   }) async {
-    await settleMatch(result, consumeLife: false);
+    final normalized = code.trim().toUpperCase();
+    await settleMatch(
+      result,
+      consumeLife: false,
+      matchId: 'challenge_$normalized',
+    );
     final record = RecentMatchRecord(
       id: 'mock_${_matches.length}',
       outcome: result,

@@ -1,7 +1,7 @@
 name: dot_clash
 description: "The childhood notebook game becomes a battle arena."
 publish_to: 'none'
-version: 1.5.0+25
+version: 1.5.0+26
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -32,10 +32,18 @@ dependencies:
   url_launcher: ^6.3.2
 
 dev_dependencies:
+  flutter_native_splash: ^2.4.0
   flutter_launcher_icons: ^0.14.4
   flutter_lints: ^4.0.0
   flutter_test:
     sdk: flutter
+
+flutter_native_splash:
+  color: "#0E1E35"              # same as adaptive_icon_background
+  image: assets/icons/Designer_3.png
+  android_12:
+    color: "#0E1E35"
+    image: assets/icons/Designer_3.png
 
 flutter_launcher_icons:
   android: true

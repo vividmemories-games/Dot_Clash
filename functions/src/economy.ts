@@ -1,4 +1,4 @@
-import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp, type DocumentData } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { onCall } from 'firebase-functions/v2/https';
 
@@ -9,9 +9,12 @@ import {
   DAILY_REWARD_XP,
   equipKeyForKind,
   LIFE_REFILL_PRICE_COINS,
+  MAX_LIFE_REFILL_ADS_PER_DAY,
+  MAX_RESCUE_LIFE_ADS_PER_DAY,
   ownedKeyForKind,
   POWER_UP_PRICES,
   REWARDED_AD_COINS,
+  REWARDED_AD_COOLDOWN_MS,
   todayDailyBoostId,
 } from './catalog';
 import { assertAuth, callableOptions, db } from './shared';
@@ -21,9 +24,23 @@ import {
   levelForXp,
   xpForMatch,
 } from './progression';
+import { todayUtc } from './daily';
 
 function profileRef(uid: string) {
   return db.collection('profiles').doc(uid);
+}
+
+type LifeAdGrantKind = 'life_refill' | 'campaign_refund';
+
+function readUtcDailyCount(
+  profile: DocumentData,
+  dateField: string,
+  countField: string,
+): number {
+  const today = todayUtc();
+  const date = profile[dateField] as string | undefined;
+  if (date !== today) return 0;
+  return Number(profile[countField] ?? 0);
 }
 
 function asStringList(value: unknown, fallback: string[]): string[] {
@@ -196,19 +213,37 @@ export const claimDailyReward = onCall(callableOptions, async (request) => {
 
 export const claimRewardedAd = onCall(callableOptions, async (request) => {
   const uid = assertAuth(request);
+  const { grantId } = request.data as { grantId?: string };
+  if (!grantId || typeof grantId !== 'string' || grantId.length < 8) {
+    throw new HttpsError('invalid-argument', 'grantId is required.');
+  }
+
   const nowMs = Date.now();
+  const grantRef = profileRef(uid).collection('ad_grants').doc(grantId);
 
   return db.runTransaction(async (txn) => {
-    const snap = await txn.get(profileRef(uid));
+    const [snap, grantSnap] = await Promise.all([
+      txn.get(profileRef(uid)),
+      txn.get(grantRef),
+    ]);
     if (!snap.exists) {
       throw new HttpsError('not-found', 'Profile not found.');
     }
+    if (grantSnap.exists) {
+      return { success: true, alreadyGranted: true };
+    }
+
     const profile = snap.data()!;
     const last = profile.lastRewardedAdAt as Timestamp | undefined;
-    if (last && nowMs - last.toMillis() < 30 * 60 * 1000) {
+    if (last && nowMs - last.toMillis() < REWARDED_AD_COOLDOWN_MS) {
       return { success: false, reason: 'cooldown' };
     }
 
+    txn.set(grantRef, {
+      kind: 'shop_coins',
+      coinsGranted: REWARDED_AD_COINS,
+      grantedAt: FieldValue.serverTimestamp(),
+    });
     txn.update(profileRef(uid), {
       coins: Number(profile.coins ?? 0) + REWARDED_AD_COINS,
       lastRewardedAdAt: Timestamp.fromMillis(nowMs),
@@ -220,14 +255,54 @@ export const claimRewardedAd = onCall(callableOptions, async (request) => {
 
 export const grantLifeFromAd = onCall(callableOptions, async (request) => {
   const uid = assertAuth(request);
+  const { grantId, kind: rawKind } = request.data as {
+    grantId?: string;
+    kind?: string;
+  };
+  if (!grantId || typeof grantId !== 'string' || grantId.length < 8) {
+    throw new HttpsError('invalid-argument', 'grantId is required.');
+  }
+  const kind: LifeAdGrantKind =
+    rawKind === 'campaign_refund' ? 'campaign_refund' : 'life_refill';
+
   const nowMs = Date.now();
+  const grantRef = profileRef(uid).collection('ad_grants').doc(grantId);
 
   return db.runTransaction(async (txn) => {
-    const snap = await txn.get(profileRef(uid));
+    const [snap, grantSnap] = await Promise.all([
+      txn.get(profileRef(uid)),
+      txn.get(grantRef),
+    ]);
     if (!snap.exists) {
       throw new HttpsError('not-found', 'Profile not found.');
     }
+    if (grantSnap.exists) {
+      return { success: true, alreadyGranted: true };
+    }
+
     const profile = snap.data()!;
+    const today = todayUtc();
+
+    if (kind === 'life_refill') {
+      const used = readUtcDailyCount(
+        profile,
+        'lifeAdGrantsDate',
+        'lifeAdGrantsCount',
+      );
+      if (used >= MAX_LIFE_REFILL_ADS_PER_DAY) {
+        return { success: false, reason: 'daily_cap' };
+      }
+    } else {
+      const used = readUtcDailyCount(
+        profile,
+        'rescueAdGrantsDate',
+        'rescueAdGrantsCount',
+      );
+      if (used >= MAX_RESCUE_LIFE_ADS_PER_DAY) {
+        return { success: false, reason: 'daily_cap' };
+      }
+    }
+
     const resolved = resolveLives(
       Number(profile.lives ?? 5),
       profile.nextLifeAt as Timestamp | null | undefined,
@@ -243,9 +318,36 @@ export const grantLifeFromAd = onCall(callableOptions, async (request) => {
       nowMs,
     );
 
+    const counterUpdate =
+      kind === 'life_refill'
+        ? {
+            lifeAdGrantsDate: today,
+            lifeAdGrantsCount:
+              readUtcDailyCount(
+                profile,
+                'lifeAdGrantsDate',
+                'lifeAdGrantsCount',
+              ) + 1,
+          }
+        : {
+            rescueAdGrantsDate: today,
+            rescueAdGrantsCount:
+              readUtcDailyCount(
+                profile,
+                'rescueAdGrantsDate',
+                'rescueAdGrantsCount',
+              ) + 1,
+          };
+
+    txn.set(grantRef, {
+      kind,
+      livesGranted: 1,
+      grantedAt: FieldValue.serverTimestamp(),
+    });
     txn.update(profileRef(uid), {
       lives: granted.lives,
       nextLifeAt: granted.nextLifeAt,
+      ...counterUpdate,
       updatedAt: FieldValue.serverTimestamp(),
     });
     return { success: true };
@@ -312,18 +414,31 @@ export const settleQuickMatch = onCall(callableOptions, async (request) => {
   const data = request.data as {
     outcome: 'win' | 'loss' | 'tie';
     consumeLife?: boolean;
+    matchId: string;
   };
   const outcome = data.outcome;
+  const matchId = typeof data.matchId === 'string' ? data.matchId.trim() : '';
   if (!['win', 'loss', 'tie'].includes(outcome)) {
     throw new HttpsError('invalid-argument', 'Invalid outcome.');
+  }
+  if (!matchId) {
+    throw new HttpsError('invalid-argument', 'Missing matchId.');
   }
   const win = outcome === 'win';
   const tie = outcome === 'tie';
   const consumeLife = data.consumeLife === true;
   const nowMs = Date.now();
 
-  return db.runTransaction(async (txn) => {
-    const snap = await txn.get(profileRef(uid));
+  const profileDoc = profileRef(uid);
+  const settlementRef = profileDoc.collection('quick_match_settlements').doc(matchId);
+
+  const txnResult = await db.runTransaction(async (txn) => {
+    const existingSettlement = await txn.get(settlementRef);
+    if (existingSettlement.exists) {
+      return { alreadySettled: true as const };
+    }
+
+    const snap = await txn.get(profileDoc);
     if (!snap.exists) {
       throw new HttpsError('not-found', 'Profile not found.');
     }
@@ -362,7 +477,7 @@ export const settleQuickMatch = onCall(callableOptions, async (request) => {
         : 0;
     const bestStreak = Math.max(Number(profile.bestWinStreak ?? 0), newStreak);
 
-    txn.update(profileRef(uid), {
+    txn.update(profileDoc, {
       coins: Number(profile.coins ?? 0) + deltaCoins,
       xp: newXp,
       level: levelForXp(newXp),
@@ -382,7 +497,65 @@ export const settleQuickMatch = onCall(callableOptions, async (request) => {
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    return { success: true };
+    txn.set(settlementRef, {
+      outcome,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+    return { alreadySettled: false as const };
+  });
+
+  return {
+    success: true,
+    alreadySettled: txnResult.alreadySettled,
+  };
+});
+
+/** Idempotent campaign forfeit: deduct one life when the player leaves mid-level. */
+export const forfeitCampaignLevel = onCall(callableOptions, async (request) => {
+  const uid = assertAuth(request);
+  const data = request.data as { levelId?: string; forfeitId?: string };
+  const levelId = typeof data.levelId === 'string' ? data.levelId.trim() : '';
+  const forfeitId = typeof data.forfeitId === 'string' ? data.forfeitId.trim() : '';
+  if (!levelId || !forfeitId) {
+    throw new HttpsError('invalid-argument', 'Missing levelId or forfeitId.');
+  }
+
+  const profileDoc = profileRef(uid);
+  const forfeitDoc = profileDoc.collection('campaign_forfeits').doc(forfeitId);
+  const nowMs = Date.now();
+
+  return db.runTransaction(async (txn) => {
+    const existingForfeit = await txn.get(forfeitDoc);
+    if (existingForfeit.exists) {
+      return { success: true, alreadyForfeited: true };
+    }
+
+    const profileSnap = await txn.get(profileDoc);
+    if (!profileSnap.exists) {
+      throw new HttpsError('not-found', 'Profile not found.');
+    }
+    const profile = profileSnap.data()!;
+
+    const resolved = resolveLives(
+      Number(profile.lives ?? 5),
+      profile.nextLifeAt as Timestamp | null | undefined,
+      nowMs,
+    );
+    const afterLoss = onLoss(resolved.lives, resolved.nextLifeAt, nowMs);
+
+    txn.update(profileDoc, {
+      lives: afterLoss.lives,
+      nextLifeAt: afterLoss.nextLifeAt,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    txn.set(forfeitDoc, {
+      levelId,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+    return { success: true, alreadyForfeited: false };
   });
 });
 

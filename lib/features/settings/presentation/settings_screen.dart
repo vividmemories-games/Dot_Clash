@@ -185,6 +185,7 @@ class SettingsScreen extends ConsumerWidget {
           AppSpacing.vGapSM,
           NeonCard(
             padding: EdgeInsets.zero,
+            clipInk: true,
             child: Column(
               children: [
                 _SettingsTile(
@@ -280,6 +281,7 @@ class SettingsScreen extends ConsumerWidget {
           AppSpacing.vGapSM,
           NeonCard(
             padding: EdgeInsets.zero,
+            clipInk: true,
             child: Column(
               children: [
                 _SettingsTile(
@@ -706,6 +708,7 @@ class _HelpLegalSectionState extends ConsumerState<_HelpLegalSection> {
         AppSpacing.vGapSM,
         NeonCard(
           padding: EdgeInsets.zero,
+          clipInk: true,
           child: Column(
             children: [
               ListTile(
@@ -943,6 +946,7 @@ class _TermsAndPrivacySheet extends StatelessWidget {
           AppSpacing.vGapSM,
           NeonCard(
             padding: EdgeInsets.zero,
+            clipInk: true,
             child: Column(
               children: [
                 ListTile(
