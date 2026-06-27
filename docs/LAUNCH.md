@@ -2,7 +2,7 @@
 
 **Target:** go live **week of 2026-06-16** (adjust dates as needed)  
 **Current closed-testing upload:** build **26** (`1.5.0+26`) — `BETA_ADS=true`, Gate 3a ad-flow QA **signed off 2026-06-25**  
-**Public launch (prod ads):** build **`1.5.0+24`** or higher `+N` — **after** public Play / App Store listing + AdMob store link + app review  
+**Public launch (prod ads):** build `**1.5.0+24`** or higher `+N` — **after** public Play / App Store listing + AdMob store link + app review  
 **Never reuse a build number** already uploaded to a store (Gate 0/1 QA **build 21** `1.4.3+21`; prior closed testing **build 20** `1.4.2+20`).
 
 **Related docs:** [RELEASES.md](RELEASES.md) · [SETUP.md](../SETUP.md) · [DECISIONS.md](DECISIONS.md) · [architecture.md](architecture.md) · [flutter_firebase_store_release_checklist.md](flutter_firebase_store_release_checklist.md)
@@ -11,10 +11,12 @@
 
 ## Launch definition
 
-| Track | Firebase | Ads | When |
-|-------|----------|-----|------|
-| **Closed testing** (done / ongoing) | `dot-clash-72cc6` | `BETA_ADS=true` (test units) | Builds 15–20; **26** = Gate 3a signed off |
-| **Public launch** (this runbook) | `dot-clash-72cc6` | **No `BETA_ADS`** — production AdMob | Build **24+** (after AdMob app review) |
+
+| Track                               | Firebase          | Ads                                  | When                                      |
+| ----------------------------------- | ----------------- | ------------------------------------ | ----------------------------------------- |
+| **Closed testing** (done / ongoing) | `dot-clash-72cc6` | `BETA_ADS=true` (test units)         | Builds 15–20; **26** = Gate 3a signed off |
+| **Public launch** (this runbook)    | `dot-clash-72cc6` | **No `BETA_ADS`** — production AdMob | Build **24+** (after AdMob app review)    |
+
 
 **Do not publish public production with `BETA_ADS`.** See [DECISIONS.md](DECISIONS.md) R-2, R-3.
 
@@ -40,15 +42,17 @@
 
 Use this as a default schedule; shift days if review times differ.
 
-| Day | Focus | Owner action |
-|-----|--------|--------------|
-| **Mon** | Sign off build 20 closed testing + fix P0/P1 only | Complete QA matrix below; check Crashlytics for 20 |
-| **Tue** | Backend + scheduler verification | Deploy prod if any backend delta; confirm scheduler logs clean |
-| **Wed** | Gate 3a closed testing (`1.5.0+26`) + ad-flow QA on real devices | `BETA_ADS=true`; rewarded polish + grant matrix on 2 phones — **done** |
-| **Post-listing** | Gate 3b prod ads + launch build (`1.5.0+24+`) | No `BETA_ADS`; after AdMob “Add store” + app review |
-| **Thu** | Store submission | Upload AAB + IPA; submit for review; staged rollout config |
-| **Fri** | Publish (if approved) + monitor | Start 5–20% Android; iOS release; watch Crashlytics 24h |
-| **Sat–Sun** | Soak + ramp | Increase rollout if crash-free ≥ 99%; respond to reviews |
+
+| Day              | Focus                                                            | Owner action                                                           |
+| ---------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Mon**          | Sign off build 20 closed testing + fix P0/P1 only                | Complete QA matrix below; check Crashlytics for 20                     |
+| **Tue**          | Backend + scheduler verification                                 | Deploy prod if any backend delta; confirm scheduler logs clean         |
+| **Wed**          | Gate 3a closed testing (`1.5.0+26`) + ad-flow QA on real devices | `BETA_ADS=true`; rewarded polish + grant matrix on 2 phones — **done** |
+| **Post-listing** | Gate 3b prod ads + launch build (`1.5.0+24+`)                    | No `BETA_ADS`; after AdMob “Add store” + app review                    |
+| **Thu**          | Store submission                                                 | Upload AAB + IPA; submit for review; staged rollout config             |
+| **Fri**          | Publish (if approved) + monitor                                  | Start 5–20% Android; iOS release; watch Crashlytics 24h                |
+| **Sat–Sun**      | Soak + ramp                                                      | Increase rollout if crash-free ≥ 99%; respond to reviews               |
+
 
 ---
 
@@ -85,40 +89,46 @@ Complete on **build 21** (`1.4.3+21`). Manual QA signed off **2026-06-23**.
 
 ### Challenge a Friend (two devices, prod Firebase)
 
-| # | Scenario | Expected | Pass |
-|---|----------|----------|------|
-| C1 | Host **Create** → guest **Join** by code | Both reach active 6×6 board; turns alternate | [x] |
-| C2 | Play full match to completion | One result dialog each; `challenge_finished` analytics | [x] |
-| C3 | **Rematch** from result or Challenge hub rival row | New room; both enter play | [x] |
-| C4 | Share **HTTPS link** (`vividmemories-games.github.io/join/{CODE}`) | Guest opens lobby while signed in | [x] |
-| C5 | **FCM tap** (background) | Opens lobby → play when room active | [x] |
-| C6 | **FCM / snackbar** (Android foreground) | In-app invite → JOIN works | [x] |
-| C7 | Reconnect after match **finished** | `recordChallengeMatch` idempotent; history updated | [x] |
-| C8 | Leave mid-match (Home / back / MORE → Exit) | Confirm dialog; **Stay** keeps board; leave → opponent wins | [x] |
-| C9 | Turn timer (~30s) | Turn advances (server or client backup) | [x] |
-| C10 | Challenge hub **Rivalries** + **View all history** | On Challenge hub, not Profile | [x] |
+
+| #   | Scenario                                                           | Expected                                                    | Pass |
+| --- | ------------------------------------------------------------------ | ----------------------------------------------------------- | ---- |
+| C1  | Host **Create** → guest **Join** by code                           | Both reach active 6×6 board; turns alternate                | [x]  |
+| C2  | Play full match to completion                                      | One result dialog each; `challenge_finished` analytics      | [x]  |
+| C3  | **Rematch** from result or Challenge hub rival row                 | New room; both enter play                                   | [x]  |
+| C4  | Share **HTTPS link** (`vividmemories-games.github.io/join/{CODE}`) | Guest opens lobby while signed in                           | [x]  |
+| C5  | **FCM tap** (background)                                           | Opens lobby → play when room active                         | [x]  |
+| C6  | **FCM / snackbar** (Android foreground)                            | In-app invite → JOIN works                                  | [x]  |
+| C7  | Reconnect after match **finished**                                 | `recordChallengeMatch` idempotent; history updated          | [x]  |
+| C8  | Leave mid-match (Home / back / MORE → Exit)                        | Confirm dialog; **Stay** keeps board; leave → opponent wins | [x]  |
+| C9  | Turn timer (~30s)                                                  | Turn advances (server or client backup)                     | [x]  |
+| C10 | Challenge hub **Rivalries** + **View all history**                 | On Challenge hub, not Profile                               | [x]  |
+
 
 ### Campaign & Quick Match (single device each platform)
 
-| # | Scenario | Expected | Pass |
-|---|----------|----------|------|
-| R1 | Campaign beat level → **Next level** | Fresh board; no flash of finished level | [x] |
-| R2 | Campaign mid-match → Leave | Dialog warns **1 life** cost; confirm → life deducted via `forfeitCampaignLevel` | [ ] |
-| R3 | Fresh level (0 moves) → Home | No leave dialog | [x] |
-| R4 | Quick match mid-game leave | Generic “Leave match?” copy | [x] |
-| R5 | Shop buy boost | Optimistic coins; button disabled in-flight | [x] |
-| R6 | Daily claim | Feedback + cooldown state | [x] |
+
+| #   | Scenario                             | Expected                                                                         | Pass |
+| --- | ------------------------------------ | -------------------------------------------------------------------------------- | ---- |
+| R1  | Campaign beat level → **Next level** | Fresh board; no flash of finished level                                          | [x]  |
+| R2  | Campaign mid-match → Leave           | Dialog warns **1 life** cost; confirm → life deducted via `forfeitCampaignLevel` | [ ]  |
+| R3  | Fresh level (0 moves) → Home         | No leave dialog                                                                  | [x]  |
+| R4  | Quick match mid-game leave           | Generic “Leave match?” copy                                                      | [x]  |
+| R5  | Shop buy boost                       | Optimistic coins; button disabled in-flight                                      | [x]  |
+| R6  | Daily claim                          | Feedback + cooldown state                                                        | [x]  |
+
 
 ### Auth, compliance, monetization
 
-| # | Scenario | Expected | Pass |
-|---|----------|----------|------|
-| A1 | Google Sign-In (Android) | Profile loads | [x] |
-| A2 | Apple Sign-In (iOS) | Profile loads | [x] |
-| A3 | Guest → later link account | No data loss on expected paths | [x] |
-| A4 | Settings → **Contact us** | Mail app opens (`vividmemoriesgames@gmail.com`) | [x] |
-| A5 | Settings → **Delete my account** (throwaway) | Auth + profile removed | [x] |
-| A6 | Remove Ads IAP (sandbox/TestFlight) | Receipt verified; ads suppressed | [x] |
+
+| #   | Scenario                                     | Expected                                        | Pass |
+| --- | -------------------------------------------- | ----------------------------------------------- | ---- |
+| A1  | Google Sign-In (Android)                     | Profile loads                                   | [x]  |
+| A2  | Apple Sign-In (iOS)                          | Profile loads                                   | [x]  |
+| A3  | Guest → later link account                   | No data loss on expected paths                  | [x]  |
+| A4  | Settings → **Contact us**                    | Mail app opens (`vividmemoriesgames@gmail.com`) | [x]  |
+| A5  | Settings → **Delete my account** (throwaway) | Auth + profile removed                          | [x]  |
+| A6  | Remove Ads IAP (sandbox/TestFlight)          | Receipt verified; ads suppressed                | [x]  |
+
 
 **Exit Gate 1:** zero **Fail** on C1–C8 and R1–R4. C9/C10 and A-items strongly recommended. **Passed 2026-06-23** — all C/R/A scenarios pass.
 
@@ -174,9 +184,9 @@ AdMob **account** may be approved while each app still shows **Requires review**
 
 ### Gate 3a — Closed testing ad-flow QA (build 26) — ✅
 
-**Target:** **`1.5.0+26`** (build **26** — economy hardening, ad-grant idempotency, splash). Manual QA signed off **2026-06-25**.
+**Target:** `**1.5.0+26`** (build **26** — economy hardening, ad-grant idempotency, splash). Manual QA signed off **2026-06-25**.
 
-**Track:** prod Firebase + IAP, **`BETA_ADS=true`** (Google test units). Ads must show **“Test Ad”** label.
+**Track:** prod Firebase + IAP, `**BETA_ADS=true`** (Google test units). Ads must show **“Test Ad”** label.
 
 #### Version bump
 
@@ -213,10 +223,12 @@ fvm flutter run --flavor prod \
 bash scripts/set_beta_ads_native.sh off
 ```
 
-| Platform | Artifact |
-|----------|----------|
-| Android | `build/app/outputs/bundle/prodRelease/app-prod-release.aab` |
-| iOS | `build/ios/ipa/*.ipa` |
+
+| Platform | Artifact                                                    |
+| -------- | ----------------------------------------------------------- |
+| Android  | `build/app/outputs/bundle/prodRelease/app-prod-release.aab` |
+| iOS      | `build/ios/ipa/*.ipa`                                       |
+
 
 Upload to Play **closed testing** / **TestFlight**; install on **≥2 real devices** (1 iOS + 1 Android).
 
@@ -236,18 +248,20 @@ Must **not** see prod-only `No ad to show` on test units. If `testUnits=false`, 
 
 #### Ad-flow verification matrix (real devices, test ads)
 
-| # | Scenario | Expected | Pass |
-|---|----------|----------|------|
-| G3a-1 | Shop → **Watch ad for coins** (first watch) | “Test Ad” opens; +35 coins; `[Callable] claimRewardedAd succeeded` | [x] |
-| G3a-2 | Shop → coin ad again within **30 min** | Button disabled / cooldown copy; or watch → grant rejected (`cooldown`) | [x] |
-| G3a-3 | Shop / lives sheet → **life ad** at &lt;5 lives | “Test Ad” opens; life granted; daily counter only on success | [x] |
-| G3a-4 | Life ad at **5 lives** | Button disabled (“Lives full” / greyed) | [x] |
-| G3a-5 | **3 life ads** in one UTC day | 4th disabled; cap message | [x] |
-| G3a-6 | Campaign loss → **Watch ad · retry** | Ad opens; life refunded; replay works | [x] |
-| G3a-7 | Dismiss ad early (no full watch) | No grant; clear snackbar; daily counters unchanged | [x] |
-| G3a-8 | Post-match **interstitial** | **Not** on w1_l01–w1_l04; shows on later matches | [x] |
-| G3a-9 | **UMP** consent | `canRequestAds=true` after flow (EEA test if possible) | [x] |
-| G3a-10 | **Remove Ads** IAP (sandbox) | Purchase succeeds; interstitials suppressed | [x] |
+
+| #      | Scenario                                     | Expected                                                                | Pass |
+| ------ | -------------------------------------------- | ----------------------------------------------------------------------- | ---- |
+| G3a-1  | Shop → **Watch ad for coins** (first watch)  | “Test Ad” opens; +35 coins; `[Callable] claimRewardedAd succeeded`      | [x]  |
+| G3a-2  | Shop → coin ad again within **30 min**       | Button disabled / cooldown copy; or watch → grant rejected (`cooldown`) | [x]  |
+| G3a-3  | Shop / lives sheet → **life ad** at <5 lives | “Test Ad” opens; life granted; daily counter only on success            | [x]  |
+| G3a-4  | Life ad at **5 lives**                       | Button disabled (“Lives full” / greyed)                                 | [x]  |
+| G3a-5  | **3 life ads** in one UTC day                | 4th disabled; cap message                                               | [x]  |
+| G3a-6  | Campaign loss → **Watch ad · retry**         | Ad opens; life refunded; replay works                                   | [x]  |
+| G3a-7  | Dismiss ad early (no full watch)             | No grant; clear snackbar; daily counters unchanged                      | [x]  |
+| G3a-8  | Post-match **interstitial**                  | **Not** on w1_l01–w1_l04; shows on later matches                        | [x]  |
+| G3a-9  | **UMP** consent                              | `canRequestAds=true` after flow (EEA test if possible)                  | [x]  |
+| G3a-10 | **Remove Ads** IAP (sandbox)                 | Purchase succeeds; interstitials suppressed                             | [x]  |
+
 
 **Exit Gate 3a:** zero **Fail** on G3a-1, G3a-3, G3a-6, G3a-8. G3a-2/4/5/7/9/10 strongly recommended. **Passed 2026-06-25** — all G3a scenarios pass.
 
@@ -274,7 +288,7 @@ Re-run abbreviated Challenge smoke on build 26: **C1, C4, R1, A4, A5**.
 
 ### Gate 3b — Prod ads launch build — **blocked until store listing**
 
-**Target:** **`1.5.0+24`** (or next unused `+N`) — **no `BETA_ADS`**.
+**Target:** `**1.5.0+24`** (or next unused `+N`) — **no `BETA_ADS`**.
 
 Run only after:
 
@@ -318,9 +332,9 @@ On a **debug/dev** build only (never ship forced crash):
 
 ### Both platforms
 
-- [ ] App icon 1024×1024 (no alpha on iOS)
-- [ ] Screenshots updated — nostalgia + online Challenge + campaign (ASO: dots and boxes, classic school game)
-- [ ] Short + long description matches shipped features (see store copy below)
+- [x] App icon 1024×1024 (no alpha on iOS)
+- [x] Screenshots updated — nostalgia + online Challenge + campaign (ASO: dots and boxes, classic school game)
+- [x] Short + long description matches shipped features (see store copy below)
 - [x] Privacy policy: `https://vividmemories-games.github.io/privacy-policy/`
 - [x] Delete data: `https://vividmemories-games.github.io/delete-data/`
 - [x] Contact: `https://vividmemories-games.github.io/contact/`
@@ -328,25 +342,25 @@ On a **debug/dev** build only (never ship forced crash):
 
 ### Google Play
 
-- [ ] Data safety form: analytics, ads, crash reporting declared
-- [ ] Content rating questionnaire current
+- [x] Data safety form: analytics, ads, crash reporting declared
+- [x] Content rating questionnaire current
 - [ ] AdMob app linked to production package
 - [ ] **Staged rollout** enabled — start **5–20%**, not 100%
 - [ ] Pre-launch report reviewed (internal track first if needed)
 
 ### Apple App Store Connect
 
-- [ ] Privacy nutrition labels match data collection
-- [ ] Sign in with Apple present (required — Google sign-in offered)
-- [ ] Push Notifications capability + `aps-environment` production
+- [x] Privacy nutrition labels match data collection
+- [x] Sign in with Apple present (required — Google sign-in offered)
+- [x] Push Notifications capability + `aps-environment` production
 - [ ] App Review notes: test account or steps to reach Challenge (if needed)
 - [ ] **Phased release** or manual release after approval
 
 ### Deep links / App Links
 
-- [ ] `assetlinks.json` (Android) — SHA-256 fingerprints current for release keystore
-- [ ] `apple-app-site-association` (iOS) — paths include `/join/*`
-- [ ] Live test: tap `https://vividmemories-games.github.io/join/TESTCODE` on device with app installed
+- [x] `assetlinks.json` (Android) — SHA-256 fingerprints current for release keystore
+- [x] `apple-app-site-association` (iOS) — paths include `/join/`*
+- [x] Live test: tap `https://vividmemories-games.github.io/join/TESTCODE` on device with app installed
 
 ---
 
@@ -357,12 +371,14 @@ On a **debug/dev** build only (never ship forced crash):
 1. Promote launch AAB to **Production** with staged rollout **5%** (or 20% if closed testing was very clean).
 2. Monitor **24 hours** minimum before increasing percentage.
 
-| Checkpoint | Threshold | Action |
-|------------|-----------|--------|
-| Crash-free users | ≥ 99% | OK to increase rollout |
-| ANR rate | No spike vs baseline | Investigate before ramp |
-| Callable errors | No sustained `submitChallengeMove` failures | Roll back if user-facing |
-| Reviews | 1-star cluster on Challenge | Pause ramp; triage |
+
+| Checkpoint       | Threshold                                   | Action                   |
+| ---------------- | ------------------------------------------- | ------------------------ |
+| Crash-free users | ≥ 99%                                       | OK to increase rollout   |
+| ANR rate         | No spike vs baseline                        | Investigate before ramp  |
+| Callable errors  | No sustained `submitChallengeMove` failures | Roll back if user-facing |
+| Reviews          | 1-star cluster on Challenge                 | Pause ramp; triage       |
+
 
 Rollout ramp suggestion: **5% → 20% → 50% → 100%** (wait 24–48h between steps).
 
@@ -375,14 +391,16 @@ Rollout ramp suggestion: **5% → 20% → 50% → 100%** (wait 24–48h between 
 
 Watch daily:
 
-| Signal | Where |
-|--------|--------|
-| Crashes / ANRs | Firebase Crashlytics, Play Vitals, App Store Connect |
-| Challenge funnel | Analytics: `challenge_started`, `challenge_finished` |
+
+| Signal            | Where                                                                            |
+| ----------------- | -------------------------------------------------------------------------------- |
+| Crashes / ANRs    | Firebase Crashlytics, Play Vitals, App Store Connect                             |
+| Challenge funnel  | Analytics: `challenge_started`, `challenge_finished`                             |
 | Callable failures | Cloud Logging — `submitChallengeMove`, `recordChallengeMatch`, `createChallenge` |
-| Scheduler | `processChallengeTimeouts` errors |
-| App Check denials | Callable logs with `UNAUTHENTICATED` |
-| Ad fill / policy | AdMob console |
+| Scheduler         | `processChallengeTimeouts` errors                                                |
+| App Check denials | Callable logs with `UNAUTHENTICATED`                                             |
+| Ad fill / policy  | AdMob console                                                                    |
+
 
 - [ ] Crashlytics alert email configured
 - [ ] Version filter set to launch build (`1.5.0+24` or current prod-ad build)
@@ -392,12 +410,14 @@ Watch daily:
 
 ## Rollback plan
 
-| Platform | Fast mitigation |
-|----------|-----------------|
-| **Android** | Halt staged rollout; promote previous stable AAB to 100% |
-| **iOS** | Remove from sale or expedite fix build; cannot “roll back” binary — prepare hotfix build |
-| **Firebase** | Avoid breaking rule/callable deploys during rollout; keep previous function revision notes |
-| **Challenge outage** | Communicate via store “What’s New” only after fix — no server-side kill switch today |
+
+| Platform             | Fast mitigation                                                                            |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| **Android**          | Halt staged rollout; promote previous stable AAB to 100%                                   |
+| **iOS**              | Remove from sale or expedite fix build; cannot “roll back” binary — prepare hotfix build   |
+| **Firebase**         | Avoid breaking rule/callable deploys during rollout; keep previous function revision notes |
+| **Challenge outage** | Communicate via store “What’s New” only after fix — no server-side kill switch today       |
+
 
 Prepare before launch:
 
@@ -433,13 +453,15 @@ Use or adapt from [RELEASES.md](RELEASES.md) build 20 section.
 
 ## Support cheat sheet (known behavior)
 
-| User report | Response |
-|-------------|----------|
-| “No push when I challenged a new friend” | By design — push only for **recent rivals**; share link/code instead |
-| “Challenge didn’t give coins” | By design — Challenge is history/H2H only (v1) |
-| “Turn didn’t advance after 30s” | Server timeout + client backup; ask for app version + approximate time |
-| “Link opened browser, not app” | Check App Links / reinstall; verify signed-in state |
-| “Campaign used a life when I left” | **Expected** on build 25+ after confirmed leave mid-match (see U-1). File bug only if life drops without confirm or on 0-move exit. |
+
+| User report                              | Response                                                                                                                            |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| “No push when I challenged a new friend” | By design — push only for **recent rivals**; share link/code instead                                                                |
+| “Challenge didn’t give coins”            | By design — Challenge is history/H2H only (v1)                                                                                      |
+| “Turn didn’t advance after 30s”          | Server timeout + client backup; ask for app version + approximate time                                                              |
+| “Link opened browser, not app”           | Check App Links / reinstall; verify signed-in state                                                                                 |
+| “Campaign used a life when I left”       | **Expected** on build 25+ after confirmed leave mid-match (see U-1). File bug only if life drops without confirm or on 0-move exit. |
+
 
 ---
 
