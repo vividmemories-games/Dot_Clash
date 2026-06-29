@@ -1157,12 +1157,19 @@ class FirestoreProfileRepository implements ProfileRepository {
       MatchResult.loss => 'loss',
       MatchResult.tie => 'tie',
     };
-    await _withRetry(() => _matches.add({
-          'outcome': outcome,
-          'modeLabel': modeLabel,
-          'opponentLabel': opponentLabel,
-          'playedAt': FieldValue.serverTimestamp(),
-        }));
+    // Match history is non-critical. A failed/denied write (e.g. an auth-state
+    // race where the token uid no longer matches the repo uid) must never
+    // crash the post-game flow — log it as non-fatal and move on.
+    try {
+      await _withRetry(() => _matches.add({
+            'outcome': outcome,
+            'modeLabel': modeLabel,
+            'opponentLabel': opponentLabel,
+            'playedAt': FieldValue.serverTimestamp(),
+          }));
+    } on FirebaseException catch (e, st) {
+      _logFirestoreFailure('recordMatch', e, st);
+    }
   }
 
   @override
