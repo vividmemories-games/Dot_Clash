@@ -87,7 +87,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
   late final String _campaignSessionId;
 
   /// Idempotency key for local / practice match settlement.
-  late final String _matchSessionId;
+  /// Reassigned by [_resetGame] on rematch/restart, so it must not be `final`
+  /// (a `late final` reassignment threw LateInitializationError on rematch).
+  late String _matchSessionId;
 
   /// Prevents pushing two victory overlays if settlement fires twice.
   bool _campaignResultPushed = false;
@@ -1307,6 +1309,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
     // builders can run more than once during install/rebuild; calling runSave()
     // there fired completeCampaignLevel twice (−2 lives on loss).
     final saveFuture = runSave();
+
+    // CampaignLevelCompleteScreen attaches its own success/failure listener
+    // when shown. But if this widget is disposed before we push the route
+    // (fast exit), the rejected future would become an unhandled async error
+    // and crash. runSave() already records the error, so swallow it here.
+    unawaited(saveFuture.catchError((Object _) {}));
 
     if (!context.mounted) return;
 
