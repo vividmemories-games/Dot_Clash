@@ -41,6 +41,13 @@ class AdMobAdService implements AdService {
       debugPrint('[AdMobAdService] Ads blocked until consent (UMP).');
       return;
     }
+    await MobileAds.instance.updateRequestConfiguration(
+      RequestConfiguration(
+        maxAdContentRating: MaxAdContentRating.pg,
+        tagForChildDirectedTreatment: TagForChildDirectedTreatment.no,
+        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.no,
+      ),
+    );
     await MobileAds.instance.initialize();
     debugPrint(
       '[AdMobAdService] initialized interstitial=$_interstitialId '

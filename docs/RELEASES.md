@@ -2,11 +2,11 @@
 
 **Naming:** Features ship by **build number** (`+N` in `pubspec.yaml`), e.g. build 19 — not "Release N". Always read `pubspec.yaml` before stating the current target.
 
-**Active build target:** `1.5.0+23` in `pubspec.yaml` (bump `+N` before each store upload)  
-**Gate 3a (in progress):** closed testing with `BETA_ADS=true` — ad-flow QA on real devices ([LAUNCH.md](LAUNCH.md) Gate 3a)  
-**Previous QA sign-off:** build 21 (`1.4.3+21`) — Gate 0/1  
-**Previous closed testing:** build 20 (`1.4.2+20`) — Challenge board presets  
-**Public launch (prod ads):** [LAUNCH.md](LAUNCH.md) Gate 3b — target `1.5.0+24+` after public store listing + AdMob app review  
+**Active build target:** `1.5.1+29` in `pubspec.yaml` (bump `+N` before each store upload)  
+**Play resubmit:** build **29** — Ad Content policy fix (PG max rating in SDK + console; target audience 13+)  
+**Previous upload:** build 28 (`1.5.0+28`) — rejected (Ad Content / content rating mismatch)  
+**Gate 3a (signed off):** build 26 — closed testing `BETA_ADS=true` ([LAUNCH.md](LAUNCH.md) Gate 3a)  
+**Public launch (prod ads):** [LAUNCH.md](LAUNCH.md) Gate 3b — prod AdMob, no `BETA_ADS`  
 **Track:** Prod package + Firebase (`dot-clash-72cc6`), `BETA_ADS=true` (test ads) for closed testing only  
 **IAP / ops:** `SETUP.md` §4b · **Security:** `SETUP.md` App Check + [`firestore.rules`](../firestore.rules)
 
@@ -18,9 +18,9 @@
 cd "/path/to/Dot_Clash"
 # Bump version in pubspec.yaml before each store upload
 
-bash scripts/build_closed_testing.sh          # both
-bash scripts/build_closed_testing.sh android
-bash scripts/build_closed_testing.sh ios
+bash scripts/set_beta_ads_native.sh off
+flutter build appbundle --flavor prod --dart-define=FLAVOR=prod --release
+flutter build ipa --flavor prod --dart-define=FLAVOR=prod --release
 ```
 
 | Platform | Artifact |
@@ -28,15 +28,32 @@ bash scripts/build_closed_testing.sh ios
 | Android | `build/app/outputs/bundle/prodRelease/app-prod-release.aab` |
 | iOS | `build/ios/ipa/*.ipa` |
 
-**Pre-upload checklist (build 23 — Gate 3a ad-flow QA)**
+**Pre-upload checklist (build 29 — Play Ad Content policy resubmit)**
 
-- [ ] `pubspec.yaml` at `1.5.0+23`
-- [ ] `bash scripts/build_closed_testing.sh` (sets `BETA_ADS=true` + iOS native test AdMob ID)
-- [ ] Device logs: `testUnits=true`; rewarded loads without `No ad to show`
-- [ ] G3a matrix in [LAUNCH.md](LAUNCH.md) — coins, life, retry, interstitial FTUE, Remove Ads IAP
-- [ ] Prod Functions deployed if backend changed: `firebase deploy --only functions,firestore:rules,firestore:indexes -P dot-clash-72cc6`
-- [ ] Build 20/21 regression: Challenge presets, Campaign, Quick Match
-- [ ] Crashlytics: filter `1.5.0+23` after rollout
+- [ ] `pubspec.yaml` at `1.5.1+29`
+- [ ] No `BETA_ADS` — production AdMob units
+- [ ] AdMob console: max content rating **PG** (app-specific, not account MA)
+- [ ] Play Console: target audience excludes ages 6–12; content rating questionnaire current
+- [ ] Device QA: 15+ prod interstitial/rewarded impressions; no mature creatives
+- [ ] Resubmission note cites SDK `RequestConfiguration` + console changes
+
+---
+
+## Build 29 — Play Ad Content policy fix
+
+**Version:** `1.5.1+29`  
+**Track:** Play production resubmit · prod Firebase · **production AdMob**
+
+### Shipped / in this build
+
+| Item | Notes |
+|------|--------|
+| AdMob `RequestConfiguration` | `maxAdContentRating: PG`, `tagForChildDirectedTreatment: no`, `tagForUnderAgeOfConsent: no` before SDK init |
+| Version bump | Resubmit after build 28 rejection (ad content vs content rating) |
+
+**Key modules:** `admob_ad_service.dart`
+
+**Console (already done before this build):** AdMob PG cap, Play target audience 13+, content rating questionnaire retaken.
 
 ---
 
