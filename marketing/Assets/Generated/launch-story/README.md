@@ -14,6 +14,10 @@ Seven standalone **9:16** images for WhatsApp Status, Instagram/Facebook Stories
 | 6 | `06-is-now-live.png` | **DOT CLASH IS NOW LIVE!** — App Store + Play Store |
 | 7 | `07-share-the-memory.png` | Remember this game from class? Share it with someone. *(Pixar 3D)* |
 
+## Reference photos (panels 2 & 7)
+
+Upload your face photos to [`references/`](references/) as `father.jpg` and `son.jpg`, then regenerate for accurate Pixar-style characters. See [`references/README.md`](references/README.md).
+
 ## Reels video
 
 | File | Specs |

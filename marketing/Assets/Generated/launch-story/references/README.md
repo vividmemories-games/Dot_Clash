@@ -1,12 +1,49 @@
-# Face reference photos
+# Reference photos (father & son)
 
-Drop your reference photos here for sharper likeness when regenerating panels 2 and 7:
+Add your two photos here, then ask the agent to regenerate panels **2** and **7** using them.
 
-| File | Who |
-|------|-----|
-| `father.jpg` | Your face (clear front or 3/4 portrait) |
-| `son.jpg` | Your son's face (clear front or 3/4 portrait) |
+## Required files
 
-Then ask the agent to regenerate using these as `reference_image_paths`.
+| Save as | Who | Tips |
+|---------|-----|------|
+| `father.jpg` | You (dad) | Clear face, front or 3/4, good light. Marina/outdoor photo is fine. |
+| `son.jpg` | Your son | Clear face, glasses visible, smiling if possible. |
 
-**Note:** Chat attachments from mobile are not always saved as files in the cloud agent. Saving them here ensures exact reference images are used.
+Supported formats: `.jpg`, `.jpeg`, `.png`, `.webp`
+
+## How to add files
+
+### On your computer (after pulling this branch)
+
+```bash
+git fetch origin
+git checkout cursor/launch-story-images-1d1f
+
+# Copy your photos into this folder, named exactly:
+#   marketing/Assets/Generated/launch-story/references/father.jpg
+#   marketing/Assets/Generated/launch-story/references/son.jpg
+
+git add marketing/Assets/Generated/launch-story/references/
+git commit -m "Add face reference photos for launch story"
+git push origin cursor/launch-story-images-1d1f
+```
+
+### On GitHub (no git)
+
+1. Open [PR #5](https://github.com/vividmemories-games/Dot_Clash/pull/5)
+2. Go to `marketing/Assets/Generated/launch-story/references/`
+3. **Add file** → upload `father.jpg` and `son.jpg`
+4. Commit to branch `cursor/launch-story-images-1d1f`
+
+## After uploading
+
+Tell the agent:
+
+> Regenerate panels 2 and 7 using the reference photos in `references/`
+
+The agent will use `father.jpg` and `son.jpg` as `reference_image_paths` for accurate Pixar-style characters.
+
+## Current status
+
+- [ ] `father.jpg` — not uploaded yet
+- [ ] `son.jpg` — not uploaded yet
