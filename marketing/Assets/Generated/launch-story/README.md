@@ -12,7 +12,7 @@ Seven standalone **9:16** images for WhatsApp Status, Instagram/Facebook Stories
 | 4 | `04-late-nights-dream.png` | Hundreds of late nights. One dream. |
 | 5 | `05-childhood-reimagined.png` | A childhood classic. Reimagined. |
 | 6 | `06-is-now-live.png` | **DOT CLASH IS NOW LIVE!** — App Store + Play Store |
-| 7 | `07-share-the-memory.png` | Remember this game from class? Share it with someone. *(illustrated)* |
+| 7 | `07-share-the-memory.png` | Remember this game from class? Share it with someone. *(Pixar 3D)* |
 
 ## Reels video
 
