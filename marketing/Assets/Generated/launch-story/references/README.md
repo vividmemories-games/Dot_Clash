@@ -47,5 +47,5 @@ The agent will use `father.jpg` and `son.jpg` as `reference_image_paths` for acc
 
 ## Current status
 
-- [ ] `father.jpg` — not uploaded yet
-- [ ] `son.jpg` — not uploaded yet
+- [x] `father.jpeg` — uploaded
+- [x] `son.jpeg` — uploaded
