@@ -4,10 +4,12 @@ Add your two photos here, then ask the agent to regenerate panels **2** and **7*
 
 ## Required files
 
-| Save as | Who | Tips |
-|---------|-----|------|
+| Save as (final) | Who | Tips |
+|-----------------|-----|------|
 | `father.jpg` | You (dad) | Clear face, front or 3/4, good light. Marina/outdoor photo is fine. |
 | `son.jpg` | Your son | Clear face, glasses visible, smiling if possible. |
+
+**Mobile tip:** Upload with **any filename** (e.g. `IMG_1234.jpeg`). The agent can run `rename_references.sh` to rename them for you.
 
 Supported formats: `.jpg`, `.jpeg`, `.png`, `.webp`
 
