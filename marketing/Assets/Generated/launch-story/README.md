@@ -14,6 +14,30 @@ Seven standalone **9:16** images for WhatsApp Status, Instagram/Facebook Stories
 | 6 | `06-is-now-live.png` | **DOT CLASH IS NOW LIVE!** — App Store + Play Store |
 | 7 | `07-share-the-memory.png` | Remember this game from class? Share it with someone. |
 
+## Reels video
+
+| File | Specs |
+|------|-------|
+| `dot-clash-launch-story-reel.mp4` | 1080×1920, 22s, 9:16, silent (add music in editor) |
+
+Rebuild anytime:
+
+```bash
+./marketing/Assets/Generated/launch-story/build_reel.sh
+```
+
+**Timing inside the reel**
+
+| Time | Panel |
+|------|-------|
+| 0:00–0:03 | 1 — Nostalgia hook |
+| 0:03–0:06 | 2 — Father & son |
+| 0:06–0:09 | 3 — Idea born |
+| 0:09–0:12 | 4 — Late nights |
+| 0:12–0:15 | 5 — Reimagined |
+| 0:15–0:20 | 6 — **IS NOW LIVE** |
+| 0:20–0:22 | 7 — Share CTA |
+
 ## Where to use
 
 | Platform | Format | How |
