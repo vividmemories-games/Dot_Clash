@@ -7,12 +7,12 @@ Seven standalone **9:16** images for WhatsApp Status, Instagram/Facebook Stories
 | # | File | Caption hook |
 |---|------|----------------|
 | 1 | `01-before-smartphones.png` | Before smartphones… we had imagination. |
-| 2 | `02-papa-can-we-play.png` | Papa, can we play a game? |
+| 2 | `02-papa-can-we-play.png` | Papa, can we play a game? *(illustrated)* |
 | 3 | `03-simple-moment-idea.png` | That simple moment became an idea. |
 | 4 | `04-late-nights-dream.png` | Hundreds of late nights. One dream. |
 | 5 | `05-childhood-reimagined.png` | A childhood classic. Reimagined. |
 | 6 | `06-is-now-live.png` | **DOT CLASH IS NOW LIVE!** — App Store + Play Store |
-| 7 | `07-share-the-memory.png` | Remember this game from class? Share it with someone. |
+| 7 | `07-share-the-memory.png` | Remember this game from class? Share it with someone. *(illustrated)* |
 
 ## Reels video
 
