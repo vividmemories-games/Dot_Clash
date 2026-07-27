@@ -87,9 +87,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
   late final String _campaignSessionId;
 
   /// Idempotency key for local / practice match settlement.
-  /// Reassigned by [_resetGame] on rematch/restart, so it must not be `final`
-  /// (a `late final` reassignment threw LateInitializationError on rematch).
-  late String _matchSessionId;
+  /// Reassigned by [_resetGame] on rematch/restart — plain [String], never
+  /// `late final` (that threw LateInitializationError on rematch in build 30).
+  String _matchSessionId = '';
 
   /// Prevents pushing two victory overlays if settlement fires twice.
   bool _campaignResultPushed = false;
@@ -604,12 +604,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
               !_isChallenge && state.moveHistory.isNotEmpty && !state.isOver,
           onUndo: _onUndo,
           onRestart: _isChallenge ? () {} : () => _confirmNewGame(context),
-          onExit: () => _requestLeaveGame(
-            context,
-            navigate: () => context.go(
-              _isChallenge ? AppRoutes.home : '/home',
-            ),
-          ),
+          onExit: () => unawaited(_requestLeaveGame(context)),
           extraTurnsAvailable: showBoosts &&
               session.hasTurnBudget &&
               !session.extraTurnsUsed &&
@@ -646,12 +641,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        unawaited(
-          _requestLeaveGame(
-            context,
-            navigate: () => context.go('/home'),
-          ),
-        );
+        unawaited(_requestLeaveGame(context));
       },
       child: CoachTourGameScope(
         owner: _gameTourScope,
@@ -704,15 +694,20 @@ class _GameScreenState extends ConsumerState<GameScreen>
     }
   }
 
+  /// Leave match and navigate via [appRouterProvider] (not [BuildContext.go]).
+  ///
+  /// After forfeit/abandon awaits, the widget [BuildContext] may no longer be
+  /// under [GoRouter] — Crashlytics: `GoRouter.of` null check on leave.
   Future<void> _requestLeaveGame(
     BuildContext context, {
-    required void Function() navigate,
+    String destination = AppRoutes.home,
   }) async {
+    final router = ref.read(appRouterProvider);
     final state = _isChallenge
         ? ref.read(challengeGameProvider(_challengeCode!))
         : ref.read(gameProvider);
     if (!_shouldConfirmLeave(state)) {
-      await _leaveGameRoute(navigate);
+      await _leaveGameRoute(router, destination: destination);
       return;
     }
 
@@ -721,6 +716,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
     final campaignForfeitsLife = isCampaign &&
         !widget.config.isDailyPuzzle &&
         !_tutorialFreeAttempt;
+    if (!context.mounted) {
+      await _leaveGameRoute(router, destination: destination);
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
@@ -754,12 +753,15 @@ class _GameScreenState extends ConsumerState<GameScreen>
         );
       },
     );
-    if (confirmed == true && context.mounted) {
-      await _leaveGameRoute(navigate);
+    if (confirmed == true) {
+      await _leaveGameRoute(router, destination: destination);
     }
   }
 
-  Future<void> _leaveGameRoute(void Function() navigate) async {
+  Future<void> _leaveGameRoute(
+    GoRouter router, {
+    String destination = AppRoutes.home,
+  }) async {
     if (widget.config.mode == GameMode.campaign &&
         widget.config.campaignLevelId != null &&
         !widget.config.isDailyPuzzle &&
@@ -791,7 +793,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
       }
     }
     CoachTourTargetRegistry.releaseAllGameTargets();
-    navigate();
+    router.go(destination);
   }
 
   // ── Header ─────────────────────────────────────────────────────────────────
@@ -806,10 +808,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
             icon: Icons.home_outlined,
             onTap: () {
               AppHaptics.lightImpact();
-              _requestLeaveGame(
-                context,
-                navigate: () => context.go('/home'),
-              );
+              unawaited(_requestLeaveGame(context));
             },
           ),
           Expanded(child: _buildTitle()),
@@ -1381,7 +1380,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
         labelB: _labelB(),
         onHome: () {
           Navigator.pop(context);
-          _leaveGameRoute(() => context.go('/home'));
+          unawaited(
+            _leaveGameRoute(
+              ref.read(appRouterProvider),
+              destination: AppRoutes.home,
+            ),
+          );
         },
         onPlayAgain: () {
           Navigator.pop(context);
