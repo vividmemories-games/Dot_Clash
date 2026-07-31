@@ -40,7 +40,22 @@ class CallableBackend {
     }
 
     // Force refresh so the native Functions SDK has a token to attach.
-    final idToken = await user.getIdToken(true);
+    // getIdToken throws FirebaseAuthException (e.g. network-request-failed) —
+    // map to FunctionsException so callers can soft-fail instead of crashing
+    // via PlatformDispatcher → Crashlytics fatal.
+    final String? idToken;
+    try {
+      idToken = await user.getIdToken(true);
+    } on FirebaseAuthException catch (e) {
+      final transient = e.code == 'network-request-failed' ||
+          e.code == 'too-many-requests' ||
+          e.code == 'timeout' ||
+          e.code == 'internal-error';
+      throw FirebaseFunctionsException(
+        code: transient ? 'unavailable' : 'unauthenticated',
+        message: e.message ?? 'Auth token refresh failed for $name',
+      );
+    }
     if (idToken == null || idToken.isEmpty) {
       throw FirebaseFunctionsException(
         code: 'unauthenticated',

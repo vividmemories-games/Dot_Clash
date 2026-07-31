@@ -808,7 +808,7 @@ class FirestoreProfileRepository implements ProfileRepository {
     try {
       return await CallableBackend.instance.call(name, data);
     } on FirebaseFunctionsException catch (e) {
-      if (_callableAllowsLocalFallback(e)) {
+      if (_shouldSwallowCallableFailure(e)) {
         if (kDebugMode) {
           final authUid = FirebaseAuth.instance.currentUser?.uid;
           debugPrint(
@@ -832,18 +832,35 @@ class FirestoreProfileRepository implements ProfileRepository {
 
   bool get _allowEconomyLocalFallback => AppEnv.isDev;
 
-  bool _callableAllowsLocalFallback(FirebaseFunctionsException e) {
+  /// Prod: soft-fail transient/auth network so UI returns false (snackbar)
+  /// instead of uncaught → Crashlytics fatal. Dev: also swallow broader codes
+  /// so local Firestore fallbacks can run.
+  bool _shouldSwallowCallableFailure(FirebaseFunctionsException e) {
+    if (_isTransientCallableFailure(e)) return true;
     if (!_allowEconomyLocalFallback) return false;
     if (e.code == 'not-found' ||
-        e.code == 'unavailable' ||
         e.code == 'internal' ||
         e.code == 'failed-precondition' ||
-        e.code == 'unauthenticated' ||
         e.code == 'permission-denied') {
       return true;
     }
     final msg = e.message ?? '';
     return msg.contains('permission to the requested URL');
+  }
+
+  bool _isTransientCallableFailure(FirebaseFunctionsException e) {
+    switch (e.code) {
+      case 'unavailable':
+      case 'deadline-exceeded':
+      case 'cancelled':
+      case 'unauthenticated':
+        return true;
+      default:
+        final msg = (e.message ?? '').toLowerCase();
+        return msg.contains('network') ||
+            msg.contains('timeout') ||
+            msg.contains('unreachable');
+    }
   }
 
   /// Runs an economy callable with an optional [optimistic] local prediction.

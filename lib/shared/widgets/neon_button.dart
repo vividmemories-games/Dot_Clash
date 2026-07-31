@@ -38,6 +38,10 @@ class _NeonButtonState extends State<NeonButton>
   late final AnimationController _controller;
   late final Animation<double> _scaleAnim;
 
+  /// False after [dispose] so late pointer up/cancel cannot touch the ticker.
+  /// Crashlytics: null check in AnimationController.stop after tour/sheet teardown.
+  bool _alive = true;
+
   @override
   void initState() {
     super.initState();
@@ -53,18 +57,19 @@ class _NeonButtonState extends State<NeonButton>
 
   @override
   void dispose() {
+    _alive = false;
     _controller.dispose();
     super.dispose();
   }
 
   void _onPointerDown(PointerDownEvent event) {
-    if (!widget.enabled) return;
+    if (!_alive || !widget.enabled) return;
     _controller.reverse();
     AppHaptics.lightImpact();
   }
 
   void _onPointerUp(PointerEvent event) {
-    if (!widget.enabled) return;
+    if (!_alive || !widget.enabled) return;
     _controller.forward();
   }
 
